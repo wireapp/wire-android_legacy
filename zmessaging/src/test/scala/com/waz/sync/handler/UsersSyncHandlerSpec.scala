@@ -3,7 +3,7 @@ package com.waz.sync.handler
 import com.waz.content.UsersStorage
 import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
-import com.waz.service.{UserSearchService, UserService}
+import com.waz.service.{BackendConfigFixture, UserSearchService, UserService}
 import com.waz.service.assets.AssetService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -35,7 +35,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
   val teamId = TeamId()
 
   def handler: UsersSyncHandler = new UsersSyncHandlerImpl(
-    FederationSupport(federationSupported), userService, usersStorage, assetService, searchService,
+    BackendConfigFixture.backendSignal, userService, usersStorage, assetService, searchService,
     usersClient, otrSync, Some(teamId), teamsSyncHandler
   )
 
@@ -309,7 +309,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
         .once()
 
       val handler = new UsersSyncHandlerImpl(
-        FederationSupport(federationSupported), userService, usersStorage, assetService,
+        BackendConfigFixture.backendSignal, userService, usersStorage, assetService,
         searchService, usersClient, otrSync, None, teamsSyncHandler
       )
       result(handler.syncSearchResults(users.keys.toArray:_*)) shouldEqual SyncResult.Success

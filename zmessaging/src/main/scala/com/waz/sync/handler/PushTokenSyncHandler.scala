@@ -27,13 +27,13 @@ import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Retry
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal}
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
 
 class PushTokenSyncHandler(pushTokenService: PushTokenService,
-                           backend: BackendConfig,
+                           backend: Signal[BackendConfig],
                            clientId: ClientId,
                            client: PushTokenClient) extends DerivedLogTag {
 
@@ -41,7 +41,8 @@ class PushTokenSyncHandler(pushTokenService: PushTokenService,
 
   def registerPushToken(token: PushToken): Future[SyncResult] = {
     debug(l"registerPushToken: $token")
-    client.postPushToken(PushTokenRegistration(token, backend.pushSenderId, clientId)).future.flatMap {
+    val pushSenderId = backend.currentValue.map { b => b.pushSenderId}.getOrElse("") // the first value is guaranteed to have at least the push sender Id
+    client.postPushToken(PushTokenRegistration(token, pushSenderId, clientId)).future.flatMap {
       case Right(PushTokenRegistration(`token`, _, `clientId`, _)) =>
         pushTokenService
           .onTokenRegistered(token)

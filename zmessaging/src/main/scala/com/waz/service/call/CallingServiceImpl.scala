@@ -173,7 +173,7 @@ object CallingService {
 final class CallingServiceImpl(val accountId:       UserId,
                                val clientId:        ClientId,
                                val domain:          Domain,
-                               federation:          FederationSupport,
+                               backend:             Signal[BackendConfig],
                                callingClient:       CallingClient,
                                avs:                 Avs,
                                convs:               ConversationsContentUpdater,
@@ -194,6 +194,8 @@ final class CallingServiceImpl(val accountId:       UserId,
 
   import CallingService._
   import com.waz.threading.Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
   flowManagerService.flowManager
@@ -460,7 +462,7 @@ final class CallingServiceImpl(val accountId:       UserId,
     Future.successful(())
 
   def onClientsRequest(convId: RConvQualifiedId): Future[Unit] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       withConv(convId.id) { (wCall, conv) =>
         otrSyncHandler.postClientDiscoveryMessage(convId).map {
           case Right(clients) =>

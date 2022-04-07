@@ -111,9 +111,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   val clock = ZMessaging.clock
 
   val global     = account.global
-
-  def federation: FederationSupport = global.backend.federationSupport
-
+  
   lazy val selfUserId: UserId = account.userId
   lazy val selfDomain: Domain = account.domain
 
@@ -153,7 +151,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   def metadata          = global.metadata
   def network           = global.network
   def blacklist         = global.blacklist
-  def backend           = global.backend
+  def backend           = global.backendConfiguration
   def teamsStorage      = global.teamsStorage
   def videoTranscoder   = global.videoTranscoder
   def audioTranscader   = global.audioTranscoder

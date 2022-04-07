@@ -19,7 +19,6 @@ package com.waz.service.push
 
 import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.UserId
@@ -34,6 +33,7 @@ import com.wire.signals._
 import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client
+import com.waz.utils.wrappers.URI
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2.http.{Body, Method, Request}
 import com.waz.znet2.{WebSocket, WebSocketFactory, http}
@@ -55,15 +55,16 @@ object WSPushServiceImpl {
 
   def apply(userId: UserId,
             clientId: ClientId,
-            backend: BackendConfig,
+            backend:  Signal[BackendConfig],
             webSocketFactory: WebSocketFactory,
             accessTokenProvider: AccessTokenProvider,
             networkModeService: NetworkModeService
            ): WSPushServiceImpl = {
 
+    val websocketUrl = backend.currentValue.map { b => b.websocketUrl }.get // the first value is guaranteed to have at least the URLs
     val requestCreator = (token: AccessToken) => {
-      val webSocketUri = if(backend.websocketUrl.getPath.startsWith("/await")) backend.websocketUrl
-        else backend.websocketUrl.buildUpon.appendPath("await").build
+      val webSocketUri = if(websocketUrl.getPath.startsWith("/await")) websocketUrl
+        else websocketUrl.buildUpon.appendPath("await").build
 
       val uri = webSocketUri.buildUpon.appendQueryParameter("client", clientId.str).build
       // XXX: this is a hack for Backend In The Box problem: 'Accept-Encoding: gzip' header causes 500

@@ -78,7 +78,7 @@ trait OtrService {
 class OtrServiceImpl(selfUserId:     UserId,
                      currentDomain:  Domain,
                      clientId:       ClientId,
-                     federation:     FederationSupport,
+                     backend:        Signal[BackendConfig],
                      clients:        OtrClientsService,
                      cryptoBox:      CryptoBoxService,
                      users:          => UserService, // lazy, bcs otherwise we'd have a circular dependency
@@ -92,6 +92,8 @@ class OtrServiceImpl(selfUserId:     UserId,
   import OtrService._
   import Threading.Implicits.Background
 
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
+
   private lazy val sessions: CryptoSessionService = returning(cryptoBox.sessions) { sessions =>
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
@@ -100,7 +102,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   override def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       for {
         qId    <- users.qualifiedId(userId)
         syncId <- resetSession(convId, qId, clientId)

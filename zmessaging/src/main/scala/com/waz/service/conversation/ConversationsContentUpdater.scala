@@ -24,11 +24,12 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
+import com.waz.service.BackendConfig
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.sync.SyncServiceHandle
 import com.waz.utils._
 import com.waz.zms.BuildConfig
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -81,13 +82,15 @@ trait ConversationsContentUpdater {
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       selfUserId:      UserId,
                                       teamId:          Option[TeamId],
-                                      federation:      FederationSupport,
+                                      backend:         Signal[BackendConfig],
                                       usersStorage:    UsersStorage,
                                       userPrefs:       UserPreferences,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   storage.onUpdated.foreach(_.foreach {
     case (prev, conv) if prev.cleared != conv.cleared =>
@@ -221,7 +224,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                            access:      Set[Access] = Set(Access.PRIVATE),
                                            accessRole:  AccessRole = AccessRole.PRIVATE,
                                            receiptMode: Int = 0): Future[ConversationData] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       for {
         conv <- storage.insert(
           ConversationData(

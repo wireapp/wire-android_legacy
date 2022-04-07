@@ -26,12 +26,13 @@ import com.waz.model.UserInfo.ProfilePicture
 import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.AssetService
-import com.waz.service.{UserSearchService, UserService}
+import com.waz.service.{BackendConfig, UserSearchService, UserService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.Threading
 import com.waz.zms.BuildConfig
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
@@ -49,7 +50,7 @@ trait UsersSyncHandler {
   def deleteAccount(): Future[SyncResult]
 }
 
-final class UsersSyncHandlerImpl(federation:       FederationSupport,
+final class UsersSyncHandlerImpl(backend:          Signal[BackendConfig],
                                  userService:      UserService,
                                  usersStorage:     UsersStorage,
                                  assets:           AssetService,
@@ -62,6 +63,8 @@ final class UsersSyncHandlerImpl(federation:       FederationSupport,
   import UsersSyncHandler._
   import Threading.Implicits.Background
 
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
+
   private def syncUsers(response: Either[ErrorResponse, Seq[UserInfo]]) = response match {
     case Right(users) =>
       userService.updateSyncedUsers(users).map(_ => SyncResult.Success)
@@ -73,7 +76,7 @@ final class UsersSyncHandlerImpl(federation:       FederationSupport,
     usersClient.loadUsers(ids).future.flatMap(syncUsers)
 
   override def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncResult] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       usersClient.loadQualifiedUsers(qIds).future.flatMap(syncUsers)
     } else {
       val ids: Array[UserId] = qIds.map(_.id).toArray
@@ -97,7 +100,7 @@ final class UsersSyncHandlerImpl(federation:       FederationSupport,
     usersClient.loadUsers(ids).future.flatMap(syncSearchResults)
 
   override def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncResult] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       usersClient.loadQualifiedUsers(qIds).future.flatMap(syncSearchResults)
     } else {
       val ids: Array[UserId] = qIds.map(_.id).toArray

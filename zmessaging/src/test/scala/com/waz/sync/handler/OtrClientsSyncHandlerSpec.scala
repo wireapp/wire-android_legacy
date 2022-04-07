@@ -5,6 +5,7 @@ import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.model.{Domain, QualifiedId, UserId}
 import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, QOtrClientIdMap, UserClients}
 import com.waz.service.BackendConfig.FederationSupport
+import com.waz.service.BackendConfigFixture
 import com.waz.service.otr.{CryptoBoxService, CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -37,7 +38,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
   private def createHandler() = new OtrClientsSyncHandlerImpl(
     selfUserId,
     currentDomain,
-    FederationSupport(federationSupported),
+    BackendConfigFixture.backendSignal,
     selfClientId,
     netClient,
     otrClients,

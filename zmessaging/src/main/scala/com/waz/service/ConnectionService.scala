@@ -33,7 +33,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.wire.signals.Serialized
+import com.wire.signals.{Serialized, Signal}
 import com.waz.utils.RichWireInstant
 
 import scala.collection.breakOut
@@ -53,7 +53,7 @@ trait ConnectionService {
 
 final class ConnectionServiceImpl(selfUserId:      UserId,
                                   teamId:          Option[TeamId],
-                                  federation:      FederationSupport,
+                                  backend:         Signal[BackendConfig],
                                   push:            PushService,
                                   convsContent:    ConversationsContentUpdater,
                                   convsStorage:    ConversationStorage,
@@ -68,18 +68,20 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
 
   override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e) => handleUserConnectionEvents(e))
 
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
+
   override def handleUserConnectionEvents(events: Seq[UserConnectionEvent]): Future[Unit] = {
     def updateOrCreate(event: UserConnectionEvent)(user: Option[UserData]): UserData =
       user.fold {
         UserData(
           event.to,
-          if (federation.isSupported) event.toDomain else Domain.Empty,
+          if (federationSupported) event.toDomain else Domain.Empty,
           None,
           event.fromUserName.getOrElse(Name.Empty),
           None,
           None,
           connection = event.status,
-          conversation = if (federation.isSupported) event.qualifiedConvId else Some(RConvQualifiedId(event.convId)),
+          conversation = if (federationSupported) event.qualifiedConvId else Some(RConvQualifiedId(event.convId)),
           connectionMessage = event.message,
           searchKey = SearchKey.Empty,
           connectionLastUpdated = event.lastUpdated,
@@ -87,7 +89,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
         )
       } {
         _.copy(
-          conversation = if (federation.isSupported) event.qualifiedConvId else Some(RConvQualifiedId(event.convId))
+          conversation = if (federationSupported) event.qualifiedConvId else Some(RConvQualifiedId(event.convId))
         ).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
       }
 
@@ -121,7 +123,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
     }
 
     val oneToOneConvData = eventInfos.map { case ConnectionEventInfo(user , _ , _) =>
-      (federation.isSupported, user.qualifiedId) match {
+      (federationSupported, user.qualifiedId) match {
         case (true, Some(qId)) => OneToOneConvData(qId, user.conversation, getConvTypeForUser(user))
         case _                 => OneToOneConvData(QualifiedId(user.id), user.conversation, getConvTypeForUser(user))
       }
@@ -171,7 +173,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
    * Connects to user and creates one-to-one conversation if needed. Returns existing conversation if user is already connected.
    */
   override def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       users.qualifiedId(userId).flatMap(connectToUser(_, message, name))
     } else {
       def sanitizedName = if (name.isEmpty) Name("_") else if (name.length >= 256) name.substring(0, 256) else name
@@ -232,7 +234,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
     } yield conv
 
   override def acceptConnection(userId: UserId): Future[ConversationData] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       users.qualifiedId(userId).flatMap(acceptConnection)
     } else {
       val updateConnectionStatus = users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
@@ -273,7 +275,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
     } yield updated.fold(conv)(_._2)
 
   override def ignoreConnection(userId: UserId): Future[Option[UserData]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       users.qualifiedId(userId).flatMap(ignoreConnection)
     } else {
       for {
@@ -291,7 +293,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
   } yield user
 
   override def blockConnection(userId: UserId): Future[Option[UserData]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       users.qualifiedId(userId).flatMap(blockConnection)
     } else {
       for {
@@ -314,7 +316,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
       qId  <- users.qualifiedId(userId)
       _    <- user.fold(Future.successful({})) { _ =>
                 for {
-                  syncId <- if (federation.isSupported && qId.hasDomain)
+                  syncId <- if (federationSupported && qId.hasDomain)
                               sync.postQualifiedConnectionStatus(qId, ConnectionStatus.Accepted)
                             else
                               sync.postConnectionStatus(userId, ConnectionStatus.Accepted)
@@ -335,7 +337,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
       }
     }).flatMap {
       case Some((prev, user)) if prev != user =>
-        (federation.isSupported, user.qualifiedId) match {
+        (federationSupported, user.qualifiedId) match {
           case (true, Some(qId)) =>
             sync.postQualifiedConnectionStatus(qId, ConnectionStatus.Cancelled)
           case _ =>
@@ -366,7 +368,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
       def userIdForConv(convId: ConvId) = UserId(convId.str)
 
       def getRemotes: Future[Map[RConvQualifiedId, ConversationData]] =
-        if (federation.isSupported) {
+        if (federationSupported) {
           convsInfo.flatMap(_.remoteId).toSet match {
             case remotes if remotes.isEmpty =>
               Future.successful(Map.empty)
@@ -413,7 +415,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
                              rId,
                              conv.copy(
                                remoteId = rId.id,
-                               domain = if (federation.isSupported && rId.domain.nonEmpty) Domain(rId.domain) else Domain.Empty
+                               domain = if (federationSupported && rId.domain.nonEmpty) Domain(rId.domain) else Domain.Empty
                              )
                            )
                          }

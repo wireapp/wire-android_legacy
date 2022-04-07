@@ -201,10 +201,9 @@ final class GlobalModuleImpl(val context:             AContext,
 
   lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
 
-  private def _backendConfiguration = new SourceSignal[BackendConfig](None)
+  private val _backendConfiguration = new SourceSignal[BackendConfig](Option(backend))
   override def backendConfiguration: Signal[BackendConfig] = _backendConfiguration
 
-  _backendConfiguration ! backend
 }
 
 class EmptyGlobalModule extends GlobalModule {

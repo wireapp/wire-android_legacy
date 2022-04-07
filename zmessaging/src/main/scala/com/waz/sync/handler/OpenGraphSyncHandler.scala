@@ -18,7 +18,6 @@
 package com.waz.sync.handler
 
 import java.io.File
-
 import com.waz.api.Message
 import com.waz.api.Message.Part
 import com.waz.api.impl.ErrorResponse
@@ -30,6 +29,7 @@ import com.waz.model.GenericContent.{Asset, LinkPreview, Text}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
+import com.waz.service.BackendConfig
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, Asset => Asset2}
 import com.waz.service.messages.MessagesService
@@ -38,14 +38,14 @@ import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.sync.client.{ErrorOr, OpenGraphClient}
 import com.waz.sync.otr.OtrSyncHandler
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal}
 import com.waz.utils.RichFuture
 import com.waz.utils.wrappers.URI
 import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
-class OpenGraphSyncHandler(federation:      FederationSupport,
+class OpenGraphSyncHandler(backend:         Signal[BackendConfig],
                            convs:           ConversationStorage,
                            messages:        MessagesStorage,
                            assets:          AssetService,
@@ -53,6 +53,8 @@ class OpenGraphSyncHandler(federation:      FederationSupport,
                            client:          OpenGraphClient,
                            messagesService: MessagesService) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] = messages.getMessage(msgId) flatMap {
     case None => Future successful SyncResult(internalError(s"No message found with id: $msgId"))
@@ -80,7 +82,7 @@ class OpenGraphSyncHandler(federation:      FederationSupport,
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(l"updated link previews: $proto")
-                    val postMsg = if (federation.isSupported) {
+                    val postMsg = if (federationSupported) {
                       otrSync.postQualifiedOtrMessage(conv.id, proto, isHidden = false)
                     } else {
                       otrSync.postOtrMessage(conv.id, proto, isHidden = false)

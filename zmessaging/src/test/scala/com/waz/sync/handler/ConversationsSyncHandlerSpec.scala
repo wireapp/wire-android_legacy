@@ -8,7 +8,7 @@ import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
-import com.waz.service.{ConversationRolesService, ErrorsService, GenericMessageService, UserService}
+import com.waz.service.{BackendConfigFixture, ConversationRolesService, ErrorsService, GenericMessageService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.{ConversationResponse, ListConversationsIdsResponse}
 import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, QConversationsResult}
@@ -37,7 +37,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
 
   private def createHandler: ConversationsSyncHandler = new ConversationsSyncHandler(
-    self.id, domain, Some(teamId), FederationSupport(federationSupported),userService,
+    self.id, domain, Some(teamId), BackendConfigFixture.backendSignal,userService,
     messagesStorage, messagesService,
     convService, convs, convEvents, convStorage, errorsService,
     conversationsClient, genericMessages, rolesService, membersStorage

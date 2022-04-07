@@ -21,19 +21,23 @@ import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.Reaction
 import com.waz.model._
+import com.waz.service.BackendConfig
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.messages.ReactionsService
 import com.waz.sync.SyncResult
 import com.waz.sync.otr.OtrSyncHandler
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
-final class ReactionsSyncHandler(federation: FederationSupport,
+final class ReactionsSyncHandler(backend:    Signal[BackendConfig],
                                  service:    ReactionsService,
                                  otrSync:    OtrSyncHandler,
                                  convs:      ConversationStorage) extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   def postReaction(id: ConvId, liking: Liking): Future[SyncResult] =
     for {
@@ -43,7 +47,7 @@ final class ReactionsSyncHandler(federation: FederationSupport,
     } yield result
 
   private def postMessage(convId: ConvId, message: GenericMessage, liking: Liking): Future[SyncResult] = {
-    val postMsg = if (federation.isSupported) {
+    val postMsg = if (federationSupported) {
       otrSync.postQualifiedOtrMessage(convId, message, isHidden = false)
     } else {
       otrSync.postOtrMessage(convId, message, isHidden = false)
