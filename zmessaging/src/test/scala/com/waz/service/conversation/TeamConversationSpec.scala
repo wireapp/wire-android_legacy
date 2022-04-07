@@ -25,7 +25,7 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{ConversationMemberData, _}
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, UriHelper}
-import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, SearchKey, UserService}
+import com.waz.service.{BackendConfigFixture, ErrorsService, NetworkModeService, PropertiesService, SearchKey, UserService}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -67,7 +67,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
   def initService: ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
     new ConversationsUiServiceImpl(
-      selfId, team, domain, FederationSupport(federationSupported), assetService, users, messages,
+      selfId, team, domain, BackendConfigFixture.backendSignal, assetService, users, messages,
       messagesStorage, msgContent, members, convsContent, convsStorage, network, convsService, sync,
       requests, client, accounts, tracking, errors, uriHelper, properties
     )

@@ -23,7 +23,7 @@ import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
-import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, UserService}
+import com.waz.service.{BackendConfigFixture, ErrorsService, NetworkModeService, PropertiesService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
@@ -62,7 +62,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, domain, FederationSupport(federationSupported), assetService, users, messages,
+      selfUserId, teamId, domain, BackendConfigFixture.backendSignal, assetService, users, messages,
       messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, requests, client,
       accounts, tracking, errors, uriHelper, properties)

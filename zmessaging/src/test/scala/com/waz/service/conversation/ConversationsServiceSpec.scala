@@ -88,7 +88,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     None,
     selfUserId,
     domain,
-    FederationSupport(federationSupported),
+    BackendConfigFixture.backendSignal,
     push,
     userService,
     usersStorage,
@@ -112,7 +112,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, domain, FederationSupport(federationSupported), assets, userService, messages, msgStorage,
+      selfUserId, teamId, domain, BackendConfigFixture.backendSignal, assets, userService, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
       service, sync, requests, convsClient, accounts, tracking, errors, uriHelper,
       properties

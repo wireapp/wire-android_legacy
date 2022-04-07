@@ -20,9 +20,32 @@ package com.waz.service
 import com.waz.specs.ZSpec
 import com.waz.sync.client.SupportedApiConfig
 import com.waz.utils.wrappers.URI
+import com.wire.signals.{Signal, SourceSignal}
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+
+object BackendConfigFixture {
+
+  //This information can be found in downloadable google-services.json file from the BE console.
+  val testFirebaseOptions = FirebaseOptions(
+    "21312312312",
+    "1:7213123213:android:123123213213",
+    "dsadasr3ee2ed213123eqw213")
+
+  val testBackend: BackendConfig = BackendConfig(
+    environment = "test",
+    baseUrl = "https://example.com",
+    websocketUrl = "https://example.com",
+    blacklistHost = Some("https://example.com"),
+    teamsUrl = "https://example.com",
+    accountsUrl = "https://example.com",
+    websiteUrl = "https://example.com",
+    testFirebaseOptions
+  )
+
+  val backendSignal: Signal[BackendConfig] = new SourceSignal[BackendConfig](Option(BackendConfigFixture.testBackend))
+}
 
 @RunWith(classOf[RobolectricTestRunner])
 class BackendConfigSpec extends ZSpec {

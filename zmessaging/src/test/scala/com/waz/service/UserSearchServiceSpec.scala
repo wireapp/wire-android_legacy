@@ -665,7 +665,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       selfId,
       if (inTeam) teamId else emptyTeamId,
       currentDomain,
-      FederationSupport(federationSupported),
+      BackendConfigFixture.backendSignal,
       userService,
       usersStorage,
       teamsService,

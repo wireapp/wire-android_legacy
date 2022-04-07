@@ -78,7 +78,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
     new UserServiceImpl(
-      users.head.id, domain, None, FederationSupport(federationSupported), accountsService,
+      users.head.id, domain, None, BackendConfigFixture.backendSignal, accountsService,
       accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       selectedConv, messages, syncRequests
@@ -101,7 +101,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       availability should not equal Availability.Busy
 
       val userService = new UserServiceImpl(
-        users.head.id, domain, someTeamId, FederationSupport(federationSupported), accountsService,
+        users.head.id, domain, someTeamId, BackendConfigFixture.backendSignal, accountsService,
         accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
         selectedConv, messages, syncRequests

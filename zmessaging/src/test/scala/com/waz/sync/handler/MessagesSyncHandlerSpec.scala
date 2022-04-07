@@ -24,7 +24,7 @@ import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, AssetStorage, UploadAssetStorage}
-import com.waz.service.{ErrorsService, Timeouts, UserService}
+import com.waz.service.{BackendConfigFixture, ErrorsService, Timeouts, UserService}
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
@@ -59,7 +59,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
 
   def getHandler: MessagesSyncHandler = {
     new MessagesSyncHandler(
-      account1Id, FederationSupport(federationSupported), service, msgContent, clients, otrSync,
+      account1Id, BackendConfigFixture.backendSignal, service, msgContent, clients, otrSync,
       convs, storage, sync,
       assets, assetStorage, uploads, cache, members, users, tracking, errors, timeouts
     )

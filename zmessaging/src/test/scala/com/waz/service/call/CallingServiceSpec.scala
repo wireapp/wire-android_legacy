@@ -35,7 +35,7 @@ import com.waz.service.call.CallingServiceSpec.CallStateCheckpoint
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.service.{MediaManagerService, NetworkModeService}
+import com.waz.service.{BackendConfigFixture, MediaManagerService, NetworkModeService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
@@ -1198,7 +1198,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
 
     val s = new CallingServiceImpl(
-      selfUserId, selfClientId, domain, FederationSupport(federationSupported), null, avs, convs, convsService, members, otrSyncHandler,
+      selfUserId, selfClientId, domain, BackendConfigFixture.backendSignal, null, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, prefs, globalPrefs, permissions, httpProxy = None
     )
     result(s.wCall)

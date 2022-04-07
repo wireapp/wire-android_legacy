@@ -346,7 +346,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
   def createBlankService() =
    new ConnectionServiceImpl(
-     selfUserId, teamId, FederationSupport(federationSupported), push, convs, convsStorage,
+     selfUserId, teamId, BackendConfigFixture.backendSignal, push, convs, convsStorage,
      members, messagesService, messagesStorage, users, usersStorage, sync
    )
 
@@ -387,7 +387,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
     (users.syncUsers _).expects(*, *, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
     new ConnectionServiceImpl(
-      selfUserId, teamId, FederationSupport(federationSupported), push, convs, convsStorage,
+      selfUserId, teamId, BackendConfigFixture.backendSignal, push, convs, convsStorage,
       members, messagesService, messagesStorage, users, usersStorage, sync
     )
   }
