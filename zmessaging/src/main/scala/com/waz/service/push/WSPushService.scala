@@ -61,7 +61,7 @@ object WSPushServiceImpl {
             networkModeService: NetworkModeService
            ): WSPushServiceImpl = {
 
-    val websocketUrl = backend.currentValue.map { b => b.websocketUrl }.getOrElse(URI.parse("")) // the first value is guaranteed to have at least the URLs
+    val websocketUrl = backend.currentValue.map { b => b.websocketUrl }.get // the first value is guaranteed to have at least the URLs
     val requestCreator = (token: AccessToken) => {
       val webSocketUri = if(websocketUrl.getPath.startsWith("/await")) websocketUrl
         else websocketUrl.buildUpon.appendPath("await").build

@@ -67,6 +67,8 @@ object BasicLogging {
     def apply[T](implicit ct: ClassTag[T]): LogTag = new LogTag(ct.runtimeClass.getSimpleName)
   }
 
+  def unsafeLog[T](value: T): CanBeShown = new CanBeShownImpl[T](value)
+
   trait CanBeShown {
     def showSafe: String
     def showUnsafe: String
