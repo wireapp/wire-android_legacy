@@ -234,9 +234,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   self.map(_.picture).collect { case Some(pic) => pic}.onUi { id =>
     view.setPicture(id)
   }
-  Signal.zip(self, zms).onUi {
-    case(self, z) => {
-      view.setHandle(self.displayHandle(self.domain, if(z.federation.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain))
+  Signal.zip(self, zms.flatMap {_.backend}).onUi {
+    case(self, backend) => {
+      view.setHandle(self.displayHandle(self.domain, if(backend.federationSupport.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain))
       view.setName(self.name)
       view.setAccentDrawable(new Drawable {
 

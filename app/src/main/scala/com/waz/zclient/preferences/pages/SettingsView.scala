@@ -119,12 +119,13 @@ class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: Eve
 
   val selfInfo = for {
     z <- zms
+    backend <- z.backend
     self <- UserSignal(z.selfUserId)
   } yield (
     self.name,
     self.displayHandle(
       self.domain,
-      if(z.federation.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain
+      if(backend.federationSupport.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain
     )
   )
 
