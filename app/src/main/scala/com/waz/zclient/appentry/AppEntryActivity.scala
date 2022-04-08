@@ -224,7 +224,9 @@ final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
       case Right(config) =>
         enableProgress(false)
-        backendController.switchBackend(inject[GlobalModule], config, configUrl)
+        val global = inject[GlobalModule]
+        backendController.switchBackend(global, config, configUrl)
+        WireApplication.APP_INSTANCE.updateSupportedApiVersions(global.backend)
 
         // re-present fragment for updated ui.
         getSupportFragmentManager.popBackStackImmediate(StartSSOFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)

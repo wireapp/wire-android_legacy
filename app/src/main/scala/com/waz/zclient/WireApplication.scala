@@ -420,7 +420,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
           false
       }
 
-  private def updateSupportedApiVersions(backend: BackendConfig): Unit =
+  def updateSupportedApiVersions(backend: BackendConfig): Unit =
     inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
       case Right(supportedApiConfig) => {
         verbose(l"change in supported API versions: $supportedApiConfig")
