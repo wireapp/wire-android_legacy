@@ -23,6 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
+import com.waz.service.EventScheduler.Stage
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
@@ -55,7 +56,7 @@ class TypingService(userId:        UserId,
 
   val onTypingChanged = EventStream[(ConvId, IndexedSeq[TypingUser])]()
 
-  val typingEventStage = EventScheduler.Stage[TypingEvent]((c, es) => traverseSequential(es)(handleTypingEvent))
+  val typingEventStage: Stage.Atomic = EventScheduler.Stage[TypingEvent]((c, es) => traverseSequential(es)(handleTypingEvent))
 
   accounts.accountState(userId).on(Threading.Background) {
     case InForeground => // fine

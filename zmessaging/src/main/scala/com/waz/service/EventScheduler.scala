@@ -29,12 +29,12 @@ import scala.concurrent.Future.{successful, traverse}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 
-class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
+class EventScheduler(val layout: EventScheduler.Stage) extends DerivedLogTag {
   import EventScheduler._
 
   private val queue = new GroupedEventProcessingQueue[Event, RConvId](RConvEvent, (c, e) => executeSchedule(c, createSchedule(e)), "EventScheduler")
 
-  def enqueue(events: Traversable[Event]): Future[Unit] = queue.enqueue(events.to[Vector]).recoverWithLog()
+  def enqueue(events: Traversable[Event]): Future[Unit] = queue.enqueue(events.toVector).recoverWithLog()
 
   def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
 
@@ -88,7 +88,7 @@ object EventScheduler {
   }
 
   object Stage {
-    case class Composite(strategy: SchedulingStrategy, stages: Vector[Stage]) extends Stage {
+    final case class Composite(strategy: SchedulingStrategy, stages: Vector[Stage]) extends Stage {
       def isEligible(e: Event): Boolean = stages.exists(_.isEligible(e))
     }
 
@@ -121,7 +121,7 @@ object EventScheduler {
   sealed trait Schedule
   case class Branch(strategy: ExecutionStrategy, schedules: Stream[Schedule]) extends Schedule
   case class Leaf(stage: Stage.Atomic, events: Vector[Event]) extends Schedule
-  val NOP = Leaf(Stage[Event]((s, e) => successful(()), _ => false), Vector.empty)
+  val NOP = Leaf(Stage[Event]((s, e) => successful(Vector.empty), _ => false), Vector.empty)
 
   def executeSchedule(conv: RConvId, schedule: Schedule): Future[Unit] = {
     import Threading.Implicits.Background

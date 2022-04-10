@@ -17,7 +17,6 @@
  */
 package com.waz.service.push
 
-import android.content.Context
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.Preferences.Preference
@@ -71,7 +70,6 @@ trait PushService {
 }
 
 final class PushServiceImpl(selfUserId:        UserId,
-                            context:           Context,
                             userPrefs:         UserPreferences,
                             prefs:             GlobalPreferences,
                             eventsStorage:     PushNotificationEventsStorage,
@@ -108,26 +106,42 @@ final class PushServiceImpl(selfUserId:        UserId,
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
 
-  private def process(): Future[Unit] =
-    Serialized.future(PipelineKey) {
-      verbose(l"processing new added events")
-      val offset = System.currentTimeMillis()
-      for {
-        _         <- Future.successful(processing ! true)
-        encrypted <- eventsStorage.encryptedEvents
-        _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
-        decrypted <- eventsStorage.getDecryptedRows
-        decoded   =  decrypted.flatMap(otrEventDecoder.decode)
-        _         <- if (decoded.nonEmpty) pipeline(decoded) else Future.successful(())
-        _         <- eventsStorage.removeRows(decrypted.map(_.index))
-        _         <- Future.successful(processing ! false)
-        _         = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
-      } yield ()
-    }.recover {
-      case ex =>
-        processing ! false
-        error(l"Unable to process events: $ex")
-    }
+  private def process(retry: Int = 0): Future[Unit] = {
+    if (retry > 3) Future.successful(())
+    else
+      Serialized.future(PipelineKey) {
+        verbose(l"processing events")
+        val offset = System.currentTimeMillis()
+        for {
+          _         <- Future.successful(processing ! true)
+          encrypted <- eventsStorage.encryptedEvents
+          _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
+          decrypted <- eventsStorage.getDecryptedRows
+          decoded   =  decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
+          processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
+          _         <- eventsStorage.removeRows(processed)
+          decrLeft  <- eventsStorage.getDecryptedRows
+        } yield
+          if (decrLeft.isEmpty) {
+            processing ! false
+            verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
+          } else if (retry < 3) {
+            warn(l"Unable to process some events (${decrLeft.size}): $decrLeft, trying again (${retry + 1}) after delay...")
+            CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
+          } else {
+            warn(l"Unable to process some events (${decrLeft.size}): $decrLeft, deleting them")
+            eventsStorage.removeRows(decrypted.map(_.index)).foreach(_ => processing ! false)
+          }
+      }.recoverWith {
+        case ex if retry >= 3 =>
+          processing ! false
+          error(l"Unable to process events: $ex")
+          Future.successful(())
+        case ex =>
+          warn(l"Processing events failed, trying again (${retry + 1}) after delay...")
+          CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
+      }.map(_ => ())
+  }
 
   private val timeOffset = System.currentTimeMillis()
   @inline private def timePassed = System.currentTimeMillis() - timeOffset

@@ -99,7 +99,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   def createEventPipeline(): EventPipeline = {
     val service = createService()
     val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
-    new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+    new EventPipeline(scheduler)
   }
 
   // Tests
@@ -796,7 +796,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     def createMessageEventPipeline(service: LegalHoldServiceImpl): EventPipeline = {
       val scheduler = new EventScheduler(Stage(Sequential)(service.messageEventStage))
-      new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+      new EventPipeline(scheduler)
     }
 
     def createMessage(status: Messages.LegalHoldStatus): GenericMessage =

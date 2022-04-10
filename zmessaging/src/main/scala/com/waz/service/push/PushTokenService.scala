@@ -18,7 +18,6 @@
 package com.waz.service.push
 
 import java.io.IOException
-
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.log.BasicLogging.LogTag
@@ -27,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.otr.ClientId
 import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.Active
+import com.waz.service.EventScheduler.Stage
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
@@ -60,7 +60,7 @@ class PushTokenService(userId:       UserId,
   }
   private val userToken = accStorage.signal(userId).map(_.pushToken)
 
-  val eventProcessingStage = EventScheduler.Stage[PushTokenRemoveEvent] { (_, events) =>
+  val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[PushTokenRemoveEvent] { (_, events) =>
     globalToken.resetGlobalToken(events.map(_.token))
   }
 

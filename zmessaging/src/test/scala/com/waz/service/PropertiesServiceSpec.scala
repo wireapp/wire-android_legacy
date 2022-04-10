@@ -41,7 +41,7 @@ class PropertiesServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private lazy val service   = new PropertiesServiceImpl(prefs, sync, storage, req, push)
   private lazy val scheduler = new EventScheduler(Stage(Sequential)(service.eventProcessor))
-  private lazy val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  private lazy val pipeline  = new EventPipeline(scheduler)
 
   feature("Properties"){
 

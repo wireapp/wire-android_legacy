@@ -27,7 +27,6 @@ import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.MessagesService
-import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.utils.returning
@@ -39,7 +38,6 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   val federationSupported: Boolean = false
   import com.waz.threading.Threading.Implicits.Background
 
-  val push            = mock[PushService]
   val teamId          = Option.empty[TeamId]
   val convs           = mock[ConversationsContentUpdater]
   val members         = mock[MembersStorage]
@@ -346,7 +344,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
   def createBlankService() =
    new ConnectionServiceImpl(
-     selfUserId, teamId, BackendConfigFixture.backendSignal, push, convs, convsStorage,
+     selfUserId, teamId, BackendConfigFixture.backendSignal, convs, convsStorage,
      members, messagesService, messagesStorage, users, usersStorage, sync
    )
 
@@ -387,7 +385,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
     (users.syncUsers _).expects(*, *, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
     new ConnectionServiceImpl(
-      selfUserId, teamId, BackendConfigFixture.backendSignal, push, convs, convsStorage,
+      selfUserId, teamId, BackendConfigFixture.backendSignal, convs, convsStorage,
       members, messagesService, messagesStorage, users, usersStorage, sync
     )
   }

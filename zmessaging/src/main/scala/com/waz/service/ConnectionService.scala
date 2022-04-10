@@ -25,12 +25,10 @@ import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
-import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.ConnectionService._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.MessagesService
-import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
 import com.wire.signals.{Serialized, Signal}
@@ -54,7 +52,6 @@ trait ConnectionService {
 final class ConnectionServiceImpl(selfUserId:      UserId,
                                   teamId:          Option[TeamId],
                                   backend:         Signal[BackendConfig],
-                                  push:            PushService,
                                   convsContent:    ConversationsContentUpdater,
                                   convsStorage:    ConversationStorage,
                                   members:         MembersStorage,
@@ -63,7 +60,6 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
                                   users:           UserService,
                                   usersStorage:    UsersStorage,
                                   sync:            SyncServiceHandle) extends ConnectionService with DerivedLogTag {
-
   import Threading.Implicits.Background
 
   override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e) => handleUserConnectionEvents(e))

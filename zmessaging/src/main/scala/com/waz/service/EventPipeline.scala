@@ -18,27 +18,47 @@
 package com.waz.service
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.Event
-import com.waz.threading.Threading.Implicits.Background
+import com.waz.model.{Event, RConvEvent}
+import com.waz.service.EventScheduler.Stage
+import com.waz.service.EventScheduler.Stage.Composite
+import com.waz.log.LogSE._
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 
 import scala.concurrent.Future
-import scala.concurrent.Future._
-import com.waz.log.LogSE._
+import scala.util.Try
 
-trait EventPipeline extends (Traversable[Event] => Future[Unit]) {
-  def apply(input: Traversable[Event]): Future[Unit]
-}
+class EventPipeline(scheduler: => EventScheduler) extends (Seq[Event] => Future[Unit]) with DerivedLogTag {
+  private implicit val serialDispatcher: DispatchQueue = SerialDispatchQueue()
 
-class EventPipelineImpl(transformersByName: => Vector[Vector[Event] => Future[Vector[Event]]],
-                        schedulerByName: => Traversable[Event] => Future[Unit]) extends EventPipeline with DerivedLogTag {
-  private lazy val (transformers, scheduler) = (transformersByName, schedulerByName)
-
-  override def apply(input: Traversable[Event]): Future[Unit] = {
-    val inputEvents = input.toVector
-    val t = System.currentTimeMillis()
-    for {
-      events <- transformers.foldLeft(successful(inputEvents))((l, r) => l.flatMap(r))
-      _      <- scheduler(events)
-    } yield ()
+  private def unrollStages(stage: Stage): Seq[Stage.Atomic] = stage match {
+    case Composite(_, stages) => stages.flatMap(unrollStages)
+    case stage: Stage.Atomic  => Seq(stage)
+    case _                    => Nil
   }
+
+  private lazy val stages: Seq[Stage.Atomic] = unrollStages(scheduler.layout)
+
+  def apply(input: Seq[Event]): Future[Unit] =
+    process(input.map((0, _))).map(_ => ())
+
+  def process(input: Seq[(Int, Event)]): Future[Seq[Int]] =
+    Future.traverse(input) { case (index, event) =>
+      val rId = RConvEvent(event)
+      val partialResults = stages.filter(_.isEligible(event)).map { stage =>
+        Try {
+          stage(rId, Seq(event)).map(_ => true).recover { case _ => false }
+        }.getOrElse {
+          Future.successful(false)
+        }
+      }
+
+      Future.sequence(partialResults).map { results =>
+        if (results.forall(r => r)) {
+          Some(index)
+        } else {
+          warn(l"Unable to process the event: $event (index: $index, class: ${event.getClass.getName})")
+          None
+        }
+      }
+    }.map(_.flatten.toVector)
 }

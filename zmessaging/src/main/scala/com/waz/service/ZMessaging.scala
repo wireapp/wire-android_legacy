@@ -283,7 +283,7 @@ class ZMessaging(val teamId:    Option[TeamId],
 
   lazy val wsNotifications: WsNotificationService = wire[WsNotificationServiceImpl]
 
-  lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
+  lazy val eventPipeline: EventPipeline = new EventPipeline(eventScheduler)
 
   lazy val assets2Module = ZMessaging.assets2Module
 

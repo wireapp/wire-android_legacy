@@ -3,7 +3,7 @@ package com.waz.service.teams
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, Domain, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
-import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler}
+import com.waz.service.{EventPipeline, EventScheduler}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.handler.FeatureConfigsSyncHandler
@@ -21,7 +21,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   def createEventPipeline(service: FeatureConfigsService): EventPipeline = {
     val scheduler = new EventScheduler(Stage(Sequential)(service.eventProcessingStage))
-    new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+    new EventPipeline(scheduler)
   }
 
   scenario("Fetch the AppLock feature config and set properties") {
