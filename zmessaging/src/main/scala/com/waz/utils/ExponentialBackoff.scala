@@ -33,7 +33,7 @@ trait Backoff {
   */
 class ExponentialBackoff(initialDelay: FiniteDuration, maxDelay: FiniteDuration) extends Backoff {
 
-  override val maxRetries = ExponentialBackoff.bitsCount(maxDelay.toMillis / math.max(initialDelay.toMillis, 1L))
+  override val maxRetries: Int = ExponentialBackoff.bitsCount(maxDelay.toMillis / math.max(initialDelay.toMillis, 1L))
 
   override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = {
     if (retry <= 0) initialDelay
@@ -53,13 +53,13 @@ class ExponentialBackoff(initialDelay: FiniteDuration, maxDelay: FiniteDuration)
 object ExponentialBackoff {
   def bitsCount(v: Long): Int = if (v >= 2) 1 + bitsCount(v >> 1) else if (v >= 0) 1 else 0
 
-  def zeroBackoff(max: Int) = new ExponentialBackoff(Duration.Zero, Duration.Zero){
-    override val maxRetries = max
+  def zeroBackoff(max: Int): ExponentialBackoff = new ExponentialBackoff(Duration.Zero, Duration.Zero){
+    override val maxRetries: Int = max
     override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = Duration.Zero
   }
 
-  def constantBackof(duration: FiniteDuration) = new ExponentialBackoff(duration, duration) {
-    override val maxRetries = Int.MaxValue
+  def constantBackoff(duration: FiniteDuration): ExponentialBackoff = new ExponentialBackoff(duration, duration) {
+    override val maxRetries: Int = Int.MaxValue
     override def delay(retry: Int, minDelay: FiniteDuration = Duration.Zero): FiniteDuration = duration
   }
 

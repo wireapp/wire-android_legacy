@@ -22,8 +22,9 @@ import com.waz.api.Message.Type._
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, ReadReceipt => GReadReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text, ReadReceipt => GReadReceipt}
 import com.waz.model.{GenericContent, _}
+import com.waz.service.EventScheduler.Stage
 import com.waz.service.{EventScheduler, GlobalModule}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
@@ -32,7 +33,6 @@ import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.{RichFuture, _}
 
 import scala.concurrent.Future
-
 import scala.language.existentials
 
 class MessageEventProcessor(selfUserId:           UserId,
@@ -49,7 +49,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   import MessageEventProcessor._
   import Threading.Implicits.Background
 
-  val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events) =>
+  val messageEventProcessingStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (convId, events) =>
     convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
       verbose(l"processing events for conv: $conv, events: $events")
 

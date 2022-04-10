@@ -55,7 +55,7 @@ import scala.concurrent.duration._
                                   accessTokenProvider: AccessTokenProvider = accessTokenProvider,
                                   requestCreator:      RequestCreator = _ => httpRequest,
                                   webSocketFactory:    WebSocketFactory = webSocketFactory,
-                                  backoff:             Backoff = ExponentialBackoff.constantBackof(100.millis)) = {
+                                  backoff:             Backoff = ExponentialBackoff.constantBackoff(100.millis)) = {
     new WSPushServiceImpl(userId, accessTokenProvider, requestCreator, webSocketFactory, network, backoff)
   }
 
