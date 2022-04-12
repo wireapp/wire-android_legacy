@@ -23,13 +23,14 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
+import com.waz.service.BackendConfig
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
 import com.waz.zms.BuildConfig
-import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal}
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Future, Promise}
@@ -59,7 +60,7 @@ trait Avs {
   * Facilitates synchronous communication with AVS and also provides a wrapper around the native code which can be easily
   * mocked for testing the CallingService
   */
-final class AvsImpl(federation: FederationSupport) extends Avs with DerivedLogTag {
+final class AvsImpl(backendConfiguration: Signal[BackendConfig]) extends Avs with DerivedLogTag {
   private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
@@ -91,6 +92,8 @@ final class AvsImpl(federation: FederationSupport) extends Avs with DerivedLogTa
   override def libraryVersion: Future[String] = {
     withAvsReturning(wcall_library_version(), "Unknown AVS version")
   }
+
+  private def federationSupported: Boolean = backendConfiguration.currentValue.exists { b => b.federationSupport.isSupported }
 
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
@@ -133,7 +136,7 @@ final class AvsImpl(federation: FederationSupport) extends Avs with DerivedLogTa
               AvsClientList.decode(json).fold({ throw _ }, identity)
             }
 
-            if (federation.isSupported) {
+            if (federationSupported) {
               cs.onQSend(ctx, message, rConvId, targetRecipients)
             } else {
               cs.onSend(ctx, message, rConvId, targetRecipients)

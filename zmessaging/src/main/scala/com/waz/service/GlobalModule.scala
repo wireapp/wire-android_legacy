@@ -59,7 +59,6 @@ trait GlobalModule {
 
   def context:                  AContext
   def backend:                  BackendConfig
-  def federationSupport:       FederationSupport
 
   def syncRequests:             SyncRequestService
   def syncHandler:              SyncHandler
@@ -130,7 +129,6 @@ final class GlobalModuleImpl(val context:             AContext,
   }
 
   def backend:                 BackendConfig                    = _backend
-  def federationSupport:       FederationSupport                = _backend.federationSupport
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -156,7 +154,7 @@ final class GlobalModuleImpl(val context:             AContext,
   lazy val phoneNumbers:        PhoneNumberService               = wire[PhoneNumberServiceImpl]
   lazy val timeouts                                              = wire[Timeouts]
   lazy val permissions:         PermissionsService               = new PermissionsService
-  lazy val avs:                 Avs                              = wire[AvsImpl]
+  lazy val avs:                 Avs                              = new AvsImpl(backendConfiguration)
 
   lazy val reporting                                             = wire[GlobalReportingService]
 
@@ -208,8 +206,6 @@ final class GlobalModuleImpl(val context:             AContext,
 
 class EmptyGlobalModule extends GlobalModule {
   override def setBackend(newBackend: BackendConfig): Unit                                   = ???
-
-  override def federationSupport: FederationSupport                                          = ???
 
   override def accountsService:          AccountsService                                     = ???
   override def trackingService:          TrackingService                                     = ???
