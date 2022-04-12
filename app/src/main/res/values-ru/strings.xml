@@ -1220,7 +1220,7 @@
     <string name="guest_time_left_hours">Осталось %1$s час.</string>
     <string name="guest_time_left_hours_minutes">Осталось %1$s.%2$s час.</string>
     <string name="guest_time_left_minutes">Осталось менее %1$s мин.</string>
-    <string name="backup_description">Создайте резервную копию, чтобы сохранить историю бесед. Это пригодится для восстановления истории в случае потери или замены устройства.
+    <string name="backup_description">Создайте резервную копию, чтобы сохранить историю бесед. Она пригодится для восстановления истории в случае потери или замены устройства.
         \n\nВыберите надежный пароль для защиты резервной копии.</string>
     <string name="pref_account_backup_title">Резервная копия бесед</string>
     <string name="backup_password_dialog_title">Установить пароль</string>
