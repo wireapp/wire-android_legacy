@@ -534,6 +534,7 @@ final class CallingServiceImpl(val accountId:       UserId,
                   }
                 case _ =>
                   val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
+                  verbose(l"Start call with qualified Id ${rConvQualifiedId}, federation supported: ${federationSupported}")
                   avs.startCall(w, rConvQualifiedId, callType, convType, useConstantBitRate).map {
                     case 0 =>
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler

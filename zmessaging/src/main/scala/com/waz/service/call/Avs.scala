@@ -98,7 +98,7 @@ final class AvsImpl(backendConfiguration: Signal[BackendConfig]) extends Avs wit
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
-    val qualifiedId = QualifiedId.apply(cs.accountId, cs.domain)
+    val qualifiedId = if(federationSupported) QualifiedId.apply(cs.accountId, cs.domain) else QualifiedId.apply(cs.accountId)
 
     val callingReady = Promise[Unit]()
 
