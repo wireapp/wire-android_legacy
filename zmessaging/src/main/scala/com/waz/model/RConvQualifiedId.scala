@@ -13,6 +13,7 @@ final case class RConvQualifiedId(id: RConvId, domain: String) {
 object RConvQualifiedId {
   def apply(id: RConvId): RConvQualifiedId = RConvQualifiedId(id, "")
   def apply(id: RConvId, domain: Domain): RConvQualifiedId = RConvQualifiedId(id, domain.str)
+  def apply(id: RConvId, domain: Domain, federationSupported: Boolean): RConvQualifiedId = if(federationSupported) apply(id, domain) else apply(id)
 
   private val IdFieldName = "id"
   private val DomainFieldName  = "domain"

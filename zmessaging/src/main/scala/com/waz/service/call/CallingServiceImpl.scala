@@ -362,7 +362,7 @@ final class CallingServiceImpl(val accountId:       UserId,
           val updatedCall = p.calls.get(conv.id).map { call =>
             verbose(l"endCall: $convId, skipTerminating (ultimate): $skipTerminatingUltimate. Active call in state: ${call.state}")
             //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
-            val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+            val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
 
             if (call.state == OtherCalling) avs.rejectCall(w, rConvQualifiedId) else avs.endCall(w, rConvQualifiedId)
             //if there is another incoming call - skip the terminating state
@@ -461,19 +461,16 @@ final class CallingServiceImpl(val accountId:       UserId,
   def onNetworkQualityChanged(convId: ConvId, participant: Participant, quality: NetworkQuality): Future[Unit] =
     Future.successful(())
 
-  def onClientsRequest(convId: RConvQualifiedId): Future[Unit] =
-    if (federationSupported) {
-      withConv(convId.id) { (wCall, conv) =>
+  def onClientsRequest(convId: RConvQualifiedId): Future[Unit] = {
+    withConv(convId.id) { (wCall, conv) =>
+      if (federationSupported) {
         otrSyncHandler.postClientDiscoveryMessage(convId).map {
           case Right(clients) =>
-            val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
-            avs.onQualifiedClientsRequest(wCall, rConvQualifiedId, clients)
+            avs.onQualifiedClientsRequest(wCall, RConvQualifiedId.apply(conv.remoteId, conv.domain), clients)
           case Left(errorResponse) =>
             warn(l"Could not post client discovery message: $errorResponse")
         }
-      }
-    } else {
-      withConv(convId.id) { (wCall, conv) =>
+      } else {
         otrSyncHandler.postClientDiscoveryMessage(convId.id).map {
           case Right(clients) =>
             avs.onClientsRequest(wCall, conv.remoteId, clients)
@@ -482,6 +479,7 @@ final class CallingServiceImpl(val accountId:       UserId,
         }
       }
     }
+  }
 
   override def startCall(convId: ConvId,
                          isVideo: Boolean = false,
@@ -510,7 +508,7 @@ final class CallingServiceImpl(val accountId:       UserId,
               Future.successful {
                 call.state match {
                   case OtherCalling =>
-                    val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+                    val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
                     avs.answerCall(w, rConvQualifiedId, callType, useConstantBitRate)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
                     if (forceOption)
@@ -526,7 +524,7 @@ final class CallingServiceImpl(val accountId:       UserId,
                 case Some(call) if !Set[CallState](Ended, Terminating)(call.state) =>
                   Future.successful {
                     verbose(l"Joining an ongoing background call")
-                    val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+                    val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
                     avs.answerCall(w, rConvQualifiedId, callType, useConstantBitRate)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
@@ -535,7 +533,8 @@ final class CallingServiceImpl(val accountId:       UserId,
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   }
                 case _ =>
-                  val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+                  val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
+                  verbose(l"Start call with qualified Id ${rConvQualifiedId}, federation supported: ${federationSupported}")
                   avs.startCall(w, rConvQualifiedId, callType, convType, useConstantBitRate).map {
                     case 0 =>
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
@@ -613,7 +612,7 @@ final class CallingServiceImpl(val accountId:       UserId,
     updateActiveCallAsync { (w, conv, call) =>
       verbose(l"onInterrupted - gsm call received")
       //Ensure that conversation state is only performed INSIDE withConv
-      val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+      val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
       avs.endCall(w, rConvQualifiedId)
       call
     } ("onInterrupted")
@@ -637,7 +636,7 @@ final class CallingServiceImpl(val accountId:       UserId,
         case c => c
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
-      val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+      val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
 
       if (state != NoCameraPermission && shouldUpdateVideoState) avs.setVideoSendState(w, rConvQualifiedId, targetSt)
       call.updateVideoState(Participant(QualifiedId(accountId, domain), clientId), targetSt)
@@ -647,7 +646,7 @@ final class CallingServiceImpl(val accountId:       UserId,
     case (_, events) =>
       Future.successful(events.sortBy(_.time).foreach { e =>
 
-        val rConvQualifiedId = RConvQualifiedId.apply(e.convId, e.convDomain)
+        val rConvQualifiedId = RConvQualifiedId.apply(e.convId, e.convDomain, federationSupported)
         val qualifiedId = QualifiedId.apply(e.from, e.fromDomain)
 
         receiveCallEvent(e.content, e.time, rConvQualifiedId, qualifiedId, e.sender)
@@ -659,7 +658,7 @@ final class CallingServiceImpl(val accountId:       UserId,
                                 convId: RConvId,
                                 from: UserId,
                                 sender: ClientId): Unit =
-    receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain), QualifiedId(from, domain), sender)
+    receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain, federationSupported), QualifiedId(from, domain), sender)
 
   private var lastCallEventTime = Option.empty[LocalInstant]
 
