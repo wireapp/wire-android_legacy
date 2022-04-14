@@ -39,7 +39,6 @@ final class BackendConfig(private var _environment: String,
 
   def environment: String = _environment
   def baseUrl: URI = _baseUrl
-  def domain: String = if (baseUrl.getPath.contains('.')) baseUrl.getPath.substring(baseUrl.getPath.indexOf('.')) else ""
   def websocketUrl: URI = _websocketUrl
   def blacklistHost: Option[URI] = _blacklistHost
   def teamsUrl: URI = _teamsUrl
@@ -78,7 +77,6 @@ final class BackendConfig(private var _environment: String,
       |BackendConfig(
       |  environment:   $environment,
       |  baseUrl:       $baseUrl,
-      |  domain:        $domain,
       |  websocketUrl:  $websocketUrl,
       |  blacklistHost: $blacklistHost,
       |  teamsUrl:      $teamsUrl,
