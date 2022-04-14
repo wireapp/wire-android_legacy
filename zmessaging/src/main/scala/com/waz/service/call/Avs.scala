@@ -98,7 +98,7 @@ final class AvsImpl(backendConfiguration: Signal[BackendConfig]) extends Avs wit
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
-    val qualifiedId = if(federationSupported) QualifiedId.apply(cs.accountId, cs.domain) else QualifiedId.apply(cs.accountId)
+    val qualifiedId = QualifiedId.apply(cs.accountId, cs.domain, federationSupported)
 
     val callingReady = Promise[Unit]()
 
@@ -206,7 +206,7 @@ final class AvsImpl(backendConfiguration: Signal[BackendConfig]) extends Avs wit
             val participants = participantsChange.members.map(m => {
               val userIdString = DomainUtils.removeDomain(m.userid.str)
               val userDomain = DomainUtils.getDomainFromString(m.userid.str)
-              val qualifiedId = QualifiedId.apply(UserId(userIdString), Domain(userDomain))
+              val qualifiedId = QualifiedId.apply(UserId(userIdString), Domain(userDomain), federationSupported)
               Participant(qualifiedId, m.clientid, m.muted == 1)
             }).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
@@ -233,7 +233,7 @@ final class AvsImpl(backendConfiguration: Signal[BackendConfig]) extends Avs wit
                                              arg: Pointer): Unit = {
           val userIdString = DomainUtils.removeDomain(userId)
           val userDomain = DomainUtils.getDomainFromString(userId)
-          val qualifiedId = QualifiedId(UserId(userIdString), Domain(userDomain))
+          val qualifiedId = QualifiedId(UserId(userIdString), Domain(userDomain), federationSupported)
           val participant = Participant(qualifiedId, ClientId(clientId))
 
           cs.onNetworkQualityChanged(ConvId(convId), participant, NetworkQuality(quality))
