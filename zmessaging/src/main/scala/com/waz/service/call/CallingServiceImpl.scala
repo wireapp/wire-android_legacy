@@ -299,7 +299,7 @@ final class CallingServiceImpl(val accountId:       UserId,
 
       val newCall = CallInfo(
         conv.id,
-        selfParticipant = Participant(QualifiedId(accountId, domain), clientId),
+        selfParticipant = Participant(QualifiedId(accountId, domain, federationSupported), clientId),
         isGroup,
         userId,
         OtherCalling,
@@ -432,7 +432,7 @@ final class CallingServiceImpl(val accountId:       UserId,
   def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState, userDomain: String): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      val qualifiedId = QualifiedId(UserId(userId), Domain(userDomain))
+      val qualifiedId = QualifiedId(UserId(userId), Domain(userDomain), federationSupported)
       call.updateVideoState(Participant(qualifiedId, ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
@@ -540,7 +540,7 @@ final class CallingServiceImpl(val accountId:       UserId,
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
                       val newCall = CallInfo(
                         conv.id,
-                        selfParticipant = Participant(QualifiedId(accountId, domain), clientId),
+                        selfParticipant = Participant(QualifiedId(accountId, domain, federationSupported), clientId),
                         isGroup,
                         accountId,
                         SelfCalling,
@@ -639,7 +639,7 @@ final class CallingServiceImpl(val accountId:       UserId,
       val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain, federationSupported)
 
       if (state != NoCameraPermission && shouldUpdateVideoState) avs.setVideoSendState(w, rConvQualifiedId, targetSt)
-      call.updateVideoState(Participant(QualifiedId(accountId, domain), clientId), targetSt)
+      call.updateVideoState(Participant(QualifiedId(accountId, domain, federationSupported), clientId), targetSt)
     }("setVideoSendState")
 
   override val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {
@@ -647,7 +647,7 @@ final class CallingServiceImpl(val accountId:       UserId,
       Future.successful(events.sortBy(_.time).foreach { e =>
 
         val rConvQualifiedId = RConvQualifiedId.apply(e.convId, e.convDomain, federationSupported)
-        val qualifiedId = QualifiedId.apply(e.from, e.fromDomain)
+        val qualifiedId = QualifiedId.apply(e.from, e.fromDomain, federationSupported)
 
         receiveCallEvent(e.content, e.time, rConvQualifiedId, qualifiedId, e.sender)
       })
@@ -658,7 +658,7 @@ final class CallingServiceImpl(val accountId:       UserId,
                                 convId: RConvId,
                                 from: UserId,
                                 sender: ClientId): Unit =
-    receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain, federationSupported), QualifiedId(from, domain), sender)
+    receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain, federationSupported), QualifiedId(from, domain, federationSupported), sender)
 
   private var lastCallEventTime = Option.empty[LocalInstant]
 
