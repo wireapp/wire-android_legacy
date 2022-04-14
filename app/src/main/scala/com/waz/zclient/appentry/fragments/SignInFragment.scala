@@ -66,9 +66,9 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
       case _               => Register
     }
 
-    val input = getStringArg(InputTypeArg) match {
-      case Some(Email.str) => Email
-      case _               => Phone
+    val input = (getStringArg(InputTypeArg), sign) match {
+      case (Some(Phone.str), Login) => Phone
+      case _               => Email
     }
 
     val onlyLogin = getBooleanArg(OnlyLoginArg)
@@ -118,8 +118,7 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
   private lazy val scenes = Array(
     R.layout.sign_in_email_scene,
     R.layout.sign_in_phone_scene,
-    R.layout.sign_up_email_scene,
-    R.layout.sign_up_phone_scene
+    R.layout.sign_up_email_scene
   )
 
   private lazy val phoneButton = view[TypefaceTextView](R.id.ttv__new_reg__sign_in__go_to__phone)
@@ -144,11 +143,11 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
 
   def forgotPasswordButton = Option(findById[View](getView, R.id.ttv_signin_forgot_password))
 
-  def setupViews(onlyLogin: Boolean): Unit = {
+  def setupViews(onlyLogin: Boolean, registration: Boolean): Unit = {
 
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
-    phoneButton.foreach(_.setVisible(!onlyLogin))
+    phoneButton.foreach(_.setVisible(!onlyLogin && !registration))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -220,7 +219,7 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
           pos match  {
             case TabPages.CREATE_ACCOUNT =>
               tabSelector.setSelected(TabPages.CREATE_ACCOUNT)
-              uiSignInState.mutate(_ => SignInMethod(Register, Phone))
+              uiSignInState.mutate(_ => SignInMethod(Register, Email))
             case TabPages.SIGN_IN =>
               tabSelector.setSelected(TabPages.SIGN_IN)
               uiSignInState.mutate {
@@ -234,8 +233,12 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
     }
 
     uiSignInState.head.map {
-      case SignInMethod(Login, _, _) => tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
-      case SignInMethod(Register, _, false) => tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
+      case SignInMethod(Login, _, _) =>
+        tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
+        phoneButton.foreach(_.setVisible(true))
+      case SignInMethod(Register, _, false) =>
+        tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
+        phoneButton.foreach(_.setVisible(false))
       case _ =>
     } (Threading.Ui)
   }
@@ -254,24 +257,19 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
       state match {
         case SignInMethod(Login, Email, onlyLogin) =>
           switchScene(0)
-          setupViews(onlyLogin)
+          setupViews(onlyLogin, false)
           setEmailButtonSelected()
           emailField.foreach(_.getEditText.requestFocus())
         case SignInMethod(Login, Phone, false) =>
           switchScene(1)
-          setupViews(onlyLogin = false)
+          setupViews(onlyLogin = false, false)
           setPhoneButtonSelected()
           phoneField.foreach(_.requestFocus())
         case SignInMethod(Register, Email, false) =>
           switchScene(2)
-          setupViews(onlyLogin = false)
+          setupViews(onlyLogin = false, true)
           setEmailButtonSelected()
           nameField.foreach(_.getEditText.requestFocus())
-        case SignInMethod(Register, Phone, false) =>
-          switchScene(3)
-          setupViews(onlyLogin = false)
-          setPhoneButtonSelected()
-          phoneField.foreach(_.requestFocus())
       }
       phoneCountry.currentValue.foreach(onCountryHasChanged)
     }
