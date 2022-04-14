@@ -21,7 +21,7 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
   import SupportedApiConfig._
 
   override def getSupportedApiVersions(baseUrl: URI): ErrorOrResponse[SupportedApiConfig] = {
-    if(baseUrl.getHost.isEmpty) { // this might be the case before we switch to another backend
+    if(baseUrl == null || baseUrl.getHost == null || baseUrl.getHost.isEmpty) { // this might be the case before we switch to another backend
       return CancellableFuture(Right(v0OnlyApiConfig))
     }
     val appended = baseUrl.toString.stripSuffix("/") + "/api-version"
