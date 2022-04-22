@@ -114,7 +114,14 @@ class OpenGraphSyncHandler(backend:         Signal[BackendConfig],
         case Left(err) => Left(err)
       }
 
-    Future.traverse(msg.content)(updateOpenGraphData) flatMap { res =>
+    val firstLink = msg.content.find(p => p.openGraph.isEmpty && p.tpe == Part.Type.WEB_LINK)
+    Future.traverse(msg.content) { content =>
+      if(firstLink.contains(content)) {
+        updateOpenGraphData(content)
+      } else {
+        Future successful Right(content)
+      }
+    } flatMap { res =>
       val errors = res.collect { case Left(err) => err }
       val parts = res.zip(msg.content) map {
         case (Right(p), _) => p
