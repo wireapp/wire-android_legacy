@@ -82,7 +82,6 @@ class OpenGraphSyncHandler(backend:         Signal[BackendConfig],
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(l"updated link previews: $proto")
-                    val m = proto.unpack._2.proto
                     val postMsg = if (federationSupported) {
                       otrSync.postQualifiedOtrMessage(conv.id, proto, isHidden = false)
                     } else {
