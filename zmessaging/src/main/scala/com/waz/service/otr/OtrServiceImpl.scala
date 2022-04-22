@@ -18,9 +18,9 @@
 package com.waz.service.otr
 
 import java.io._
+
 import com.waz.cache.{CacheService, LocalData}
 import com.waz.content.{GlobalPreferences, MembersStorage, OtrClientsStorage}
-import com.waz.log.BasicLogging
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.Asset.{AES_CBC, EncryptionAlgorithm}
@@ -37,8 +37,8 @@ import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.zms.BuildConfig
 import com.wire.signals.Signal
-
 import javax.crypto.Mac
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
@@ -181,7 +181,6 @@ class OtrServiceImpl(selfUserId:     UserId,
     for {
       payloads <- Future.traverse(recipients.entries) { case (userId, clientIds) =>
                     val partialResultForUser = partialResult.content.getOrElse(userId, Map.empty)
-                    verbose(l"OTR encrypt message: ${BasicLogging.unsafeLog(message.proto)}")
                     encryptForClients(userId, clientIds, msgData, useFakeOnError, partialResultForUser)
                   }
       content   = payloads.filter(_._2.nonEmpty).toMap
@@ -200,7 +199,6 @@ class OtrServiceImpl(selfUserId:     UserId,
                               partialResult:   QEncryptedContent): Future[QEncryptedContent] = {
 
     val msgData = message.toByteArray
-    verbose(l"OTR encrypt message: ${BasicLogging.unsafeLog(message.proto)}")
     for {
       payloads <- Future.traverse(recipients.entries) { case (qId, clientIds) =>
                     val partialResultForUser = partialResult.content.getOrElse(qId, Map.empty)
