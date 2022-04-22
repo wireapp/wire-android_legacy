@@ -159,24 +159,24 @@ package object model {
 
       def apply(text: String,
                 legalHoldStatus: Messages.LegalHoldStatus = Messages.LegalHoldStatus.UNKNOWN): GenericMessage =
-        GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false, legalHoldStatus))
+        GenericMessage(Uid(), Text(text, Nil, Option.empty, expectsReadConfirmation = false, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 expectsReadConfirmation: Boolean,
                 legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation, legalHoldStatus))
+        GenericMessage(Uid(), Text(text, mentions, Option.empty, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
-                links: Seq[LinkPreview],
+                links: Option[LinkPreview],
                 expectsReadConfirmation: Boolean,
                 legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
         GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
-                links: Seq[LinkPreview],
+                links: Option[LinkPreview],
                 quote: Option[Quote],
                 expectsReadConfirmation: Boolean,
                 legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
@@ -186,10 +186,10 @@ package object model {
         GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false), msg.protoLegalHoldStatus)
+          Text(msg.contentString, msg.content.flatMap(_.mentions), Option.empty, msg.protoQuote, msg.expectsRead.getOrElse(false), msg.protoLegalHoldStatus)
         )
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Option[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {
         case text: Text     => Some(text.unpack)
         case eph: Ephemeral => eph.unpackContent match {
           case text: Text => Some(text.unpack)

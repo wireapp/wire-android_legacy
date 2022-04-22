@@ -604,11 +604,11 @@ object GenericContent {
   final case class Text(override val proto: Messages.Text) extends GenericContent[Messages.Text] {
     override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setText(proto)
 
-    lazy val unpack: (String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean) = {
+    lazy val unpack: (String, Seq[com.waz.model.Mention], Option[LinkPreview], Option[Quote], Boolean) = {
       (
         proto.getContent,
         proto.getMentionsList.asScala.map(m => Mention(m).unpack),
-        proto.getLinkPreviewList.asScala.map(LinkPreview(_)),
+        proto.getLinkPreviewList.asScala.map(LinkPreview(_)).headOption,
         if (proto.hasQuote) Some(Quote(proto.getQuote)) else None,
         proto.getExpectsReadConfirmation
       )
@@ -618,24 +618,24 @@ object GenericContent {
   object Text {
     def apply(content: String,
               legalHoldStatus: LegalHoldStatus = LegalHoldStatus.UNKNOWN): Text =
-      apply(content, Nil, Nil, None, expectsReadConfirmation = false, legalHoldStatus)
+      apply(content, Nil, Option.empty, None, expectsReadConfirmation = false, legalHoldStatus)
 
     def apply(content: String,
-              links: Seq[LinkPreview],
+              links: Option[LinkPreview],
               expectsReadConfirmation: Boolean,
               legalHoldStatus: LegalHoldStatus): Text =
       apply(content, Nil, links, None, expectsReadConfirmation, legalHoldStatus)
 
     def apply(content: String,
               mentions: Seq[com.waz.model.Mention],
-              links: Seq[LinkPreview],
+              links: Option[LinkPreview],
               expectsReadConfirmation: Boolean,
               legalHoldStatus: LegalHoldStatus): Text =
       apply(content, mentions, links, None, expectsReadConfirmation, legalHoldStatus)
 
     def apply(content: String,
               mentions: Seq[com.waz.model.Mention],
-              links: Seq[LinkPreview],
+              links: Option[LinkPreview],
               quote: Option[Quote],
               expectsReadConfirmation: Boolean,
               legalHoldStatus: LegalHoldStatus): Text = Text {
@@ -643,7 +643,10 @@ object GenericContent {
         Messages.Text.newBuilder
           .setContent(content)
           .addAllMentions(mentions.map(Mention(_).proto).asJava)
-          .addAllLinkPreview(links.map(_.proto).asJava)
+          .addAllLinkPreview((links match {
+            case Some(n) => Seq(n.proto)
+            case _ => Seq.empty[Messages.LinkPreview]
+          }).asJava)
           .setExpectsReadConfirmation(expectsReadConfirmation)
           .setLegalHoldStatus(legalHoldStatus)
       quote.foreach(q => builder.setQuote(q.proto))

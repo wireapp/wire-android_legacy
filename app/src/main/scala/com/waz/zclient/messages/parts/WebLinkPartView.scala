@@ -73,7 +73,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
   } yield {
     val index = msg.content.indexOf(ct)
     val linkIndex = msg.content.take(index).count(_.tpe == Part.Type.WEB_LINK)
-    if (index >= 0 && msg.links.size > linkIndex) Option(msg.unpackLinks.apply(linkIndex)) else None
+    if (index >= 0 && linkIndex == 0) msg.unpackLinks else None
   }
 
   private val imageRequest = for {
