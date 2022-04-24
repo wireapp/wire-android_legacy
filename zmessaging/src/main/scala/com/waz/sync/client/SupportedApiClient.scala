@@ -2,10 +2,12 @@ package com.waz.sync.client
 
 import java.net.URL
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.JsonDecoder.intArray
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.utils.wrappers.URI
 import com.waz.znet2.http.{HttpClient, Method, Request}
+import com.wire.signals.CancellableFuture
 import org.json.{JSONArray, JSONObject}
 
 trait SupportedApiClient {
@@ -13,12 +15,15 @@ trait SupportedApiClient {
 }
 
 final class SupportedApiClientImpl(implicit httpClient: HttpClient)
-  extends SupportedApiClient {
+  extends SupportedApiClient with DerivedLogTag {
   import com.waz.znet2.http.HttpClient.AutoDerivationOld._
   import HttpClient.dsl._
   import SupportedApiConfig._
 
   override def getSupportedApiVersions(baseUrl: URI): ErrorOrResponse[SupportedApiConfig] = {
+    if(baseUrl == null || baseUrl.getHost == null || baseUrl.getHost.isEmpty) { // this might be the case before we switch to another backend
+      return CancellableFuture(Right(v0OnlyApiConfig))
+    }
     val appended = baseUrl.toString.stripSuffix("/") + "/api-version"
     // unfortunately, the nicer code:
     //      val appended = baseUrl.buildUpon.appendPath("api-version").build
