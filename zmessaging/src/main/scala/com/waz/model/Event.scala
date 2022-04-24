@@ -368,18 +368,34 @@ object ConversationState {
 }
 
 object Event {
-  def decodeRConvId(implicit js: JSONObject): (RConvId, Option[String]) =
-    RConvQualifiedId.decodeOpt('qualified_conversation)
+  def decodeRConvId(implicit js: JSONObject): (RConvId, Option[String]) = {
+    println(
+      s"""
+         |decodeRConvId for:
+         |${js.toString(2)}
+         |""".stripMargin)
+    val res = RConvQualifiedId.decodeOpt('qualified_conversation)
       .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
       .getOrElse {
         if (js.has("convId")) (RConvId('convId), None)
         else (RConvId('conversation), None)
       }
+    println(s"result: $res")
+    res
+  }
 
-  def decodeQUserId(nonQSymbol: Symbol, qSymbol: Symbol)(implicit js: JSONObject): (UserId, Option[String]) =
-    QualifiedId.decodeOpt(qSymbol)
+  def decodeQUserId(nonQSymbol: Symbol, qSymbol: Symbol)(implicit js: JSONObject): (UserId, Option[String]) = {
+    println(
+      s"""
+         |decodeQUserId for:
+         |${js.toString(2)}
+         |""".stripMargin)
+    val res = QualifiedId.decodeOpt(qSymbol)
       .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
       .getOrElse((UserId(nonQSymbol), None))
+    println(s"result: $res")
+    res
+  }
 
   implicit object EventDecoder extends JsonDecoder[Event] with DerivedLogTag {
 
@@ -533,9 +549,9 @@ object MessageEvent {
 
   implicit lazy val MessageEventEncoder: JsonEncoder[MessageEvent] = new JsonEncoder[MessageEvent] {
 
-    val QualifiedEncoder: JsonEncoder[(RConvId, String)] =
+    private val QualifiedEncoder: JsonEncoder[(String, String)] =
       JsonEncoder.build { case (id, domain) => js => {
-        js.put("id", id.str)
+        js.put("id", id)
         js.put("domain", domain)
       } }
 
@@ -553,10 +569,10 @@ object MessageEvent {
         .put("type", eventType)
         .setType(eventType)
       if (convDomain.isDefined)
-        json.put("qualified_conversation", QualifiedEncoder.apply((convId, convDomain.str)) )
+        json.put("qualified_conversation", QualifiedEncoder.apply((convId.str, convDomain.str)) )
 
       if (fromDomain.isDefined)
-        json.put("qualified_from", QualifiedEncoder.apply((convId, fromDomain.str)) )
+        json.put("qualified_from", QualifiedEncoder.apply((from.str, fromDomain.str)) )
 
       json
     }
