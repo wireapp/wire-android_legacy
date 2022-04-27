@@ -242,7 +242,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
           m.copy(
             msgType = tpe,
             content = ct,
-            genericMsgs = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.protoQuote, m.protoReadReceipts.getOrElse(false), legalHoldStatus)))),
+            genericMsgs = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Option.empty, m.protoQuote, m.protoReadReceipts.getOrElse(false), legalHoldStatus)))),
             state = Message.Status.PENDING,
             editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
           )
