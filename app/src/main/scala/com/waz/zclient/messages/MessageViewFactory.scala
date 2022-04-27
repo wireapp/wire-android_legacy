@@ -22,7 +22,6 @@ import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.{BuildConfig, R}
 import com.waz.zclient.ViewHelper._
-import com.waz.zclient.log.LogUI._
 
 import scala.collection.mutable
 
@@ -35,13 +34,11 @@ class MessageViewFactory extends DerivedLogTag {
   private val viewCache = new mutable.HashMap[Int, mutable.Stack[View]]
 
   def recycle(part: MessageViewPart): Unit = {
-    verbose(l"recycling part: ${part.tpe}")
     cache.getOrElseUpdate(part.tpe, new mutable.Stack[MessageViewPart]()).push(part)
   }
 
   def get(tpe: MsgPart, parent: ViewGroup): MessageViewPart = {
     cache.get(tpe).flatMap(s => if(s.isEmpty) None else Some(s.pop())).getOrElse {
-      verbose(l"there was no cached $tpe, building a new one")
       import MsgPart._
       tpe match {
         case User               => inflate(R.layout.message_user, parent, false)
@@ -93,7 +90,6 @@ class MessageViewFactory extends DerivedLogTag {
   }
 
   def recycle(view: View, resId: Int): Unit = {
-    verbose(l"recycling view: $resId")
     viewCache.getOrElseUpdate(resId, new mutable.Stack[View]()).push(view)
   }
 

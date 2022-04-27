@@ -254,7 +254,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events2 = Seq(
-      GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(2), UserId(), domain, GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
+      GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(2), UserId(), domain, GenericMessage.TextMessage("hello @user", Nil, Option.empty, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(service.conversationOrderEventsStage.apply(rConvId, events2))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
@@ -287,7 +287,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
     val events = Seq(
       GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(1), UserId(), domain, GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN)),
       GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(2), UserId(), domain, GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN)),
-      GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(3), UserId(), domain, GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
+      GenericMessageEvent(rConvId, domain, RemoteInstant.ofEpochMilli(3), UserId(), domain, GenericMessage.TextMessage("hello @user", Nil, Option.empty, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(pipeline.apply(events))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)

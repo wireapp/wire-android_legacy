@@ -72,7 +72,7 @@ class MessageDataSpec extends AndroidFreeSpec {
         MessageContent(Message.Part.Type.TEXT, " aaa @user2 aaa", mentions = Seq(mentions(1)))
       )
 
-      val result = MessageData.messageContent(text, mentions, links = Seq(linkPreview), weblinkEnabled = true)
+      val result = MessageData.messageContent(text, mentions, links = Option(linkPreview), weblinkEnabled = true)
 
       result._1 shouldEqual Message.Type.RICH_MEDIA
       result._2 shouldEqual expected

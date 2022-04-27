@@ -235,7 +235,7 @@ final class MessagesServiceImpl(selfUserId:     UserId,
     convs.storage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
       val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
       val id = MessageId()
-      val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings, legalHoldStatus))
+      val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Option.empty, expectsReadReceipt.selfSettings, legalHoldStatus))
       updater.addLocalMessage(
         MessageData(
           id, convId, tpe, selfUserId,
@@ -264,7 +264,7 @@ final class MessagesServiceImpl(selfUserId:     UserId,
               MessageData(
                 id, original.convId, tpe, selfUserId,
                 content = ct,
-                genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings, legalHoldStatus))),
+                genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Option.empty, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings, legalHoldStatus))),
                 quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
                 forceReadReceipts = expectsReadReceipt.convSetting
               ),

@@ -77,12 +77,12 @@ final case class MessageData(override val id:   MessageId              = Message
     case _ => content.headOption.fold("")(_.content)
   }
 
-  lazy val links: Seq[LinkPreview] = genericMsgs.lastOption match {
+  lazy val links: Option[LinkPreview] = genericMsgs.lastOption match {
     case Some(TextMessage(_, _, links, _, _)) => links
-    case _ => Nil
+    case _ => Option.empty
   }
 
-  def unpackLinks: Seq[(String, String, Option[AssetData])] = links.map(_.unpack)
+  def unpackLinks: Option[(String, String, Option[AssetData])] = links.map(_.unpack)
 
   lazy val protoQuote: Option[Quote] = genericMsgs.lastOption match {
     case Some(TextMessage(_, _, _, quote, _)) => quote
@@ -210,7 +210,7 @@ final case class MessageData(override val id:   MessageId              = Message
             case _ => None
           }
       }).getOrElse(
-        GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false), protoLegalHoldStatus))
+        GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Option.empty, protoReadReceipts.getOrElse(false), protoLegalHoldStatus))
       )
 
       if (content == newContent && genericMsgs.lastOption.contains(newProto)) None
@@ -539,7 +539,7 @@ object MessageData extends DerivedLogTag {
   }
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
-  def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
+  def messageContent(message: String, mentions: Seq[Mention], links: Option[LinkPreview] = Option.empty, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
     if (message.trim.isEmpty) (Message.Type.TEXT, textContent(message))
     else {
       val markdownLinks =
@@ -564,7 +564,7 @@ object MessageData extends DerivedLogTag {
         }
 
         val res = new MessageContentBuilder
-        val end = links.filterNot { l => markdownLinks.contains(l.proto.getUrl)}.sortBy(_.proto.getUrlOffset).foldLeft(0) {
+        val end = links.filterNot { l => markdownLinks.contains(l.proto.getUrl)}.foldLeft(0) {
           case (prevEnd, link) =>
             if (link.proto.getUrlOffset > prevEnd)
               res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.proto.getUrlOffset), mentions, prevEnd)

@@ -113,7 +113,14 @@ class OpenGraphSyncHandler(backend:         Signal[BackendConfig],
         case Left(err) => Left(err)
       }
 
-    Future.traverse(msg.content)(updateOpenGraphData) flatMap { res =>
+    val firstLink = msg.content.find(p => p.openGraph.isEmpty && p.tpe == Part.Type.WEB_LINK)
+    Future.traverse(msg.content) { content =>
+      if(firstLink.contains(content)) {
+        updateOpenGraphData(content)
+      } else {
+        Future successful Right(content)
+      }
+    } flatMap { res =>
       val errors = res.collect { case Left(err) => err }
       val parts = res.zip(msg.content) map {
         case (Right(p), _) => p
@@ -142,21 +149,24 @@ class OpenGraphSyncHandler(backend:         Signal[BackendConfig],
       }
     }
 
+    verbose(l"Updating Link preview...")
     msg.genericMsgs.lastOption match {
       case Some(TextMessage(content, mentions, ps, quote, rr)) =>
-        val previews = if (ps.isEmpty) createEmptyPreviews(content) else ps
 
-        RichFuture.traverseSequential(links zip previews) { case (link, preview) => generatePreview(msg.id, link.openGraph.get, preview, retention) } flatMap { res =>
-          val errors = res collect { case Left(err) => err }
-          val updated = (res zip previews) collect {
-            case (Right(p), _) => p._2
-            case (_, p) => p
+        val previews = if (ps.isEmpty) createEmptyPreviews(content).headOption else ps
+        verbose(l"Updating Link preview for message ${content}: previews ${previews}")
+        RichFuture.traverseSequential(links zip previews)
+          { case (link, preview) => generatePreview(msg.id, link.openGraph.get, preview, retention) } flatMap { res =>
+            val errors = res collect { case Left(err) => err }
+            val updated = (res zip previews) collect {
+              case (Right(p), _) => p._2
+              case (_, p) => p
+            }
+
+            val gm = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated.headOption, quote, rr, msg.protoLegalHoldStatus))
+            verbose(l"Update generic message with previews: ${updated}")
+            updateIfNotEdited(msg, _.copy(genericMsgs = Seq(gm))) map { _ => if (errors.isEmpty) Right(gm) else Left(errors) }
           }
-
-          val gm = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr, msg.protoLegalHoldStatus))
-
-          updateIfNotEdited(msg, _.copy(genericMsgs = Seq(gm))) map { _ => if (errors.isEmpty) Right(gm) else Left(errors) }
-        }
 
       case _ =>
         Future successful Left(Seq(ErrorResponse.internalError(s"Unexpected message protos in: $msg")))
