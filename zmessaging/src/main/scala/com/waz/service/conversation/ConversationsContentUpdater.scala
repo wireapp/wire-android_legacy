@@ -270,23 +270,38 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
    * @param retryAsync - true if retry should be executed asynchronously, this should be used when executing from some ProcessingQueue, using delays in processing queue will block it
    */
   override def processConvWithRemoteId[A](remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A] = {
+    def retry(): Future[A] =
+      CancellableFuture.delay(ConversationsService.RetryBackoff.delay(retryCount))
+        .future
+        .flatMap { _ => processConvWithRemoteId(remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec) } (ec)
 
-    def retry() = CancellableFuture.delay(ConversationsService.RetryBackoff.delay(retryCount)).future .flatMap { _ =>
-      processConvWithRemoteId(remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec)
-    } (ec)
+    println(s"processConvWithRemoteId($remoteId, $reta ryAsync, $retryCount)")
 
-    convByRemoteId(remoteId).flatMap {
-      case Some(conv) => processor(conv)
+    storage.values.foreach { convs =>
+      println(s"current conversations (${convs.size}) for remoteId $remoteId:")
+      convs.foreach { c => println(s"${c.id}, ${c.remoteId}, ${c.name}, ${c.creator}")}
+    }
+
+    val maybeConv =
+      for {
+        conv    <- convByRemoteId(remoteId)
+        conv    <- if (conv.isEmpty) { println(s"Trying to find conv by conv id"); storage.get(ConvId(remoteId.str)) } else Future.successful(conv)
+        convIds <- if (conv.isEmpty) { println(s"Trying to find conv by user id"); membersStorage.getActiveConvs(UserId(remoteId.str)) } else Future.successful(Seq.empty)
+        conv    <- if (convIds.size == 1) storage.get(convIds.head) else Future.successful(conv)
+      } yield conv
+
+    maybeConv.flatMap {
+      case Some(conv) =>
+        processor(conv)
       case None if retryCount > 3 =>
+        println(s"No conversation data found for remote id: $remoteId on try: $retryCount")
         val ex = new NoSuchElementException("No conversation data found") with NoStackTrace
         Future.failed(ex)
-      case None =>
-        warn(l"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
-        if (retryAsync) {
-          retry()
-          Future.failed(new NoSuchElementException(s"No conversation data found for: $remoteId"))
-        } else
-          retry()
+      case None if retryAsync =>
+        retry()
+        Future.failed(new NoSuchElementException(s"No conversation data found for: $remoteId"))
+      case _ =>
+        retry()
     } (ec)
   }
 
