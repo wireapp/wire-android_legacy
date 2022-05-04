@@ -275,7 +275,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         .future
         .flatMap { _ => processConvWithRemoteId(remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec) } (ec)
 
-    println(s"processConvWithRemoteId($remoteId, $reta ryAsync, $retryCount)")
+    println(s"processConvWithRemoteId($remoteId, $retryAsync, $retryCount)")
 
     storage.values.foreach { convs =>
       println(s"current conversations (${convs.size}) for remoteId $remoteId:")
