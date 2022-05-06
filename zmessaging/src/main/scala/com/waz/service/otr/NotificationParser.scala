@@ -4,6 +4,7 @@ import com.waz.api.Message
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.content.{ConversationStorage, MessageAndLikesStorage, UsersStorage}
+import com.waz.log.BasicLogging
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.{Asset, Composite, Ephemeral, Knock, Location, Reaction, Text}
 import com.waz.model._
@@ -12,7 +13,6 @@ import com.waz.threading.Threading
 
 import scala.concurrent.Future
 import com.waz.model.UserData.ConnectionStatus
-
 import com.waz.log.LogSE._
 
 trait NotificationParser {
@@ -41,12 +41,14 @@ final class NotificationParserImpl(selfId:       UserId,
   private def parse(event: GenericMessageEvent) =
     (for {
       self              <- selfUser.head
-      Some(conv)        <- convStorage.getByRemoteId(event.convId)
       (uid, msgContent) =  event.content.unpack
+      _                 = verbose(l"Unpacked GME123: ${BasicLogging.unsafeLog(msgContent)}\n Proto: ${BasicLogging.unsafeLog(msgContent.proto)}")
+      Some(conv)        <- convStorage.getByRemoteId(event.convId)
+      _                 = verbose(l"Parsing made it so far! GME123")
       notification      <- createNotification(uid, self, conv, event, msgContent)
     } yield notification)
       .recover { case ex: Throwable =>
-        error(l"error while parsing (1) $event, ${ex.getMessage}", ex)
+        error(l"error while parsing (1) ${BasicLogging.unsafeLog(event.toString)}, ${BasicLogging.unsafeLog(ex.getMessage)}", ex)
         None
       }
 
