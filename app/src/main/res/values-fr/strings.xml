@@ -263,7 +263,7 @@
     <string name="calling__self_preview_unavailable_long">APPAREIL PHOTO INDISPONIBLE</string>
     <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
     <string name="incoming__controls__ongoing__camera">APPAREIL PHOTO</string>
-    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">RETOURNER CAMÉRA</string>
     <string name="calling__header__joining">Connexion&#8230;</string>
     <string name="calling__header__outgoing_subtitle">Sonnerie&#8230;</string>
     <string name="calling__header__outgoing_video_subtitle">Sonnerie&#8230;</string>
@@ -1412,14 +1412,14 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="self_deleting_messages_change_info_dialog_message_disabled">L\'envoi de messages éphémères est désactivé.</string>
     <!-- Conference Calling Restriction feature config -->
     <string name="conference_calling_restriction_dialog_title">Mettre à niveau vers Entreprise</string>
-    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
-    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
-    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_description">Votre équipe est actuellement sur le plan de base gratuit. Passez à la version Enterprise pour accéder à des fonctionnalités telles que le lancement de conférences et bien plus encore.
+&lt;br /&gt;<![CDATA[<a href="https://wire.com/en/pricing/">En savoir plus sur les tarifs de Wire\</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">PASSEZ À LA VITESSE SUPÉRIEURE MAINTENANT</string>
     <string name="conference_calling_restriction_dialog_negative_button">ANNULER</string>
-    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
-    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
-        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
-    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
-    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
-    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+    <string name="upgraded_plan_dialog_title">Wire Entreprise</string>
+    <string name="upgraded_plan_dialog_description">Votre équipe a été mise à niveau vers Wire Enterprise, ce qui vous donne accès à des fonctionnalités telles que les conférences téléphoniques et plus encore.
+        &lt;br /&gt;<![CDATA[<a href="https://wire.com/en/products/enterprise-collaboration/">En savoir plus sur Wire Enterprise</a>]]></string>
+    <string name="conference_calling_unavailable_dialog_title">Fonction indisponible</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">L\'option permettant de lancer une conférence téléphonique n\'est disponible que dans la version payante de Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">Pour lancer une conférence téléphonique, votre équipe doit passer à la formule Entreprise.</string>
 </resources>
