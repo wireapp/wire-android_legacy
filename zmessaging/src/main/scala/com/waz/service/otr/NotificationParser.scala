@@ -47,9 +47,17 @@ final class NotificationParserImpl(selfId:       UserId,
       _                 = verbose(l"Parsing made it so far! GME123")
       notification      <- createNotification(uid, self, conv, event, msgContent)
     } yield notification)
-      .recover { case ex: Throwable =>
-        error(l"error while parsing (1) ${BasicLogging.unsafeLog(event.toString)}, ${BasicLogging.unsafeLog(ex.getMessage)}", ex)
-        None
+      .recover {
+        case ex: java.util.NoSuchElementException =>
+          error(l"No such element while parsing ${BasicLogging.unsafeLog(event.toString)}, ${BasicLogging.unsafeLog(ex.getMessage)}", ex)
+          convStorage.values.onSuccess {
+            case v => val foundIDs = v.map { e => e.id.toString }
+              verbose(l"Was looking for ${BasicLogging.unsafeLog(event.convId)} but failed, found conversations: ${BasicLogging.unsafeLog(foundIDs)}")
+          }
+          None
+        case ex: Throwable =>
+          error(l"error while parsing (1) ${BasicLogging.unsafeLog(event.toString)}, ${BasicLogging.unsafeLog(ex.getMessage)}", ex)
+          None
       }
 
   private def parse(event: UserConnectionEvent) =
