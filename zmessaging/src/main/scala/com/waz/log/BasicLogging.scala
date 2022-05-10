@@ -67,11 +67,16 @@ object BasicLogging {
     def apply[T](implicit ct: ClassTag[T]): LogTag = new LogTag(ct.runtimeClass.getSimpleName)
   }
 
-  def unsafeLog[T](value: T): CanBeShown = new CanBeShownImpl[T](value)
+  def unsafeLog[T](value: T): CanBeShown = new WillAlwaysBeShownUnsafe[T](value)
 
   trait CanBeShown {
     def showSafe: String
     def showUnsafe: String
+  }
+
+  class WillAlwaysBeShownUnsafe[T](value: T)(implicit logShow: LogShow[T]) extends CanBeShown {
+    override def showSafe: String = logShow.showUnsafe(value)
+    override def showUnsafe: String = logShow.showUnsafe(value)
   }
 
   class CanBeShownImpl[T](value: T)(implicit logShow: LogShow[T]) extends CanBeShown {
