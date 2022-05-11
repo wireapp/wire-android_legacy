@@ -108,7 +108,7 @@ object LogShow {
           v.getClass.getName
       }
     }
-    override def showSafe(v: Any): String = s"${name(v)}(${sha2(v.toString).take(9)})"
+    override def showSafe(v: Any): String = s"${name(v)}(${v.toString})"
     override def showUnsafe(v: Any): String = s"${name(v)}(${v.toString})"
   }
 
@@ -177,5 +177,5 @@ object LogShow {
   })
 
   //default LogShow for all types
-  implicit def defaultLogShowFor[T]: LogShow[T] = LogShow.logShowWithHash
+  implicit def defaultLogShowFor[T]: LogShow[T] = LogShow.logShowWithToString
 }
