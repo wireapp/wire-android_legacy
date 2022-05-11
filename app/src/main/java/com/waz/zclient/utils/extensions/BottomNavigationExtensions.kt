@@ -1,4 +1,5 @@
 @file:JvmName("BottomNavigationUtil")
+
 /**
  * Wire
  * Copyright (C) 2019 Wire Swiss GmbH
@@ -18,12 +19,9 @@
  */
 package com.waz.zclient.utils.extensions
 
-import android.view.View
 import androidx.annotation.IdRes
-import com.google.android.material.bottomnavigation.BottomNavigationMenuView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 fun BottomNavigationView.setItemVisible(@IdRes id: Int, visible: Boolean) {
-    val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView
-    menuView.findViewById<View>(id).visibility = if (visible) View.VISIBLE else View.GONE
+    menu.findItem(id).isVisible = visible
 }
