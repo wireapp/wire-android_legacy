@@ -112,7 +112,7 @@ object EventScheduler {
 
       def apply(conv: RConvId, es: Traversable[Event]): Future[Any] = {
         val events: Vector[A] = es.collect { case EligibleEvent(a) if include(a) => a }(breakOut)
-        verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events.take(10)} ${showString(if (events.size > 10) "..." else "")}")(LogTag(s"${LogTag[Stage].value}[${eventTag.value}]"))
+        verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events}")(LogTag(s"${LogTag[Stage].value}[${eventTag.value}]"))
         processor(conv, events)
       }
     }

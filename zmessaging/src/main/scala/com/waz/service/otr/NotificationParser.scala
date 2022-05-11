@@ -42,14 +42,21 @@ final class NotificationParserImpl(selfId:       UserId,
     (for {
       self              <- selfUser.head
       (uid, msgContent) =  event.content.unpack
-      _                 = verbose(l"Unpacked GME123: ${BasicLogging.unsafeLog(msgContent)}\n Proto: ${BasicLogging.unsafeLog(msgContent.proto)}")
+      _                 = verbose(l"Unpacked GME123: ${msgContent}")
       Some(conv)        <- convStorage.getByRemoteId(event.convId)
-      _                 = verbose(l"Parsing made it so far! GME123")
       notification      <- createNotification(uid, self, conv, event, msgContent)
     } yield notification)
-      .recover { case ex: Throwable =>
-        error(l"error while parsing (1) ${BasicLogging.unsafeLog(event.toString)}, ${BasicLogging.unsafeLog(ex.getMessage)}", ex)
-        None
+      .recover {
+        case ex: java.util.NoSuchElementException =>
+          error(l"No such element while parsing ${event.toString}, ${ex.getMessage}", ex)
+          convStorage.values.onSuccess {
+            case v => val foundIDs = v.map { e => e.id.toString }
+              verbose(l"Was looking for ${event.convId} but failed, found conversations: ${foundIDs}")
+          }
+          None
+        case ex: Throwable =>
+          error(l"error while parsing (1) ${event.toString}, ${ex.getMessage}", ex)
+          None
       }
 
   private def parse(event: UserConnectionEvent) =
