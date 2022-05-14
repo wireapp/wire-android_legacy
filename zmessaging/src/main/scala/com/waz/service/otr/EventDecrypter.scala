@@ -7,6 +7,7 @@ import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.service.tracking.TrackingService
+import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.CryptoException
 
 import scala.concurrent.Future
@@ -41,6 +42,7 @@ class EventDecrypterImpl(selfId:        UserId,
         tracking().msgDecryptionFailed(otrEvent.convId, selfId)
         storage.writeError(index, e)
       case Right(_) =>
+        verbose(l"Successfully decrypted ${otrEvent.ciphertext}")
         Future.successful(())
     }
 
@@ -53,7 +55,7 @@ class EventDecrypterImpl(selfId:        UserId,
             import CryptoException.Code._
             e.code match {
               case DUPLICATE_MESSAGE =>
-                verbose(l"detected duplicate message for event: $ev")
+                verbose(l"detected duplicate message for event with text: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(Duplicate))
               case OUTDATED_MESSAGE =>
                 error(l"detected outdated message for event: $ev")

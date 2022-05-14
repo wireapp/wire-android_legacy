@@ -46,8 +46,12 @@ class EventPipeline(scheduler: => EventScheduler) extends (Seq[Event] => Future[
       val rId = RConvEvent(event)
       val partialResults = stages.filter(_.isEligible(event)).map { stage =>
         Try {
-          stage(rId, Seq(event)).map(_ => true).recover { case _ => false }
+          stage(rId, Seq(event)).map(_ => true).recover { case _ =>
+            warn(l"Unable to process event DD24 ${event}")
+            false
+          }
         }.getOrElse {
+          warn(l"Unable to process event DD23 ${event}")
           Future.successful(false)
         }
       }

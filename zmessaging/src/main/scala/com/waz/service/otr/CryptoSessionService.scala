@@ -22,10 +22,12 @@ import com.waz.log.LogSE._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
+import com.waz.utils.crypto.AESUtils
 import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized, Signal}
 import com.waz.utils.returning
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
+import java.util.Base64
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -104,7 +106,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
       val (session, plain) = decrypt(opt)
       eventsWriter(plain).map { _ =>
         session.save()
-        verbose(l"decrypted data len: ${plain.length}")
+        verbose(l"decrypted from: ${AESUtils.base64(msg)} to: ${AESUtils.base64(plain)} data len: ${plain.length}")
       }
     }
   }

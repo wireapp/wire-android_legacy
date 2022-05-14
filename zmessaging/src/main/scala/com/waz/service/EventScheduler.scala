@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{Event, RConvEvent, RConvId}
+import com.waz.model.{Event, GenericMessageEvent, RConvEvent, RConvId}
 import com.waz.threading.Threading
 import com.waz.utils._
 
@@ -113,6 +113,9 @@ object EventScheduler {
       def apply(conv: RConvId, es: Traversable[Event]): Future[Any] = {
         val events: Vector[A] = es.collect { case EligibleEvent(a) if include(a) => a }(breakOut)
         verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events}")(LogTag(s"${LogTag[Stage].value}[${eventTag.value}]"))
+        events.foreach {
+          case g: GenericMessageEvent => verbose(l"Starting to process ${g.content}):")(LogTag(s"${LogTag[Stage].value}[${eventTag.value}]"))
+        }
         processor(conv, events)
       }
     }
