@@ -369,23 +369,19 @@ object ConversationState {
 
 object Event {
   def decodeRConvId(implicit js: JSONObject): (RConvId, Option[String]) = {
-    println(s"decodeQUserId for: ${if (js.has("qualified_conversation")) js.getJSONObject("qualified_conversation") else "Not found!"}")
     val res = RConvQualifiedId.decodeOpt('qualified_conversation)
       .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
       .getOrElse {
         if (js.has("convId")) (RConvId('convId), None)
         else (RConvId('conversation), None)
       }
-    println(s"result: $res")
     res
   }
 
   def decodeQUserId(nonQSymbol: Symbol, qSymbol: Symbol)(implicit js: JSONObject): (UserId, Option[String]) = {
-    println(s"decodeQUserId for: ${if (js.has(qSymbol)) js.getJSONObject(qSymbol) else "Not found!"}")
     val res = QualifiedId.decodeOpt(qSymbol)
       .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
       .getOrElse((UserId(nonQSymbol), None))
-    println(s"result: $res")
     res
   }
 
