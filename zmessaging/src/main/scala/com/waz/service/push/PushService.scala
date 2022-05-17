@@ -39,6 +39,7 @@ import com.waz.znet2.http.ResponseCode
 import com.wire.signals._
 import org.threeten.bp.{Duration, Instant}
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 
@@ -110,15 +111,20 @@ final class PushServiceImpl(selfUserId:        UserId,
     if (retry > 3) Future.successful(())
     else
       Serialized.future(PipelineKey) {
-        verbose(l"processing events")
+        val uid = UUID.randomUUID()
+        verbose(l"processing events ${uid}")
         val offset = System.currentTimeMillis()
         for {
           _         <- Future.successful(processing ! true)
           encrypted <- eventsStorage.encryptedEvents
           _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
           decrypted <- eventsStorage.getDecryptedRows
-          decoded   =  decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
+          eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
+          _         = verbose(l"Extracted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging}")
+          decoded   = decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
+          _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
+          _         = verbose(l"Processed from storage ${uid} ${processed.size}: ${processed}")
           _         <- eventsStorage.removeRows(processed)
           decrLeft  <- eventsStorage.getDecryptedRows
         } yield
@@ -130,7 +136,7 @@ final class PushServiceImpl(selfUserId:        UserId,
             CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
           } else {
             warn(l"Unable to process some events (${decrLeft.size}): $decrLeft, deleting them")
-            eventsStorage.removeRows(decrypted.map(_.index)).foreach(_ => processing ! false)
+            eventsStorage.removeRows(decrLeft.map(_.index)).foreach(_ => processing ! false)
           }
       }.recoverWith {
         case ex if retry >= 3 =>

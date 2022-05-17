@@ -44,7 +44,13 @@ class EventPipeline(scheduler: => EventScheduler) extends (Seq[Event] => Future[
   def process(input: Seq[(Int, Event)]): Future[Seq[Int]] =
     Future.traverse(input) { case (index, event) =>
       val rId = RConvEvent(event)
-      val partialResults = stages.filter(_.isEligible(event)).map { stage =>
+      val partialResults = stages.filter { e =>
+        val eligible = e.isEligible(event)
+        if(!eligible) {
+          verbose(l"Event ${event} is not processed by ${e}")
+        }
+        eligible
+      }.map { stage =>
         Try {
           stage(rId, Seq(event)).map(_ => true).recover { case _ =>
             warn(l"Unable to process event DD24 ${event}")
