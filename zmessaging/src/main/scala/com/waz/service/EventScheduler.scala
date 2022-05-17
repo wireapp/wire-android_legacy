@@ -96,8 +96,6 @@ object EventScheduler {
 
       val eventTag: LogTag = LogTag("Event")
 
-      val logTag = LogTag(s"${LogTag[Stage].value}[${eventTag.value}]")
-
       def apply(conv: RConvId, es: Traversable[Event]): Future[Any]
     }
 
@@ -107,6 +105,8 @@ object EventScheduler {
 
       override val eventTag = LogTag(EligibleEvent.runtimeClass.getSimpleName)
 
+      val logTag = LogTag(s"${LogTag[Stage].value}[${eventTag.value}]")
+
       def isEligible(e: Event): Boolean = e match {
         case EligibleEvent(a) if include(a) => true
         case _ => false
@@ -114,7 +114,7 @@ object EventScheduler {
 
       def apply(conv: RConvId, es: Traversable[Event]): Future[Any] = {
         val events: Vector[A] = es.collect { case EligibleEvent(a) if include(a) => a }(breakOut)
-        verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events}")(logTag)
+        verbose(l"processing ${events.size} eligible events out of ${es.size}")(logTag)
         events.foreach {
           case g: GenericMessageEvent =>
             verbose(l"Starting to process ${g.content}): ${g.content.proto}")(logTag)
