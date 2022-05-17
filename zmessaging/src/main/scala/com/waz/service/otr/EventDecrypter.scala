@@ -42,7 +42,6 @@ class EventDecrypterImpl(selfId:        UserId,
         tracking().msgDecryptionFailed(otrEvent.convId, selfId)
         storage.writeError(index, e)
       case Right(_) =>
-        verbose(l"Successfully decrypted ${otrEvent.ciphertext}")
         Future.successful(())
     }
 
