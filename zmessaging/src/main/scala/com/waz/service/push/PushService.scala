@@ -112,7 +112,7 @@ final class PushServiceImpl(selfUserId:        UserId,
     else
       Serialized.future(PipelineKey) {
         val uid = UUID.randomUUID()
-        verbose(l"processing events ${uid}")
+        verbose(l"MM883 processing events ${uid}")
         val offset = System.currentTimeMillis()
         for {
           _         <- Future.successful(processing ! true)
