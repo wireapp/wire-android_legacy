@@ -143,10 +143,10 @@ final class PushServiceImpl(selfUserId:        UserId,
       }.recoverWith {
         case ex if retry >= 3 =>
           processing ! false
-          error(l"Unable to process events: $ex")
+          error(l"Unable to process events: ${ex} ${ex.getStackTrace.mkString("\n")}")
           Future.successful(())
         case ex =>
-          warn(l"Processing events failed, trying again (${retry + 1}) after delay...")
+          warn(l"Processing events failed, trying again (${retry + 1}) after delay... ${ex} ${ex.getStackTrace.mkString("\n")}")
           CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
       }.map(_ => ())
   }
