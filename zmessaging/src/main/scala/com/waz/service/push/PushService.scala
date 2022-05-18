@@ -117,10 +117,12 @@ final class PushServiceImpl(selfUserId:        UserId,
         for {
           _         <- Future.successful(processing ! true)
           encrypted <- eventsStorage.encryptedEvents
+          encryptedForLogging = encrypted.map { e => e.event.str }
+          _         = verbose(l"Encrypted from storage ${uid} ${encrypted.size}: ${encryptedForLogging.mkString(", ")}")
           _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
           decrypted <- eventsStorage.getDecryptedRows
           eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
-          _         = verbose(l"Extracted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
+          _         = verbose(l"Decrypted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
           decoded   = decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
           _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
