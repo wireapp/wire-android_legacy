@@ -268,6 +268,11 @@ trait FragmentHelper
     super.onPause()
   }
 
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
+    views.foreach(_.clear())
+  }
+
   override def onDestroyView(): Unit = {
     views foreach(_.clear())
     super.onDestroyView()

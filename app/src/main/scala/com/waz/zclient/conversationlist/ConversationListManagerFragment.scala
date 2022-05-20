@@ -92,11 +92,7 @@ class ConversationListManagerFragment extends Fragment
 
   protected var subs = Set.empty[Subscription]
 
-  private lazy val bottomNavigationView = returning(view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)) { vh =>
-    subs += convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
-      vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))
-    }
-  }
+  private lazy val bottomNavigationView = view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)
 
   lazy val zms = inject[Signal[ZMessaging]]
 
@@ -178,6 +174,10 @@ class ConversationListManagerFragment extends Fragment
         animateOnIncomingCall()
 
       case _ => //
+    }
+
+    subs += convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
+      bottomNavigationView.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))
     }
 
     subs += inject[AccentColorController].accentColor.map(_.color).onUi { c =>
