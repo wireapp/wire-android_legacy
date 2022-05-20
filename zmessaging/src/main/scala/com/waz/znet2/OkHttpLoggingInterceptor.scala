@@ -58,7 +58,7 @@ import scala.util.{Failure, Try}
   *
   * <-- END HTTP
   */
-final class OkHttpLoggingInterceptor(logBodyTypes: List[String], maxBodyStringLength: Int = 50000)
+final class OkHttpLoggingInterceptor(logBodyTypes: List[String], maxBodyStringLength: Int = 100000)
   extends Interceptor with DerivedLogTag {
 
   private val CharsetUtf8: Charset = Charset.forName("UTF-8")
