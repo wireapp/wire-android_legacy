@@ -86,6 +86,7 @@ final class ParticipantFragment extends ManagerFragment with ConversationScreenC
     }
 
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
     verbose(l"onViewCreated.")
 
     withChildFragmentOpt(R.id.fl__participant__container) {
