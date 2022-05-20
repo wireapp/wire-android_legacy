@@ -189,7 +189,7 @@ class AccountManager(val userId:  UserId,
   def registerNewClient(password: Option[Password] = None): ErrorOr[ClientRegistrationState] = {
     for {
       account <- global.accountsStorage.signal(userId).head
-      pwd     = password.orElse(if (account.ssoId.isEmpty) account.password else None)
+      pwd     = password.orElse(account.password)
       client  <- cryptoBox.createClient()
       resp    <- client match {
         case None => Future.successful(Left(internalError("CryptoBox missing")))
