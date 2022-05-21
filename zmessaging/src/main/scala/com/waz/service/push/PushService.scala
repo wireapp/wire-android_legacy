@@ -124,9 +124,9 @@ final class PushServiceImpl(selfUserId:        UserId,
           eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
           _         = verbose(l"Decrypted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
           decoded   = decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
-          _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded}")
+          _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded.mkString(", ")}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
-          _         = verbose(l"Processed from storage ${uid} ${processed.size}: ${processed}")
+          _         = verbose(l"Processed from storage ${uid} ${processed.size}: ${processed.mkString(", ")}")
           _         <- eventsStorage.removeRows(processed)
           decrLeft  <- eventsStorage.getDecryptedRows
         } yield
@@ -134,10 +134,10 @@ final class PushServiceImpl(selfUserId:        UserId,
             processing ! false
             verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
           } else if (retry < 3) {
-            warn(l"Unable to process some events (${decrLeft.size}): $decrLeft, trying again (${retry + 1}) after delay...")
+            warn(l"Unable to process some events ($retry) (${decrLeft.size}): ${decrLeft.mkString(", ")}, trying again (${retry + 1}) after delay...")
             CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
           } else {
-            warn(l"Unable to process some events (${decrLeft.size}): $decrLeft, deleting them")
+            warn(l"Unable to process some events (${decrLeft.size}): ${decrLeft.mkString(", ")}, deleting them")
             eventsStorage.removeRows(decrLeft.map(_.index)).foreach(_ => processing ! false)
           }
       }.recoverWith {
