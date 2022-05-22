@@ -29,7 +29,7 @@ import com.waz.service.SearchKey
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils._
 
-import scala.collection.GenMap
+import scala.collection.{GenMap, immutable}
 import scala.concurrent.Future
 
 trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
@@ -71,12 +71,12 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
     })
   }
 
-  private val init = for {
+  private val init: Future[Unit] = for {
     convs   <- super.keySet
     updater = (c: ConversationData) => c.copy(searchKey = c.savedOrFreshSearchKey)
     _       <- updateAll2(convs, updater)
   } yield {
-    verbose(l"Caching ${convs.size} conversations")
+    verbose(l"Caching ${convs.size} conversations: ${convs.mkString(", ")}")
   }
 
   private def updateSearchKey(cs: Seq[ConversationData]) =
@@ -85,9 +85,7 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
 
   def apply[A](f: GenMap[ConvId, ConversationData] => A): Future[A] = init.flatMap(_ => contents.head).map(f)
 
-  def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]] = init.flatMap { _ =>
-    findByRemoteId(remoteId).map(_.headOption)
-  }
+  def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]] = init.flatMap { _ => findByRemoteId(remoteId) }
 
   override def getByRemoteIds(remoteIds: Traversable[RConvId]): Future[Seq[ConvId]] =
     getMapByRemoteIds(remoteIds.toSet).map { convs =>
@@ -121,8 +119,45 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
   override def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
     storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.name.fold("")(_.str))(currentLocaleOrdering).take(limit))
 
-  private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
-  private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
+  private def findByRemoteId(remoteId: RConvId): Future[Option[ConversationData]] = {
+    for {
+      convs <- values
+      conv  =  convs.find(_.remoteId == remoteId)
+      _     =  if (conv.isEmpty)
+                 warn(l"""
+                  unable to find conversation data by remoteId in the values cache: $remoteId
+                  (there are ${convs.size} convs cached with remote ids: ${convs.map(_.remoteId).mkString(", ")})
+                 """)
+      conv <- if (conv.isDefined)
+                Future.successful(conv)
+              else
+                find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity).map(_.headOption)
+    } yield {
+      if (conv.isEmpty) warn(l"unable to find conversation data by remoteId in the database: $remoteId")
+      conv
+    }
+  }
+
+  private def findByRemoteIds(remoteIds: Set[RConvId]): Future[IndexedSeq[ConversationData]] =
+    for {
+      allConvs <- values
+      convs = allConvs.filter(c => remoteIds.contains(c.remoteId))
+      _     =  if (convs.size != remoteIds.size) {
+        val idsLeft = remoteIds -- convs.map(_.remoteId).toSet
+        warn(l"""
+                  unable to find conversation data by remoteId in the values cache: ${idsLeft.mkString(", ")}
+                  (there are ${convs.size} convs cached with remote ids: ${convs.map(_.remoteId).mkString(", ")})
+                 """)
+      }
+      convs <- if (convs.nonEmpty)
+                 Future.successful(convs)
+               else
+                 find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
+    } yield {
+      val idsLeft = remoteIds -- convs.map(_.remoteId).toSet
+      if (idsLeft.nonEmpty) warn(l"unable to find conversation data by remoteId in the database: ${idsLeft.mkString(", ")}")
+      convs
+    }
 
   override def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus] = get(convId).map {
     case Some(conv) => conv.messageLegalHoldStatus
