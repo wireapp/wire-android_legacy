@@ -21,6 +21,7 @@ import com.waz.znet2.http.ResponseCode
 import com.wire.signals.{CancellableFuture, Serialized}
 import org.threeten.bp.{Duration, Instant}
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -55,16 +56,21 @@ final class FCMPushHandlerImpl(userId:      UserId,
     time.fold(Future.successful(()))(t => (beDriftPref := clock.instant.until(t)))
 
   private def processNotifications(notifications: Vector[PushNotificationEncoded]) = {
-    verbose(l"processNotifications($notifications)")
+    val uid = UUID.randomUUID()
+    verbose(l"MC884 Process notifications $uid: ${notifications.mkString(", ")}")
     for {
       encrypted <- storage.saveAll(notifications)
-      _         =  verbose(l"encrypted: ${encrypted.size}")
+      _         =  verbose(l"Saved to encrypted storage: ${encrypted.size}")
       _         <- decrypter.processEncryptedEvents(encrypted)
       decrypted <- storage.getDecryptedRows
-      _         =  verbose(l"decrypted: ${decrypted.size}")
+      eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
+      _         = verbose(l"Extracted decrypted rows from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
       decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-      notCalls  =  processCalls(decoded)
+      _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded.mkString(", ")}")
+      notCalls  = processCalls(decoded)
+      _         = verbose(l"Events that are not calls ${uid} ${notCalls.size}: ${notCalls.mkString(", ")}")
       parsed    <- parser.parse(notCalls)
+      _         = verbose(l"Parsed from storage ${uid} ${parsed.size}: ${parsed.mkString(", ")}")
       _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
       _         <- updateLastId(notifications)
     } yield ()

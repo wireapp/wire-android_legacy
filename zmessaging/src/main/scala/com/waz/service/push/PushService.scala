@@ -121,6 +121,13 @@ final class PushServiceImpl(selfUserId:        UserId,
           _         = verbose(l"Encrypted from storage ${uid} ${encrypted.size}: ${encryptedForLogging.mkString(", ")}")
           _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
           decrypted <- eventsStorage.getDecryptedRows
+          eventsForLogging = decrypted.map { e =>
+            e.plain match {
+              case Some(x) => SafeBase64.encode(x)
+              case e => e.toString
+            }
+          }
+          _         = verbose(l"Decrypted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
           decoded   = decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
           _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded.mkString(", ")}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
