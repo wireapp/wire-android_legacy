@@ -127,9 +127,9 @@ class BufferedLogOutput(baseDir: String,
 
 object BufferedLogOutput {
 
-  val DefMaxBufferSize = 256L * 1024L
-  val DefMaxFileSize = 4L * DefMaxBufferSize
-  val DefMaxRollFiles = 10
+  val DefMaxBufferSize = 256L * 4000L
+  val DefMaxFileSize = 8L * DefMaxBufferSize
+  val DefMaxRollFiles = 20
   val DefFileName = "internalLog"
 
   @tailrec
