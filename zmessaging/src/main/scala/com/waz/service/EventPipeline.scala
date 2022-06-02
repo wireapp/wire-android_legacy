@@ -43,6 +43,7 @@ class EventPipeline(scheduler: => EventScheduler) extends (Seq[Event] => Future[
 
   def process(input: Seq[(Int, Event)]): Future[Seq[Int]] =
     Future.traverse(input) { case (index, event) =>
+      verbose(l"Event going through the pipeline: ${event}")
       val rId = RConvEvent(event)
       val partialResults = stages.filter { e =>
         val eligible = e.isEligible(event)
