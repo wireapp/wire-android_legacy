@@ -83,13 +83,11 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
   })
 
   def onPagedListChanged(): Unit = {
-    verbose(l"onPagedListChanged")
     queuedScroll.foreach(processScroll)
   }
 
   def onPagedListReplaced(pl: PagedList[MessageAndLikes]): Unit = {
     val newCount = pl.getDataSource.asInstanceOf[MessageDataSource].totalCount
-    verbose(l"onPagedListReplaced $newCount, $previousCount")
     if (previousCount.exists(_ < newCount)) {
       onMessageAdded ! newCount - previousCount.getOrElse(0)
     } else {
@@ -108,7 +106,6 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
       .foreach(_.loadAround(pos))
 
   private def processScroll(s: Scroll): Unit = {
-    verbose(l"Scrolling to: $s")
     if (queuedScroll.forall(!_.force)) {
       queuedScroll = Some(s)
     }
@@ -148,12 +145,10 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
   private def startDragging(): Unit = {
     dragging = true
     queuedScroll = None
-    verbose(l"startDragging")
   }
 
   private def stopDragging(): Unit = {
     dragging = false
-    verbose(l"stopDragging")
   }
 
   private def shouldScrollToBottom: Boolean = queuedScroll.isEmpty && !dragging && adapter.unreadIsLast
