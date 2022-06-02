@@ -412,7 +412,6 @@ class UserServiceImpl(selfUserId:        UserId,
         qualified             =  qIds.filter(qId => newIds.contains(qId.id)) ++
                                    existing.collect { case (_, u) if u.qualifiedId.nonEmpty => u.qualifiedId.get }.toSet
         nonQualified          =  toSync -- qualified.map(_.id)
-        _                     =  verbose(l"syncIfNeeded for users (qualified); new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size}) (qualified: ${qualified.size})")
         syncId1               <- if (qualified.nonEmpty)
                                    sync.syncQualifiedUsers(qualified).map(Option(_))
                                  else
@@ -430,7 +429,6 @@ class UserServiceImpl(selfUserId:        UserId,
         val offset   = LocalInstant.Now - olderThan
         val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
         val toSync   = newIds ++ existing.map(_.id)
-        verbose(l"syncIfNeeded for users (unqualified); new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
         if (toSync.nonEmpty)
           sync.syncUsers(toSync)
             .flatMap {
