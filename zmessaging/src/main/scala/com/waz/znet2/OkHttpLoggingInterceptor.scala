@@ -58,11 +58,10 @@ import scala.util.{Failure, Try}
   *
   * <-- END HTTP
   */
-final class OkHttpLoggingInterceptor(logBodyTypes: List[String], maxBodyStringLength: Int = 100000)
+final class OkHttpLoggingInterceptor(logBodyTypes: List[String])
   extends Interceptor with DerivedLogTag {
 
   private val CharsetUtf8: Charset = Charset.forName("UTF-8")
-  private val truncatedBodySuffix: String = "...TRUNCATED"
 
   private def shouldLogBody(bodyMediaType: MediaType): Boolean = {
     val mediaTypeStr = bodyMediaType.toString.toLowerCase()
@@ -83,9 +82,7 @@ final class OkHttpLoggingInterceptor(logBodyTypes: List[String], maxBodyStringLe
   }
 
   private def prepareBodyForLogging(body: Array[Byte], mediaType: Option[MediaType]): String = {
-    val bodyStrSafe = hideSensitiveInfo(new String(body, CharsetUtf8), mediaType)
-    if (bodyStrSafe.length <= maxBodyStringLength) bodyStrSafe
-    else bodyStrSafe.subSequence(0, (maxBodyStringLength - truncatedBodySuffix.length) max 1) + truncatedBodySuffix
+    hideSensitiveInfo(new String(body, CharsetUtf8), mediaType)
   }
 
   @throws[IOException]
