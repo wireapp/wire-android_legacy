@@ -46,11 +46,7 @@ class EventPipeline(scheduler: => EventScheduler) extends (Seq[Event] => Future[
       verbose(l"Event going through the pipeline: ${event}")
       val rId = RConvEvent(event)
       val partialResults = stages.filter { e =>
-        val eligible = e.isEligible(event)
-        if(!eligible) {
-          verbose(l"Event ${event} is not processed by ${e}")
-        }
-        eligible
+        e.isEligible(event)
       }.map { stage =>
         Try {
           stage(rId, Seq(event)).map(_ => true).recover { case _ =>
