@@ -354,10 +354,10 @@ class MainActivity extends BaseActivity
               isNewClient <- z.userPrefs(IsNewClient).apply()
               pendingPw <- z.userPrefs(PendingPassword).apply()
               pendingEmail <- z.userPrefs(PendingEmail).apply()
-              ssoLogin <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
             } yield {
               val (f, t) =
-                if (ssoLogin) {
+                if (passwordManagedBySSO) {
                   if (self.handle.isEmpty) (SetHandleFragment(), SetHandleFragment.Tag)
                   else (new MainPhoneFragment, MainPhoneFragment.Tag)
                 }
@@ -375,10 +375,10 @@ class MainActivity extends BaseActivity
               self <- am.getSelf
               pendingPw <- am.storage.userPrefs(PendingPassword).apply()
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-              ssoLogin <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
             } yield {
               val (f, t) =
-                if (ssoLogin) (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
+                if (passwordManagedBySSO) (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
                 else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
                 else if (pendingEmail.isDefined) (VerifyEmailFragment(pendingEmail.get), VerifyEmailFragment.Tag)
                 else if (self.email.isEmpty) (AddEmailFragment(), AddEmailFragment.Tag)
@@ -390,10 +390,10 @@ class MainActivity extends BaseActivity
             for {
               self <- am.getSelf
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-              ssoLogin <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
+              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
             } {
               val (f, t) =
-                if (ssoLogin) {
+                if (passwordManagedBySSO) {
                   if (self.handle.isEmpty) (SetHandleFragment(), SetHandleFragment.Tag)
                   else (new MainPhoneFragment, MainPhoneFragment.Tag)
                 }

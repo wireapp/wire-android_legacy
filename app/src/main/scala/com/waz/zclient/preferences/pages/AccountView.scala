@@ -262,14 +262,14 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   team.map(_.map(_.name)).onUi(view.setTeam)
   view.setDomain(domain)
 
-  Signal.zip(isTeam, accounts.isActiveAccountSSO)
-    .map { case (team, sso) => team || sso }
+  Signal.zip(isTeam, accounts.activeAccountUsesCompanyLogin)
+    .map { case (team, companyLogin) => team || companyLogin }
     .onUi(t => view.setDeleteAccountEnabled(!t))
 
-  accounts.isActiveAccountSSO.onUi { sso =>
-    view.setEmailEnabled(!sso)
-    view.setResetPasswordEnabled(!sso)
-  }
+  accounts.activeAccountHasCompanyManagedPassword.onUi { managedByCompany => view.setResetPasswordEnabled(!managedByCompany) }
+
+  accounts.activeAccountUsesCompanyLogin.onUi { isCompanyLogin => view.setEmailEnabled(!isCompanyLogin) }
+
   isPhoneNumberEnabled.onUi(view.setPhoneNumberEnabled)
 
   view.onNameClick.onUi { _ =>
@@ -386,7 +386,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   view.onBackupClick.onUi { _ =>
-    Signal.zip(accounts.isActiveAccountSSO, email).head.map {
+    Signal.zip(accounts.activeAccountUsesCompanyLogin, email).head.map {
       case (true, _)        => navigator.goTo(BackupExportKey())
       case (false, Some(_)) => navigator.goTo(BackupExportKey())
       case _ =>

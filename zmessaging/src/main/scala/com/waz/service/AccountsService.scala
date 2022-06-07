@@ -94,11 +94,24 @@ trait AccountsService {
 
   def accountState(userId: UserId): Signal[AccountState]
 
-  def activeAccountId:      Signal[Option[UserId]]
-  def activeAccount:        Signal[Option[AccountData]]
-  def isActiveAccountSSO:   Signal[Boolean] = activeAccount.map(_.exists(_.ssoId.isDefined))
-  def activeAccountManager: Signal[Option[AccountManager]]
-  def activeZms:            Signal[Option[ZMessaging]]
+  def activeAccountId:                Signal[Option[UserId]]
+  def activeAccount:                  Signal[Option[AccountData]]
+
+  /**
+   * @return a Signal of Boolean that informs if the active account has a SSO Subject (i.e. the
+   *         account's password is managed by SSO and we should never ask the user for password confirmation).
+   *         It doesn't mean that the account isn't managed by SSO at all. For that, see [[activeAccountUsesCompanyLogin]].
+   */
+  def activeAccountHasCompanyManagedPassword: Signal[Boolean] = activeAccount.map(_.exists(_.ssoId.exists(_.subject.nonEmpty)))
+
+  /**
+   * @return a Signal of Boolean that informs if the active account is managed by SSO. It doesn't mean
+   *         that the account doesn't have a password. For that, see [[activeAccountHasCompanyManagedPassword]].
+   */
+  def activeAccountUsesCompanyLogin: Signal[Boolean] = activeAccount.map(_.exists(_.ssoId.isDefined))
+
+  def activeAccountManager:           Signal[Option[AccountManager]]
+  def activeZms:                      Signal[Option[ZMessaging]]
 
   def loginClient: LoginClient
 

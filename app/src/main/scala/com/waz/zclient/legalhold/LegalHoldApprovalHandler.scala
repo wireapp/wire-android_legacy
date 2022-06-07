@@ -42,11 +42,11 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
 
   private def showLegalHoldRequestDialog(showError: Boolean = false): Unit = {
     def showDialog(activity: FragmentActivity,
-                   isSso: Boolean,
+                   isPassManagedByCompany: Boolean,
                    fingerprint: String): Unit = {
       val fingerprintText = DevicesPreferencesUtil.getFormattedFingerprint(activity, fingerprint).toString
 
-      returning(LegalHoldRequestDialog.newInstance(isSso = isSso, fingerprintText, showError = showError)) { dialog =>
+      returning(LegalHoldRequestDialog.newInstance(isPasswordManagedByCompany = isPassManagedByCompany, fingerprintText, showError = showError)) { dialog =>
         dialog.onAccept.onUi(onLegalHoldAccepted)
         dialog.onDecline.onUi(_ => setFinished())
       }.show(activity.getSupportFragmentManager, LegalHoldRequestDialog.TAG)
@@ -56,14 +56,14 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
       if (!isShowingLegalHoldRequestDialog(activity)) {
 
         for {
-          request     <- legalHoldController.legalHoldRequest.head
-          isSso       <- accountsService.isActiveAccountSSO.head
-          fingerprint <- request match {
+          request               <- legalHoldController.legalHoldRequest.head
+          companyManagedPassword  <- accountsService.activeAccountHasCompanyManagedPassword.head
+          fingerprint           <- request match {
                            case Some(r) => legalHoldController.getFingerprint(r)
                            case None    => Future.successful(Option.empty)
                          }
-        } yield (request, isSso, fingerprint) match {
-          case (_, sso, Some(fp)) => showDialog(activity, sso, fp)
+        } yield (request, companyManagedPassword, fingerprint) match {
+          case (_, passwordManagedByCompany, Some(fp)) => showDialog(activity, passwordManagedByCompany, fp)
           case (Some(_), _, None) => showGeneralError()
           case _ =>
         }

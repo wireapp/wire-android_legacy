@@ -24,7 +24,7 @@ import com.waz.zclient.R
 class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
   import RemoveDeviceDialog._
 
-  override lazy val isSSO: Boolean = getArguments.getBoolean(IsSSOARG)
+  override lazy val isPasswordManagedByCompany: Boolean = getArguments.getBoolean(IsSSOARG)
 
   override lazy val errorMessage: Option[String] = Option(getArguments.getString(ErrorArg))
 
@@ -34,7 +34,7 @@ class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
   )
 
   override lazy val message: String = {
-    val resId = if (isSSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
+    val resId = if (isPasswordManagedByCompany) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
     getString(resId)
   }
 

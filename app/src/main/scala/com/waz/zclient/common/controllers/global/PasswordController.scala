@@ -55,7 +55,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       }
   }
 
-  val ssoEnabled:            Signal[Boolean] = accounts.isActiveAccountSSO
+  val ssoManagedPassword:    Signal[Boolean] = accounts.activeAccountHasCompanyManagedPassword
   val customPasswordEmpty:   Signal[Boolean] = customPassword.flatMap(_.signal.map(_.isEmpty))
   val appLockEnabled:        Signal[Boolean] = prefs.flatMap(_.preference(AppLockEnabled).signal)
   val appLockFeatureEnabled: Signal[Boolean] = prefs.flatMap(_.preference(AppLockFeatureEnabled).signal)

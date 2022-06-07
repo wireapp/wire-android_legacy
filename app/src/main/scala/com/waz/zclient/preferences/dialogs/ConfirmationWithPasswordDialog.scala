@@ -57,13 +57,13 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
 
   private lazy val dialogClickListener = new DialogInterface.OnClickListener {
     override def onClick(dialog: DialogInterface, which: Int): Unit = which match {
-      case DialogInterface.BUTTON_POSITIVE => providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
+      case DialogInterface.BUTTON_POSITIVE => providePassword(if (isPasswordManagedByCompany) None else Some(Password(passwordEditText.getText.toString)))
       case DialogInterface.BUTTON_NEGATIVE => onNegativeClick()
       case _ =>
     }
   }
 
-  def isSSO: Boolean
+  def isPasswordManagedByCompany: Boolean
   def errorMessage: Option[String]
   def title: String
   def message: String
@@ -71,9 +71,9 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
   def negativeButtonText: Int
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    passwordEditText.setVisible(!isSSO)
-    textInputLayout.setVisible(!isSSO)
-    forgotPasswordButton.setVisible(!isSSO)
+    passwordEditText.setVisible(!isPasswordManagedByCompany)
+    textInputLayout.setVisible(!isPasswordManagedByCompany)
+    forgotPasswordButton.setVisible(!isPasswordManagedByCompany)
     messageTextView.setText(message)
     errorMessage.foreach(textInputLayout.setError)
     new AlertDialog.Builder(getActivity)
