@@ -108,50 +108,50 @@ final class PushServiceImpl(selfUserId:        UserId,
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
 
   private def process(retry: Int = 0): Future[Unit] = {
+    val tag = UUID.randomUUID()
+    verbose(l"MM883 processing events ${tag}")
     if (retry > 3) Future.successful(())
     else
       Serialized.future(PipelineKey) {
-        val uid = UUID.randomUUID()
-        verbose(l"MM883 processing events ${uid}")
         val offset = System.currentTimeMillis()
         for {
           _         <- Future.successful(processing ! true)
           encrypted <- eventsStorage.encryptedEvents
           encryptedForLogging = encrypted.map { e => e.event.str }
-          _         = verbose(l"Encrypted from storage ${uid} ${encrypted.size}: ${encryptedForLogging.mkString(", ")}")
-          _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
+          _         = verbose(l"Encrypted from storage ${tag} ${encrypted.size}: ${encryptedForLogging.mkString(", ")}")
+          _         <- otrEventDecrypter.processEncryptedEvents(encrypted, tag)
           decrypted <- eventsStorage.getDecryptedRows
-          eventsForLogging = decrypted.map { e =>
+          decryptedEventsForLogging = decrypted.map { e =>
             e.plain match {
               case Some(x) => SafeBase64.encode(x)
-              case e => e.toString
+              case _ => e.toString
             }
           }
-          _         = verbose(l"Decrypted from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
+          _         = verbose(l"Decrypted from storage ${tag} ${decryptedEventsForLogging.size}/${decrypted.size}: ${decryptedEventsForLogging.mkString(", ")}")
           decoded   = decrypted.flatMap(d => otrEventDecoder.decode(d).map(e => d.index -> e))
-          _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded.mkString(", ")}")
+          _         = verbose(l"Decoded from storage ${tag} ${decoded.size}: ${decoded.mkString(", ")}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
-          _         = verbose(l"Processed from storage ${uid} ${processed.size}: ${processed.mkString(", ")}")
+          _         = verbose(l"Processed from storage ${tag} ${processed.size}: ${processed.mkString(", ")}")
           _         <- eventsStorage.removeRows(processed)
           decrLeft  <- eventsStorage.getDecryptedRows
         } yield
           if (decrLeft.isEmpty) {
             processing ! false
-            verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
+            verbose(l"$tag: Events processing finished, time: ${System.currentTimeMillis() - offset}ms")
           } else if (retry < 3) {
-            warn(l"Unable to process some events ($retry) (${decrLeft.size}): ${decrLeft.mkString(", ")}, trying again (${retry + 1}) after delay...")
+            warn(l"$tag: Unable to process some events ($retry) (${decrLeft.size}): ${decrLeft.mkString(", ")}, trying again (${retry + 1}) after delay...")
             CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
           } else {
-            warn(l"Unable to process some events (${decrLeft.size}): ${decrLeft.mkString(", ")}, deleting them")
+            warn(l"$tag: Unable to process some events (${decrLeft.size}): ${decrLeft.mkString(", ")}, deleting them")
             eventsStorage.removeRows(decrLeft.map(_.index)).foreach(_ => processing ! false)
           }
       }.recoverWith {
         case ex if retry >= 3 =>
           processing ! false
-          error(l"Unable to process events: ${ex} ${ex.getStackTrace.mkString("\n")}")
+          error(l"$tag: Unable to process events: ${ex} ${ex.getStackTrace.mkString("\n")}")
           Future.successful(())
         case ex =>
-          warn(l"Processing events failed, trying again (${retry + 1}) after delay... ${ex} ${ex.getStackTrace.mkString("\n")}")
+          warn(l"$tag: Processing events failed, trying again (${retry + 1}) after delay... ${ex} ${ex.getStackTrace.mkString("\n")}")
           CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
       }.map(_ => ())
   }

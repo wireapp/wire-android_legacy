@@ -56,21 +56,21 @@ final class FCMPushHandlerImpl(userId:      UserId,
     time.fold(Future.successful(()))(t => (beDriftPref := clock.instant.until(t)))
 
   private def processNotifications(notifications: Vector[PushNotificationEncoded]) = {
-    val uid = UUID.randomUUID()
-    verbose(l"MC884 Process notifications $uid: ${notifications.mkString(", ")}")
+    val tag = UUID.randomUUID()
+    verbose(l"MC884 Process notifications $tag: ${notifications.mkString(", ")}")
     for {
       encrypted <- storage.saveAll(notifications)
-      _         =  verbose(l"Saved to encrypted storage: ${encrypted.size}")
-      _         <- decrypter.processEncryptedEvents(encrypted)
+      _         =  verbose(l"Saved to encrypted storage $tag: ${encrypted.size}")
+      _         <- decrypter.processEncryptedEvents(encrypted, tag)
       decrypted <- storage.getDecryptedRows
       eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
-      _         = verbose(l"Extracted decrypted rows from storage ${uid} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
+      _         = verbose(l"Extracted decrypted rows from storage ${tag} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
       decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-      _         = verbose(l"Decoded from storage ${uid} ${decoded.size}: ${decoded.mkString(", ")}")
+      _         = verbose(l"Decoded from storage ${tag} ${decoded.size}: ${decoded.mkString(", ")}")
       notCalls  = processCalls(decoded)
-      _         = verbose(l"Events that are not calls ${uid} ${notCalls.size}: ${notCalls.mkString(", ")}")
+      _         = verbose(l"Events that are not calls ${tag} ${notCalls.size}: ${notCalls.mkString(", ")}")
       parsed    <- parser.parse(notCalls)
-      _         = verbose(l"Parsed from storage ${uid} ${parsed.size}: ${parsed.mkString(", ")}")
+      _         = verbose(l"Parsed from storage ${tag} ${parsed.size}: ${parsed.mkString(", ")}")
       _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
       _         <- updateLastId(notifications)
     } yield ()

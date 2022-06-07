@@ -10,10 +10,11 @@ import com.waz.service.tracking.TrackingService
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.CryptoException
 
+import java.util.UUID
 import scala.concurrent.Future
 
 trait EventDecrypter {
-  def processEncryptedEvents(events: Seq[PushNotificationEvent]): Future[Unit]
+  def processEncryptedEvents(events: Seq[PushNotificationEvent], tag: UUID): Future[Unit]
 }
 
 class EventDecrypterImpl(selfId:        UserId,
@@ -25,28 +26,35 @@ class EventDecrypterImpl(selfId:        UserId,
   import com.waz.threading.Threading.Implicits.Background
   import EventDecrypter._
 
-  override def processEncryptedEvents(events: Seq[PushNotificationEvent]): Future[Unit] =
+  override def processEncryptedEvents(events: Seq[PushNotificationEvent], tag: UUID): Future[Unit] = {
+    verbose(l"Starting to processEncryptedEvents ${tag}: ${events.size}")
     Future.traverse(events) {
-      case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
-      case event                         => storage.setAsDecrypted(event.index)
+      case event @ GetOtrEvent(otrEvent) =>
+        verbose(l"$tag: Decrypting event ${event.index}: ${AESUtils.base64(otrEvent.ciphertext)}")
+        decrypt(event.index, otrEvent, tag)
+      case event                         =>
+        verbose(l"$tag: Event is set as already decrypted: ${event.index}: $event")
+        storage.setAsDecrypted(event.index)
     }.map(_ => ())
+  }
 
-  private def decrypt(index: Int, otrEvent: OtrEvent): Future[Unit] =
-    decryptStoredOtrEvent(otrEvent, storage.writeClosure(index)).flatMap {
+  private def decrypt(index: Int, otrEvent: OtrEvent, tag: UUID): Future[Unit] =
+    decryptStoredOtrEvent(otrEvent, storage.writeClosure(index), tag).flatMap {
       case Left(Duplicate) =>
-        verbose(l"Ignoring duplicate message")
+        verbose(l"$tag: Ignoring duplicate message with index $index: ${AESUtils.base64(otrEvent.ciphertext)}")
         storage.remove(index)
       case Left(err) =>
         val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
-        error(l"Got error when decrypting: $e")
+        error(l"$tag: Got error when decrypting message with index $index: ${AESUtils.base64(otrEvent.ciphertext)}: $e")
         tracking().msgDecryptionFailed(otrEvent.convId, selfId)
         storage.writeError(index, e)
       case Right(_) =>
         Future.successful(())
     }
 
-  private def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]] =
+  private def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter, tag: UUID): Future[Either[OtrError, Unit]] =
     clients.getOrCreateClient(ev.from, ev.sender).flatMap { _ =>
+      verbose(l"$tag: after getOrCreateEvent for event ${AESUtils.base64(ev.ciphertext)}")
       sessions.decryptMessage(SessionId(ev, currentDomain), ev.ciphertext, eventWriter)
         .map(Right(_))
         .recoverWith {
@@ -54,14 +62,16 @@ class EventDecrypterImpl(selfId:        UserId,
             import CryptoException.Code._
             e.code match {
               case DUPLICATE_MESSAGE =>
-                verbose(l"detected duplicate message for event with text: ${AESUtils.base64(ev.ciphertext)}")
+                verbose(l"$tag: detected duplicate message for event with text: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(Duplicate))
               case OUTDATED_MESSAGE =>
-                error(l"detected outdated message for event: $ev")
+                error(l"$tag: detected outdated message for event: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(Duplicate))
               case REMOTE_IDENTITY_CHANGED =>
+                error(l"$tag: remove identity changed for event: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(IdentityChangedError(ev.from, ev.sender)))
               case _ =>
+                verbose(l"$tag: successfully decrypted event: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(DecryptionError(e.getMessage, Some(e.code.ordinal()), ev.from, ev.sender)))
             }
         }
