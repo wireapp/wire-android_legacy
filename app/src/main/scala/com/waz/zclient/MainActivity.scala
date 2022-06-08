@@ -354,7 +354,7 @@ class MainActivity extends BaseActivity
               isNewClient <- z.userPrefs(IsNewClient).apply()
               pendingPw <- z.userPrefs(PendingPassword).apply()
               pendingEmail <- z.userPrefs(PendingEmail).apply()
-              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
+              passwordManagedBySSO <- accountsService.activeAccountHasSamlCredentials.head
             } yield {
               val (f, t) =
                 if (passwordManagedBySSO) {
@@ -375,7 +375,7 @@ class MainActivity extends BaseActivity
               self <- am.getSelf
               pendingPw <- am.storage.userPrefs(PendingPassword).apply()
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
+              passwordManagedBySSO <- accountsService.activeAccountHasSamlCredentials.head
             } yield {
               val (f, t) =
                 if (passwordManagedBySSO) (OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag)
@@ -390,7 +390,7 @@ class MainActivity extends BaseActivity
             for {
               self <- am.getSelf
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
-              passwordManagedBySSO <- accountsService.activeAccountHasCompanyManagedPassword.head
+              passwordManagedBySSO <- accountsService.activeAccountHasSamlCredentials.head
             } {
               val (f, t) =
                 if (passwordManagedBySSO) {

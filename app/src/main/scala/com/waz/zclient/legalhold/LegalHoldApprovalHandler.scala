@@ -57,7 +57,7 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
 
         for {
           request               <- legalHoldController.legalHoldRequest.head
-          companyManagedPassword  <- accountsService.activeAccountHasCompanyManagedPassword.head
+          companyManagedPassword  <- accountsService.activeAccountHasSamlCredentials.head
           fingerprint           <- request match {
                            case Some(r) => legalHoldController.getFingerprint(r)
                            case None    => Future.successful(Option.empty)
