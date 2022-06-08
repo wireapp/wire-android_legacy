@@ -206,12 +206,13 @@ object AccountBackStackKey {
 class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context)
   extends Injectable with DerivedLogTag {
 
-  val zms                = inject[Signal[ZMessaging]]
-  val self               = zms.flatMap(_.users.selfUser)
-  val team               = zms.flatMap(_.teams.selfTeam)
-  val accounts           = inject[AccountsService]
-  implicit val uiStorage = inject[UiStorage]
-  val navigator          = inject[BackStackNavigator]
+  val zms                 = inject[Signal[ZMessaging]]
+  val self                = zms.flatMap(_.users.selfUser)
+  val team                = zms.flatMap(_.teams.selfTeam)
+  val accounts            = inject[AccountsService]
+  implicit val uiStorage  = inject[UiStorage]
+  val navigator           = inject[BackStackNavigator]
+  val accountsController  = inject[UserAccountsController]
 
   val isTeam = team.map(_.isDefined)
   val phone  = self.map(_.phone)
@@ -257,14 +258,17 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   team.map(_.map(_.name)).onUi(view.setTeam)
   view.setDomain(domain)
 
-  Signal.zip(isTeam, accounts.isActiveAccountSSO)
-    .map { case (team, sso) => team || sso }
-    .onUi(t => view.setDeleteAccountEnabled(!t))
+  isTeam.onUi(isTeamMember => view.setDeleteAccountEnabled(!isTeamMember))
 
-  accounts.isActiveAccountSSO.onUi { sso =>
-    view.setEmailEnabled(!sso)
-    view.setResetPasswordEnabled(!sso)
+  accounts.activeAccountHasSamlCredentials.onUi { managedBySSO => view.setResetPasswordEnabled(!managedBySSO) }
+
+  Signal.zip(accountsController.isManagedByWire, accounts.activeAccountHasSamlCredentials)
+    .map { case (isManagedByWire: Boolean, hasSamlCredentials: Boolean) =>
+      isManagedByWire && !hasSamlCredentials
+    }.onUi { shouldEnableEmailEditing =>
+    view.setEmailEnabled(shouldEnableEmailEditing)
   }
+
   isPhoneNumberEnabled.onUi(view.setPhoneNumberEnabled)
 
   view.onNameClick.onUi { _ =>
@@ -381,8 +385,8 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   view.onBackupClick.onUi { _ =>
-    Signal.zip(accounts.isActiveAccountSSO, email).head.map {
-      case (true, _)        => navigator.goTo(BackupExportKey())
+    Signal.zip(accountsController.isManagedByThirdParties, email).head.map {
+      case (true, _) => navigator.goTo(BackupExportKey())
       case (false, Some(_)) => navigator.goTo(BackupExportKey())
       case _ =>
         showAlertDialog(context,
@@ -412,7 +416,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   private def finishPreferencesActivity() =
     Option(context.asInstanceOf[Activity]).foreach(_.finish())
 
-  inject[UserAccountsController].readReceiptsEnabled.onUi(view.setReadReceipt)
+  accountsController.readReceiptsEnabled.onUi(view.setReadReceipt)
 
   view.onReadReceiptSwitch.foreach { enabled =>
     zms.head.flatMap(_.propertiesService.setReadReceiptsEnabled(enabled))(Threading.Background)
