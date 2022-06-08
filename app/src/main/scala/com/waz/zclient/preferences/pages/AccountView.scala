@@ -178,11 +178,6 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     handleButton.setEnabled(!locked)
     emailButton.setEnabled(!locked)
     phoneButton.setEnabled(!locked)
-    pictureButton.setEnabled(!locked)
-    colorButton.setEnabled(!locked)
-    appearanceHeader.setVisible(!locked)
-    pictureButton.setVisible(!locked)
-    colorButton.setVisible(!locked)
   }
 }
 
