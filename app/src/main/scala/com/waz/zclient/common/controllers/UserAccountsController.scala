@@ -69,6 +69,10 @@ class UserAccountsController(implicit injector: Injector, context: Context)
 
   lazy val isTeam: Signal[Boolean] = teamId.map(_.isDefined)
 
+  lazy val isManagedByThirdParties: Signal[Boolean] = currentUser.map(_.exists(_.isReadOnlyProfile))
+
+  lazy val isManagedByWire = isManagedByThirdParties.map(!_)
+
   lazy val teamData = for {
     zms <- zms
     teamData <- zms.teams.selfTeam
