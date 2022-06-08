@@ -71,7 +71,7 @@ class EventDecrypterImpl(selfId:        UserId,
                 error(l"$tag: remove identity changed for event: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(IdentityChangedError(ev.from, ev.sender)))
               case _ =>
-                verbose(l"$tag: successfully decrypted event: ${AESUtils.base64(ev.ciphertext)}")
+                verbose(l"$tag: error ${e.code.ordinal()} in decrypting event: ${AESUtils.base64(ev.ciphertext)}")
                 Future.successful(Left(DecryptionError(e.getMessage, Some(e.code.ordinal()), ev.from, ev.sender)))
             }
         }

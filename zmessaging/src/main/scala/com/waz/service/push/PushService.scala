@@ -172,6 +172,7 @@ final class PushServiceImpl(selfUserId:        UserId,
 
   private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
     if (nots.nonEmpty) {
+      verbose(l"MC86: Storing received notifications: ${nots.mkString(", ")}")
       for {
         _   <- eventsStorage.saveAll(nots)
         res =  nots.lift(nots.lastIndexWhere(!_.transient))

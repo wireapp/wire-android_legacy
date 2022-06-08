@@ -91,7 +91,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
     def decrypt(arg: Option[CryptoBox]): (CryptoSession, Array[Byte]) = arg match {
       case None => throw new Exception("CryptoBox missing")
       case Some(cb) =>
-        verbose(l"decryptMessage($sessionId. Message length: ${msg.length})")
+        verbose(l"decryptMessage($sessionId. Message length: ${msg.length}): ${AESUtils.base64(msg)}")
         loadSession(cb, sessionId).fold {
           val sm = cb.initSessionFromMessage(sessionId.toString, msg)
           onCreate ! sessionId
@@ -104,9 +104,10 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
 
     dispatchFut(sessionId) { opt =>
       val (session, plain) = decrypt(opt)
+      verbose(l"PRE-SAVE: decrypted from: ${AESUtils.base64(msg)} to: ${AESUtils.base64(plain)} data len: ${plain.length}")
       eventsWriter(plain).map { _ =>
         session.save()
-        verbose(l"decrypted from: ${AESUtils.base64(msg)} to: ${AESUtils.base64(plain)} data len: ${plain.length}")
+        verbose(l"POST-SAVE decrypted from: ${AESUtils.base64(msg)} to: ${AESUtils.base64(plain)} data len: ${plain.length}")
       }
     }
   }
