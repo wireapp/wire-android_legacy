@@ -24,7 +24,7 @@ import com.waz.zclient.R
 class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
   import RemoveDeviceDialog._
 
-  override lazy val isPasswordManagedByCompany: Boolean = getArguments.getBoolean(IsSSOARG)
+  override lazy val isPasswordManagedBySSO: Boolean = getArguments.getBoolean(IsPasswordManagedBySSOArg)
 
   override lazy val errorMessage: Option[String] = Option(getArguments.getString(ErrorArg))
 
@@ -34,7 +34,7 @@ class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
   )
 
   override lazy val message: String = {
-    val resId = if (isPasswordManagedByCompany) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
+    val resId = if (isPasswordManagedBySSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
     getString(resId)
   }
 
@@ -47,14 +47,14 @@ object RemoveDeviceDialog {
   val FragmentTag = RemoveDeviceDialog.getClass.getSimpleName
   private val NameArg  = "ARG_NAME"
   private val ErrorArg = "ARG_ERROR"
-  private val IsSSOARG = "ARG_IS_SSO"
+  private val IsPasswordManagedBySSOArg = "ARG_IS_PASS_MANAGED_BY_SSO"
 
-  def newInstance(deviceName: String, error: Option[String], isSSO: Boolean): RemoveDeviceDialog =
+  def newInstance(deviceName: String, error: Option[String], passwordManagedBySSO: Boolean): RemoveDeviceDialog =
     returning(new RemoveDeviceDialog) {
       _.setArguments(returning(new Bundle()) { b =>
         b.putString(NameArg, deviceName)
         error.foreach(b.putString(ErrorArg, _))
-        b.putBoolean(IsSSOARG, isSSO)
+        b.putBoolean(IsPasswordManagedBySSOArg, passwordManagedBySSO)
       })
     }
 

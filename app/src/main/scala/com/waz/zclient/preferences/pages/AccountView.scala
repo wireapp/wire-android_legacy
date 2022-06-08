@@ -265,7 +265,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   isTeam.onUi(isTeamMember => view.setDeleteAccountEnabled(!isTeamMember))
 
-  accounts.activeAccountHasSamlCredentials.onUi { managedByCompany => view.setResetPasswordEnabled(!managedByCompany) }
+  accounts.activeAccountHasSamlCredentials.onUi { managedBySSO => view.setResetPasswordEnabled(!managedBySSO) }
 
   Signal.zip(accountsController.isManagedByWire, accounts.activeAccountHasSamlCredentials)
     .map { case (isManagedByWire: Boolean, hasSamlCredentials: Boolean) =>
