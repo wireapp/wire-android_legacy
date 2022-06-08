@@ -262,9 +262,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   team.map(_.map(_.name)).onUi(view.setTeam)
   view.setDomain(domain)
 
-  Signal.zip(isTeam, accounts.activeAccountUsesCompanyLogin)
-    .map { case (team, companyLogin) => team || companyLogin }
-    .onUi(t => view.setDeleteAccountEnabled(!t))
+  isTeam.onUi(t => view.setDeleteAccountEnabled(!t))
 
   accounts.activeAccountHasCompanyManagedPassword.onUi { managedByCompany => view.setResetPasswordEnabled(!managedByCompany) }
 
