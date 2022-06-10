@@ -61,18 +61,18 @@ final class FCMPushHandlerImpl(userId:      UserId,
     for {
       encrypted <- storage.saveAll(notifications)
       _         =  verbose(l"Saved to encrypted storage $tag: ${encrypted.size}")
-      _         <- decrypter.processEncryptedEvents(encrypted, tag)
-      decrypted <- storage.getDecryptedRows
-      eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
-      _         = verbose(l"Extracted decrypted rows from storage ${tag} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
-      decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-      _         = verbose(l"Decoded from storage ${tag} ${decoded.size}: ${decoded.mkString(", ")}")
-      notCalls  = processCalls(decoded)
-      _         = verbose(l"Events that are not calls ${tag} ${notCalls.size}: ${notCalls.mkString(", ")}")
-      parsed    <- parser.parse(notCalls)
-      _         = verbose(l"Parsed from storage ${tag} ${parsed.size}: ${parsed.mkString(", ")}")
-      _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
-      _         <- updateLastId(notifications)
+//      _         <- decrypter.processEncryptedEvents(encrypted, tag)
+//      decrypted <- storage.getDecryptedRows
+//      eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
+//      _         = verbose(l"Extracted decrypted rows from storage ${tag} ${eventsForLogging.size}: ${eventsForLogging.mkString(", ")}")
+//      decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
+//      _         = verbose(l"Decoded from storage ${tag} ${decoded.size}: ${decoded.mkString(", ")}")
+//      notCalls  = processCalls(decoded)
+//      _         = verbose(l"Events that are not calls ${tag} ${notCalls.size}: ${notCalls.mkString(", ")}")
+//      parsed    <- parser.parse(notCalls)
+//      _         = verbose(l"Parsed from storage ${tag} ${parsed.size}: ${parsed.mkString(", ")}")
+//      _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
+//      _         <- updateLastId(notifications)
     } yield ()
   }
 
