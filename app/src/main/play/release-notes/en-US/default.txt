@@ -1,3 +1,4 @@
 Fixed:
-  Team-enforced self-deleting messages are now correctly disabling the button to change it
-  Fixed a bug where the receiver-side of self-deleting messages would fail to delete messages containing files, audios or images.
+  Black screen after logging-in on some accounts created with SSO
+  Failure on creating a team
+  UI unresponsive on some devices after navigating in and out of the main screen
