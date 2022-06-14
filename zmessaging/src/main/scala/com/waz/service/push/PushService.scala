@@ -120,6 +120,8 @@ final class PushServiceImpl(selfUserId:        UserId,
           encryptedForLogging = encrypted.map { e => e.event.str }
           _         = verbose(l"Encrypted from storage ${tag} ${encrypted.size}: ${encryptedForLogging.mkString(", ")}")
           _         <- otrEventDecrypter.processEncryptedEvents(encrypted, tag)
+          all       <- eventsStorage.getAllRows
+          _         = verbose(l"$tag: All rows in DB ${all.size}: ${all.mkString(", ")}")
           decrypted <- eventsStorage.getDecryptedRows
           decryptedEventsForLogging = decrypted.map { e =>
             e.plain match {

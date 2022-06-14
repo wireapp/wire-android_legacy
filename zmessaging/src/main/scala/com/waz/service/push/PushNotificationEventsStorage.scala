@@ -28,6 +28,7 @@ import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
 import com.waz.sync.client.PushNotificationEncoded
 import com.waz.utils.TrimmingLruCache.Fixed
+import com.waz.utils.crypto.AESUtils
 import com.wire.signals.EventContext
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache, returning}
 
@@ -49,6 +50,7 @@ trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotifi
   def removeRows(rows: Iterable[Int]): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
   def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]]
+  def getAllRows: Future[IndexedSeq[PushNotificationEvent]]
 }
 
 final class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
@@ -66,7 +68,10 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   }
 
   override def writeClosure(index: EventIndex): PlainWriter =
-    (plain: Array[Byte]) => update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
+    (plain: Array[Byte]) => {
+      verbose(l"Saving event with index ${index} as decrypted with plaintext ${AESUtils.base64(plain)}")
+      update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
+    }
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
     update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
@@ -95,6 +100,9 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
 
   override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
+
+  override def getAllRows: Future[IndexedSeq[PushNotificationEvent]] =
+    storage.read { implicit db => PushNotificationEventsDao.listAll }
 
   def removeRows(rows: Iterable[Int]): Future[Unit] = removeAll(rows)
 
