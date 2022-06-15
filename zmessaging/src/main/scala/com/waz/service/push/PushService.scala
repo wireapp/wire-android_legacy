@@ -115,6 +115,8 @@ final class PushServiceImpl(selfUserId:        UserId,
       Serialized.future(PipelineKey) {
         val offset = System.currentTimeMillis()
         for {
+          preAll    <- eventsStorage.getAllRows
+          _         = verbose(l"$tag: When starting, the DB rows are ${preAll.mkString(", ")}")
           _         <- Future.successful(processing ! true)
           encrypted <- eventsStorage.encryptedEvents
           encryptedForLogging = encrypted.map { e => e.event.str }
@@ -122,6 +124,8 @@ final class PushServiceImpl(selfUserId:        UserId,
           _         <- otrEventDecrypter.processEncryptedEvents(encrypted, tag)
           all       <- eventsStorage.getAllRows
           _         = verbose(l"$tag: All rows in DB ${all.size}: ${all.mkString(", ")}")
+          stillEncrypted <- eventsStorage.encryptedEvents
+          _         = verbose(l"$tag: Still encrypted in DB ${stillEncrypted.size}: ${stillEncrypted.mkString(", ")}")
           decrypted <- eventsStorage.getDecryptedRows
           decryptedEventsForLogging = decrypted.map { e =>
             e.plain match {

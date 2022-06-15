@@ -59,8 +59,12 @@ final class FCMPushHandlerImpl(userId:      UserId,
     val tag = UUID.randomUUID()
     verbose(l"MC884 Process notifications $tag: ${notifications.mkString(", ")}")
     for {
+      preAll    <- storage.getAllRows
+      _         = verbose(l"$tag: Before saving, the DB rows are ${preAll.mkString(", ")}")
       encrypted <- storage.saveAll(notifications)
-      _         =  verbose(l"Saved to encrypted storage $tag: ${encrypted.size}")
+      _         =  verbose(l"Saved to encrypted storage $tag: ${encrypted.size}: ${encrypted.mkString(", ")}")
+      all       <- storage.getAllRows
+      _         = verbose(l"$tag: After saving, the DB rows are ${all.mkString(", ")}")
 //      _         <- decrypter.processEncryptedEvents(encrypted, tag)
 //      decrypted <- storage.getDecryptedRows
 //      eventsForLogging = decrypted.map { e => SafeBase64.encode(e.plain.get) }
