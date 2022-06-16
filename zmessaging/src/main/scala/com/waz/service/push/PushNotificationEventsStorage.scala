@@ -71,6 +71,10 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     (plain: Array[Byte]) => {
       verbose(l"Saving event with index ${index} as decrypted with plaintext ${AESUtils.base64(plain)}")
       update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
+      for {
+        allDecrypted <- this.getDecryptedRows
+        _           = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
+      } yield ()
     }
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
@@ -91,7 +95,10 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
         eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
-      ) { insertAll }
+      ) {
+        // TODO: MARCO: this line could be the culprit of overwriting decrypted messages
+        insertAll
+      }
     }.future
   }
 
