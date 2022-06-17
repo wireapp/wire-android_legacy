@@ -180,7 +180,7 @@ final class PushServiceImpl(selfUserId:        UserId,
     if (nots.nonEmpty) {
       verbose(l"MC86: Storing received notifications: ${nots.mkString(", ")}")
       for {
-        _   <- eventsStorage.saveAll(nots)
+        _   <- eventsStorage.saveAllNew(nots)
         res =  nots.lift(nots.lastIndexWhere(!_.transient))
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
       } yield ()

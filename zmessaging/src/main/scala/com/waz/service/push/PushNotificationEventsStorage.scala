@@ -45,7 +45,7 @@ trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotifi
   def setAsDecrypted(index: EventIndex): Future[Unit]
   def writeClosure(index: EventIndex): PlainWriter
   def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit]
-  def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
+  def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
   def encryptedEvents: Future[Seq[PushNotificationEvent]]
   def removeRows(rows: Iterable[Int]): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
@@ -81,7 +81,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
       .map(_ => Unit)
 
-  override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
+  override def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
     val eventsToSave = pushNotifications.flatMap { pn =>
       val (valid, invalid) = pn.events.partition(_.isForUs(clientId))
       invalid.foreach { event => verbose(l"Skipping otr event not intended for us: $event") }
@@ -95,10 +95,13 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
         eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
-      ) {
-        // TODO: MARCO: this line could be the culprit of overwriting decrypted messages
-        insertAll
-      }
+      ) { eventsToInsert =>
+          for {
+            decrypted <- getDecryptedRows
+            alreadyDecryptedPushIds   = decrypted.map { _.pushId }.toSet
+            newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
+          } yield(insertAll(newEvents))
+        }
     }.future
   }
 

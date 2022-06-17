@@ -61,7 +61,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
     for {
       preAll    <- storage.getAllRows
       _         = verbose(l"$tag: Before saving, the DB rows are ${preAll.mkString(", ")}")
-      encrypted <- storage.saveAll(notifications)
+      encrypted <- storage.saveAllNew(notifications)
       _         =  verbose(l"Saved to encrypted storage $tag: ${encrypted.size}: ${encrypted.mkString(", ")}")
       all       <- storage.getAllRows
       _         = verbose(l"$tag: After saving, the DB rows are ${all.mkString(", ")}")
