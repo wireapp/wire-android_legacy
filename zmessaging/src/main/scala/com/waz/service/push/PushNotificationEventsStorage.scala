@@ -70,12 +70,14 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   override def writeClosure(index: EventIndex): PlainWriter =
     (plain: Array[Byte]) => {
       verbose(l"Saving event with index ${index} as decrypted with plaintext ${AESUtils.base64(plain)}")
-      update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
-      for {
-        allDecrypted <- this.getDecryptedRows
-        _           = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
-      } yield ()
-    }
+      storage.withTransaction { implicit db =>
+        for {
+          _ <- update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
+          allDecrypted <- this.getDecryptedRows
+          _ = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
+        } yield ()
+      }
+    }.future.map({ _ => ()})
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
     update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
