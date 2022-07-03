@@ -102,6 +102,8 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
             decrypted <- getDecryptedRows
             alreadyDecryptedPushIds   = decrypted.map { _.pushId }.toSet
             newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
+            notNewEvents = eventsToInsert.filter { e => alreadyDecryptedPushIds.contains(e.pushId) }
+            _ = verbose(l"When saving new notifications, skipping ${notNewEvents.size} notification because already decrypted: $notNewEvents")
           } yield(insertAll(newEvents))
         }
     }.future
