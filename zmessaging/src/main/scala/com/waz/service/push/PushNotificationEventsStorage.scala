@@ -103,7 +103,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
             alreadyDecryptedPushIds   = decrypted.map { _.pushId }.toSet
             newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
             notNewEvents = eventsToInsert.filter { e => alreadyDecryptedPushIds.contains(e.pushId) }
-            _ = verbose(l"When saving new notifications, skipping ${notNewEvents.size} notification because already decrypted: $notNewEvents")
+            _ = verbose(l"PUSHSAVE33 When saving new notifications, already decrypted: $decrypted\nOriginally attempting to save: $eventsToInsert\nBut saving only: $newEvents\nSkipping because already decrypted: $notNewEvents")
           } yield(insertAll(newEvents))
         }
     }.future
