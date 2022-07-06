@@ -231,6 +231,8 @@ trait CachedStorage[K, V <: Identifiable[K]] {
 
   def insert(v: V): Future[V]
   def insertAll(vs: Traversable[V]): Future[Set[V]]
+  def insertAllIfNotExists(vs: Traversable[V]): Future[Set[V]]
+
 
   def get(key: K): Future[Option[V]]
   def getOrCreate(key: K, creator: => V): Future[V]
@@ -380,6 +382,9 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   def insertAll(vs: Traversable[V]) =
     updateOrCreateAll(vs.map { v => v.id -> { (_: Option[V]) => v } }(breakOut))
 
+  def insertAllIfNotExists(vs: Traversable[V]) =
+    insertIfNotExists(vs.map { v => v.id -> { (_: Option[V]) => v } }(breakOut))
+
   def get(key: K): Future[Option[V]] = cachedOrElse(key, Future { cachedOrElse(key, loadFromDb(key)) }.flatMap(identity))
 
   def getOrCreate(key: K, creator: => V): Future[V] = get(key) flatMap { value =>
@@ -479,6 +484,39 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
         db(save(toSave.result)(_)).future.map { _ =>
           if (addedResult.nonEmpty) tellAdded(addedResult)
           if (updatedResult.nonEmpty) tellUpdated(updatedResult)
+          result
+        }
+      }
+    }
+
+  def insertIfNotExists(updaters: K Map (Option[V] => V)): Future[Set[V]] =
+    insertIfNotExists2(updaters.keys.toVector, { (key, v) => updaters(key)(v)})
+
+  def insertIfNotExists2(keys: Iterable[K], updater: ((K, Option[V]) => V)): Future[Set[V]] =
+    if (keys.isEmpty) Future successful Set.empty[V]
+    else {
+      getAll(keys) flatMap { values =>
+        val loaded: Map[K, Option[V]] = keys.iterator.zip(values.iterator).map { case (k, v) => k -> Option(cache.get(k)).flatten.orElse(v) }.toMap
+        val toSave = Vector.newBuilder[V]
+        val added = Vector.newBuilder[V]
+
+        val result = keys .map { key =>
+          val current = loaded.get(key).flatten
+          val next = updater(key, current)
+          current match {
+            case None =>
+              cache.put(key, Some(next))
+              toSave += next
+              added += next
+            case Some(_) => // ignore
+          }
+          next
+        } .toSet
+
+        val addedResult = added.result
+
+        db(save(toSave.result)(_)).future.map { _ =>
+          if (addedResult.nonEmpty) tellAdded(addedResult)
           result
         }
       }

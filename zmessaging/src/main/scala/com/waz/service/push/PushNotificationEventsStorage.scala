@@ -98,13 +98,17 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
       ) { eventsToInsert =>
+          verbose(l"PUSHSAVE32 I want to insert the following events: $eventsToInsert")
           for {
             decrypted <- getDecryptedRows
             alreadyDecryptedPushIds   = decrypted.map { _.pushId }.toSet
             newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
             notNewEvents = eventsToInsert.filter { e => alreadyDecryptedPushIds.contains(e.pushId) }
-            _ = verbose(l"PUSHSAVE33 When saving new notifications, already decrypted: $decrypted\nOriginally attempting to save: $eventsToInsert\nBut saving only: $newEvents\nSkipping because already decrypted: $notNewEvents")
-          } yield(insertAll(newEvents))
+            _ = verbose(l"PUSHSAVE33 When saving new notifications, already decrypted: $decrypted Originally attempting to save: $eventsToInsert But saving only: $newEvents Skipping because already decrypted: $notNewEvents")
+          } yield({
+            verbose(l"PUSHSAVE34 Decided to save the following events: $newEvents")
+            insertAllIfNotExists(newEvents)
+          })
         }
     }.future
   }
