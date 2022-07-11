@@ -77,7 +77,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
           _ = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
         } yield ()
       }
-    }.future.map({ _ => ()})
+    }.future.flatMap(identity)
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
     update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
@@ -106,10 +106,10 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
             newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
             notNewEvents = eventsToInsert.filter { e => alreadyDecryptedPushIds.contains(e.pushId) }
             _ = verbose(l"$tag PUSHSAVE33 When saving new notifications, already decrypted: ${decrypted.mkString(",")} Originally attempting to save: ${eventsToInsert.mkString(",")} But saving only: ${newEvents.mkString(",")} Skipping because already decrypted: ${notNewEvents.mkString(",")}")
-          } yield({
+          } yield {
             verbose(l"$tag PUSHSAVE34 Decided to save the following events: ${newEvents.mkString(",")}")
-            insertAllIfNotExists(newEvents)
-          })
+            return insertAllIfNotExists(newEvents).map(_.toSeq)
+          }
         }
     }.future
   }
