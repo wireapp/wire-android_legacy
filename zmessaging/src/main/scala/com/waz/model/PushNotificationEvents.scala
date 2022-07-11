@@ -24,19 +24,17 @@ import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 
 object PushNotificationEvents {
-  implicit object PushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
+  implicit object EncryptedPushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
     private val PushId = id[Uid]('pushId).apply(_.pushId)
     private val Index = int('event_index)(_.index)
-    private val Decrypted = bool('decrypted)(_.decrypted)
     private val EventStr = text('event)(_.event.str)
-    private val Plain = opt(blob('plain))(_.plain)
     private val Transient = bool('transient)(_.transient)
 
     override val idCol = Index
-    override val table = Table("PushNotificationEvents", PushId, Index, Decrypted, EventStr, Plain, Transient)
+    override val table = Table("EncryptedPushNotificationEvents", PushId, Index, EventStr, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
-      PushNotificationEvent(PushId, Index, Decrypted, EncodedEvent(cursor.getString(3)), Plain, Transient)
+      PushNotificationEvent(PushId, Index, false, EncodedEvent(cursor.getString(3)), None, Transient)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -44,11 +42,31 @@ object PushNotificationEvents {
 
     def maxIndex()(implicit db: DB): Int = queryForLong(maxWithDefault(Index.name)).toInt
 
-    def listDecrypted()(implicit db: DB): Vector[PushNotificationEvent] =
-      list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC"))
+    def listAll()(implicit db: DB): Vector[PushNotificationEvent] =
+      list(db.query(table.name, null, null, null, null, null, "event_index ASC"))
+  }
 
-    def listEncrypted()(implicit db: DB): Vector[PushNotificationEvent] =
-      list(db.query(table.name, null, s"${Decrypted.name} = 0", null, null, null, "event_index ASC"))
+  implicit object DecryptedPushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
+    private val PushId = id[Uid]('pushId).apply(_.pushId)
+    private val Index = int('event_index)(_.index)
+    private val EventStr = text('event)(_.event.str)
+    private val Plain = opt(blob('plain))(_.plain)
+    private val Transient = bool('transient)(_.transient)
+
+    override val idCol = Index
+    override val table = Table("DecryptedPushNotificationEvents", PushId, Index, EventStr, Plain, Transient)
+
+    override def apply(implicit cursor: DBCursor): PushNotificationEvent =
+      PushNotificationEvent(PushId, Index, true, EncodedEvent(cursor.getString(3)), Plain, Transient)
+
+    override def onCreate(db: DB): Unit = {
+      super.onCreate(db)
+    }
+
+    def maxIndex()(implicit db: DB): Int = queryForLong(maxWithDefault(Index.name)).toInt
+
+    def listAll()(implicit db: DB): Vector[PushNotificationEvent] =
+      list(db.query(table.name, null, null, null, null, null, "event_index ASC"))
   }
 }
 

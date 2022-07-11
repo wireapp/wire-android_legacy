@@ -34,7 +34,7 @@ class EventDecrypterImpl(selfId:        UserId,
     decryptStoredOtrEvent(otrEvent, storage.writeClosure(index)).flatMap {
       case Left(Duplicate) =>
         verbose(l"Ignoring duplicate message")
-        storage.remove(index)
+        storage.removeEncryptedEvent(index)
       case Left(err) =>
         val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
         error(l"Got error when decrypting: $e")

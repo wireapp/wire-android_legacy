@@ -36,7 +36,7 @@ import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model.Liking.LikingDao
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.MsgDeletion.MsgDeletionDao
-import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
+import com.waz.model.PushNotificationEvents.{DecryptedPushNotificationEventsDao, EncryptedPushNotificationEventsDao}
 import com.waz.model.ReadReceipt.ReadReceiptDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model._
@@ -65,7 +65,7 @@ object ZMessagingDB {
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
     MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao,
     UserClientsDao, LikingDao, MsgDeletionDao, EditHistoryDao,
-    PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
+    EncryptedPushNotificationEventsDao, DecryptedPushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
     AssetDao, FolderDataDao, ConversationFolderDataDao,
     ConversationRoleActionDao, ButtonDataDao, MessageContentIndexDao
   )
