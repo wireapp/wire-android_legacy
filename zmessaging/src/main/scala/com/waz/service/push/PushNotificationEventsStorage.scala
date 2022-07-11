@@ -22,7 +22,7 @@ import com.waz.content.Database
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
+import com.waz.model.PushNotificationEvents.{DecryptedPushNotificationEventsDao, EncryptedPushNotificationEventsDao}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
@@ -41,30 +41,48 @@ object PushNotificationEventsStorage {
   type EventHandler = () => Future[Unit]
 }
 
-trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotificationEvent] {
+trait PushNotificationEventsStorage {
   def setAsDecrypted(index: EventIndex): Future[Unit]
   def writeClosure(index: EventIndex): PlainWriter
   def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit]
   def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
   def encryptedEvents: Future[Seq[PushNotificationEvent]]
-  def removeRows(rows: Iterable[Int]): Future[Unit]
+  def removeDecryptedEvents(rows: Iterable[Int]): Future[Unit]
+  def removeEncryptedEvent(index: EventIndex): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
   def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]]
   def getAllRows: Future[IndexedSeq[PushNotificationEvent]]
 }
 
 final class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
-  extends CachedStorageImpl[EventIndex, PushNotificationEvent](
-    new TrimmingLruCache(context, Fixed(1024*1024)), storage)(PushNotificationEventsDao, LogTag("PushNotificationEvents_Cached")
-  ) with PushNotificationEventsStorage with DerivedLogTag {
+  extends PushNotificationEventsStorage with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  override def setAsDecrypted(index: EventIndex): Future[Unit] = {
-    update(index, u => u.copy(decrypted = true)).map {
-      case None =>
-        throw new IllegalStateException(s"Failed to set event with index $index as decrypted")
-      case _ => ()
+  val encryptedStorage = new CachedStorageImpl[EventIndex, PushNotificationEvent](
+    new TrimmingLruCache(context, Fixed(1024*1024)), storage)(EncryptedPushNotificationEventsDao, LogTag("EncryptedPushNotificationEvents_Cached")
+  )
+
+  val decryptedStorage = new CachedStorageImpl[EventIndex, PushNotificationEvent](
+    new TrimmingLruCache(context, Fixed(1024*1024)), storage)(DecryptedPushNotificationEventsDao, LogTag("DecryptedPushNotificationEvents_Cached")
+  )
+
+  private def insertDecryptedVersion(event: PushNotificationEvent, plain: Option[Array[Byte]]): Future[Unit] = {
+    storage.withTransaction { implicit db =>
+      val curIndex = EncryptedPushNotificationEventsDao.maxIndex()
+      val nextIndex = if (curIndex == -1) 0 else curIndex + 1
+      val newEvent = event.copy(index = nextIndex, decrypted = true, plain = plain)
+      for {
+        _ <- decryptedStorage.insert(newEvent)
+        _ <- encryptedStorage.remove(event.index)
+      } yield ()
     }
+  }.future.flatMap(identity)
+
+  override def setAsDecrypted(index: EventIndex): Future[Unit] = {
+    for {
+      event <- encryptedStorage.get(index)
+      _ <- decryptedStorage.insert(event.get)
+    } yield()
   }
 
   override def writeClosure(index: EventIndex): PlainWriter =
@@ -72,16 +90,26 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
       verbose(l"Saving event with index ${index} as decrypted with plaintext ${AESUtils.base64(plain)}")
       storage.withTransaction { implicit db =>
         for {
-          _ <- update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
+          event <- encryptedStorage.get(index)
+          _ <- insertDecryptedVersion(event.get, Some(plain))
           allDecrypted <- this.getDecryptedRows
           _ = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
-        } yield ()
+
+        } yield()
       }
-    }.future.map({ _ => ()})
+    }.future.flatMap(identity)
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
-    update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
-      .map(_ => Unit)
+
+    storage.withTransaction { implicit db =>
+      val curIndex = EncryptedPushNotificationEventsDao.maxIndex()
+      val nextIndex = if (curIndex == -1) 0 else curIndex + 1
+      for {
+        event  <- encryptedStorage.get(index)
+        _         <- decryptedStorage.insert(event.get.copy(index = nextIndex, event = MessageEvent.errorToEncodedEvent(error), plain = None))
+        _         <- encryptedStorage.remove(index)
+      } yield ()
+    }.future.flatMap(identity)
 
   override def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
     val eventsToSave = pushNotifications.flatMap { pn =>
@@ -91,51 +119,50 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     }
 
     storage.withTransaction { implicit db =>
-      val curIndex = PushNotificationEventsDao.maxIndex()
+      val curIndex = EncryptedPushNotificationEventsDao.maxIndex()
       val nextIndex = if (curIndex == -1) 0 else curIndex+1
       returning(
         eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
       ) { eventsToInsert =>
-          val tag = Uid()
-          verbose(l"$tag PUSHSAVE32 I want to insert the following events: ${eventsToInsert.mkString(",")}")
-          for {
-            decrypted <- getDecryptedRows
-            alreadyDecryptedPushIds   = decrypted.map { _.pushId }.toSet
-            newEvents  = eventsToInsert.filter { e => !alreadyDecryptedPushIds.contains(e.pushId) }
-            notNewEvents = eventsToInsert.filter { e => alreadyDecryptedPushIds.contains(e.pushId) }
-            _ = verbose(l"$tag PUSHSAVE33 When saving new notifications, already decrypted: ${decrypted.mkString(",")} Originally attempting to save: ${eventsToInsert.mkString(",")} But saving only: ${newEvents.mkString(",")} Skipping because already decrypted: ${notNewEvents.mkString(",")}")
-          } yield({
-            verbose(l"$tag PUSHSAVE34 Decided to save the following events: ${newEvents.mkString(",")}")
-            insertAllIfNotExists(newEvents)
-          })
+          verbose(l"PUSHSAVE32 I want to insert the following events: ${eventsToInsert.mkString(",")}")
+          return encryptedStorage.insertAll(eventsToInsert).map { _.toSeq }
         }
-    }.future
+    }
   }
 
   override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] =
-    storage.read { implicit db => PushNotificationEventsDao.listEncrypted }
+    storage.read { implicit db => EncryptedPushNotificationEventsDao.listAll() }
 
   override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
-    storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
+    storage.read { implicit db => DecryptedPushNotificationEventsDao.listAll() }
 
   override def getAllRows: Future[IndexedSeq[PushNotificationEvent]] =
-    storage.read { implicit db => PushNotificationEventsDao.listAll }
+    storage.read { implicit db =>
+        val encrypted = EncryptedPushNotificationEventsDao.listAll()
+        val decrypted = DecryptedPushNotificationEventsDao.listAll()
+        encrypted ++ decrypted
+    }
 
-  def removeRows(rows: Iterable[Int]): Future[Unit] = removeAll(rows)
+  def removeDecryptedEvents(rows: Iterable[Int]): Future[Unit] = decryptedStorage.removeAll(rows)
+
+  override def removeEncryptedEvent(index: EventIndex): Future[Unit] = encryptedStorage.remove(index)
 
   //This method is called once on app start, so invoke the handler in case there are any events to be processed
   //This is safe as the handler only allows one invocation at a time.
   override def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit] = {
-    onAdded.foreach(_ => handler())
+    encryptedStorage.onAdded.foreach(_ => handler())
     processStoredEvents(handler)
   }
 
-  private def processStoredEvents(processor: () => Future[Unit]): Future[Unit] =
-    values.map { nots =>
-      if (nots.nonEmpty) {
+  private def processStoredEvents(processor: () => Future[Unit]): Future[Unit] = {
+    getAllRows.flatMap { notifications =>
+      if (notifications.nonEmpty) {
         processor()
+      } else {
+        Future.successful(())
       }
     }
+  }
 }

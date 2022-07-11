@@ -138,7 +138,7 @@ final class PushServiceImpl(selfUserId:        UserId,
           _         = verbose(l"Decoded from storage ${tag} ${decoded.size}: ${decoded.mkString(", ")}")
           processed <- if (decoded.nonEmpty) pipeline.process(decoded) else Future.successful(Nil)
           _         = verbose(l"Processed from storage ${tag} ${processed.size}: ${processed.mkString(", ")}")
-          _         <- eventsStorage.removeRows(processed)
+          _         <- eventsStorage.removeDecryptedEvents(processed)
           decrLeft  <- eventsStorage.getDecryptedRows
         } yield
           if (decrLeft.isEmpty) {
@@ -149,7 +149,7 @@ final class PushServiceImpl(selfUserId:        UserId,
             CancellableFuture.delay(250.millis).future.flatMap(_ => process(retry + 1))
           } else {
             warn(l"$tag: Unable to process some events (${decrLeft.size}): ${decrLeft.mkString(", ")}, deleting them")
-            eventsStorage.removeRows(decrLeft.map(_.index)).foreach(_ => processing ! false)
+            eventsStorage.removeDecryptedEvents(decrLeft.map(_.index)).foreach(_ => processing ! false)
           }
       }.recoverWith {
         case ex if retry >= 3 =>

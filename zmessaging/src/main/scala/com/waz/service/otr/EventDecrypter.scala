@@ -42,7 +42,7 @@ class EventDecrypterImpl(selfId:        UserId,
     decryptStoredOtrEvent(otrEvent, storage.writeClosure(index), tag).flatMap {
       case Left(Duplicate) =>
         verbose(l"$tag: Ignoring duplicate message with index $index: ${AESUtils.base64(otrEvent.ciphertext)}")
-        storage.remove(index)
+        storage.removeEncryptedEvent(index)
       case Left(err) =>
         val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
         error(l"$tag: Got error when decrypting message with index $index: ${AESUtils.base64(otrEvent.ciphertext)}: $e")
