@@ -34,7 +34,7 @@ object PushNotificationEvents {
     override val table = Table("EncryptedPushNotificationEvents", PushId, Index, EventStr, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
-      PushNotificationEvent(PushId, Index, false, EncodedEvent(cursor.getString(3)), None, Transient)
+      PushNotificationEvent(PushId, Index, false, EncodedEvent(cursor.getString(EventStr.index)), None, Transient)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -57,7 +57,7 @@ object PushNotificationEvents {
     override val table = Table("DecryptedPushNotificationEvents", PushId, Index, EventStr, Plain, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
-      PushNotificationEvent(PushId, Index, true, EncodedEvent(cursor.getString(3)), Plain, Transient)
+      PushNotificationEvent(PushId, Index, true, EncodedEvent(cursor.getString(EventStr.index)), Plain, Transient)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)

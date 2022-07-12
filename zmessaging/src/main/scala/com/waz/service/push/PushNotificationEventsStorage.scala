@@ -126,7 +126,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
       ) { eventsToInsert =>
-          return encryptedStorage.insertAll(eventsToInsert).map { _.toSeq }
+          encryptedStorage.insertAll(eventsToInsert).map { _.toSeq }
         }
     }
   }
