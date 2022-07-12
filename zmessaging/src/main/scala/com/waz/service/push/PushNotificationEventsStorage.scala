@@ -45,7 +45,7 @@ trait PushNotificationEventsStorage {
   def setAsDecrypted(index: EventIndex): Future[Unit]
   def writeClosure(index: EventIndex): PlainWriter
   def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit]
-  def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
+  def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
   def encryptedEvents: Future[Seq[PushNotificationEvent]]
   def removeDecryptedEvents(rows: Iterable[Int]): Future[Unit]
   def removeEncryptedEvent(index: EventIndex): Future[Unit]
@@ -111,7 +111,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
       } yield ()
     }.future.flatMap(identity)
 
-  override def saveAllNew(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
+  override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
     val eventsToSave = pushNotifications.flatMap { pn =>
       val (valid, invalid) = pn.events.partition(_.isForUs(clientId))
       invalid.foreach { event => verbose(l"Skipping otr event not intended for us: $event") }

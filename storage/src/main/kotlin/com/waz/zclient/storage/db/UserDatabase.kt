@@ -107,7 +107,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun buttonsDao(): ButtonsDao
 
     companion object {
-        const val VERSION = 139
+        const val VERSION = 138
 
         @JvmStatic
         val migrations = arrayOf(
