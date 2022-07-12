@@ -93,6 +93,7 @@ final class PushServiceImpl(selfUserId:        UserId,
   override val processing: SourceSignal[Boolean] = Signal(false)
 
   override def syncNotifications(syncMode: SyncMode): Future[Unit] = Serialized.future("fetchInProgress") {
+    verbose(l"I'm syncing notifications")
     (syncMode match {
       case ProcessNotifications(notifications) => storeNotifications(notifications)
       case SyncHistory(source, withRetries)    => syncHistory(source, withRetries)
@@ -133,6 +134,7 @@ final class PushServiceImpl(selfUserId:        UserId,
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
 
   wsPushService.notifications.foreach { nots =>
+    verbose(l"Sending websocket notifications to pipeline")
     syncNotifications(ProcessNotifications(nots))
   }
 
