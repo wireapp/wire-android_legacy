@@ -87,14 +87,10 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
 
   override def writeClosure(index: EventIndex): PlainWriter =
     (plain: Array[Byte]) => {
-      verbose(l"Saving event with index ${index} as decrypted with plaintext ${AESUtils.base64(plain)}")
       storage.withTransaction { implicit db =>
         for {
           event <- encryptedStorage.get(index)
           _ <- insertDecryptedVersion(event.get, Some(plain))
-          allDecrypted <- this.getDecryptedRows
-          _ = verbose(l"After saving index ${index} with plaintext ${AESUtils.base64(plain)}, the DB has the decrypted rows: ${allDecrypted.mkString(", ")}")
-
         } yield()
       }
     }.future.flatMap(identity)

@@ -134,7 +134,6 @@ final class PushServiceImpl(selfUserId:        UserId,
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
 
   wsPushService.notifications.foreach { nots =>
-    verbose(l"Sending websocket notifications to pipeline")
     syncNotifications(ProcessNotifications(nots))
   }
 
