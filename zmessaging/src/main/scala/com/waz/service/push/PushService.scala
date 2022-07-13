@@ -120,7 +120,7 @@ final class PushServiceImpl(selfUserId:        UserId,
         decrypted <- eventsStorage.getDecryptedRows
         decoded   =  decrypted.flatMap(otrEventDecoder.decode)
         _         <- if (decoded.nonEmpty) pipeline(decoded) else Future.successful(())
-        _         <- eventsStorage.removeDecryptedEvents(decrypted.map(_.index))
+        _         <- eventsStorage.removeDecryptedEvents(decrypted.map(_.id))
         _         <- Future.successful(processing ! false)
         _         = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
       } yield ()

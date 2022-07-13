@@ -36,7 +36,7 @@ import scala.concurrent.Future
 
 object PushNotificationEventsStorage {
   type PlainWriter = Array[Byte] => Future[Unit]
-  type EventIndex = Int
+  type EventIndex = (Uid, Int)
 
   type EventHandler = () => Future[Unit]
 }
@@ -47,7 +47,7 @@ trait PushNotificationEventsStorage {
   def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit]
   def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
   def encryptedEvents: Future[Seq[PushNotificationEvent]]
-  def removeDecryptedEvents(rows: Iterable[Int]): Future[Unit]
+  def removeDecryptedEvents(rows: Iterable[EventIndex]): Future[Unit]
   def removeEncryptedEvent(index: EventIndex): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
   def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]]
@@ -67,16 +67,12 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   )
 
   private def insertDecryptedVersion(event: PushNotificationEvent, plain: Option[Array[Byte]]): Future[Unit] = {
-    storage.withTransaction { implicit db =>
-      val curIndex = DecryptedPushNotificationEventsDao.maxIndex()
-      val nextIndex = if (curIndex == -1) 0 else curIndex + 1
-      val newEvent = event.copy(index = nextIndex, decrypted = true, plain = plain)
-      for {
-        _ <- decryptedStorage.insert(newEvent)
-        _ <- encryptedStorage.remove(event.index)
-      } yield ()
-    }
-  }.future.flatMap(identity)
+    val newEvent = event.copy(decrypted = true, plain = plain)
+    for {
+      _ <- decryptedStorage.insert(newEvent)
+      _ <- encryptedStorage.remove(event.id)
+    } yield ()
+  }
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
     for {
@@ -87,44 +83,27 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
 
   override def writeClosure(index: EventIndex): PlainWriter =
     (plain: Array[Byte]) => {
-      storage.withTransaction { implicit db =>
-        for {
-          event <- encryptedStorage.get(index)
-          _ <- insertDecryptedVersion(event.get, Some(plain))
-        } yield()
-      }
-    }.future.flatMap(identity)
+      for {
+        event <- encryptedStorage.get(index)
+        _ <- insertDecryptedVersion(event.get, Some(plain))
+      } yield()
+    }
 
-  override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
-
-    storage.withTransaction { implicit db =>
-      val curIndex = DecryptedPushNotificationEventsDao.maxIndex()
-      val nextIndex = if (curIndex == -1) 0 else curIndex + 1
+  override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] = {
       for {
         event  <- encryptedStorage.get(index)
-        _         <- decryptedStorage.insert(event.get.copy(index = nextIndex, event = MessageEvent.errorToEncodedEvent(error), plain = None))
-        _         <- encryptedStorage.remove(index)
+        _      <- decryptedStorage.insert(event.get.copy(event = MessageEvent.errorToEncodedEvent(error), plain = None))
+        _      <- encryptedStorage.remove(index)
       } yield ()
-    }.future.flatMap(identity)
+  }
 
   override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
     val eventsToSave = pushNotifications.flatMap { pn =>
-      val (valid, invalid) = pn.events.partition(_.isForUs(clientId))
-      invalid.foreach { event => verbose(l"Skipping otr event not intended for us: $event") }
-      valid.map { (pn.id, _, pn.transient) }
+      val (valid, invalid) = pn.events.zipWithIndex.partition(_._1.isForUs(clientId))
+      invalid.foreach { event => verbose(l"Skipping otr event not intended for us: ${event._1}") }
+      valid.map { event => PushNotificationEvent(pn.id, index = event._2, event = event._1, transient = pn.transient) }
     }
-
-    storage.withTransaction { implicit db =>
-      val curIndex = EncryptedPushNotificationEventsDao.maxIndex()
-      val nextIndex = if (curIndex == -1) 0 else curIndex+1
-      returning(
-        eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
-          case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
-        }
-      ) { eventsToInsert =>
-          encryptedStorage.insertAll(eventsToInsert).map { _.toSeq }
-        }
-    }
+    encryptedStorage.insertAll(eventsToSave).map { _.toSeq }
   }
 
   override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] =
@@ -140,7 +119,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
         encrypted ++ decrypted
     }
 
-  def removeDecryptedEvents(rows: Iterable[Int]): Future[Unit] = decryptedStorage.removeAll(rows)
+  def removeDecryptedEvents(rows: Iterable[EventIndex]): Future[Unit] = decryptedStorage.removeAll(rows)
 
   override def removeEncryptedEvent(index: EventIndex): Future[Unit] = encryptedStorage.remove(index)
 

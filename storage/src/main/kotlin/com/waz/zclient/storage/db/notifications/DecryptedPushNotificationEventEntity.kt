@@ -4,9 +4,9 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "DecryptedPushNotificationEvents")
+@Entity(tableName = "DecryptedPushNotificationEvents", primaryKeys = ["pushId", "event_index"])
 data class DecryptedPushNotificationEventEntity(
-    @PrimaryKey
+
     @ColumnInfo(name = "pushId")
     val pushId: String,
 

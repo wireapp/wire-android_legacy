@@ -2,7 +2,7 @@ package com.waz.service.otr
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{ConversationEvent, DecryptionError, Domain, Duplicate, IdentityChangedError, OtrError, OtrErrorEvent, OtrEvent, PushNotificationEvent, UserId}
+import com.waz.model.{ConversationEvent, DecryptionError, Domain, Duplicate, IdentityChangedError, OtrError, OtrErrorEvent, OtrEvent, PushNotificationEvent, Uid, UserId}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
@@ -26,20 +26,20 @@ class EventDecrypterImpl(selfId:        UserId,
 
   override def processEncryptedEvents(events: Seq[PushNotificationEvent]): Future[Unit] =
     Future.traverse(events) {
-      case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
-      case event                         => storage.setAsDecrypted(event.index)
+      case event @ GetOtrEvent(otrEvent) => decrypt(event.id, otrEvent)
+      case event                         => storage.setAsDecrypted(event.id)
     }.map(_ => ())
 
-  private def decrypt(index: Int, otrEvent: OtrEvent): Future[Unit] =
-    decryptStoredOtrEvent(otrEvent, storage.writeClosure(index)).flatMap {
+  private def decrypt(id: (Uid, Int), otrEvent: OtrEvent): Future[Unit] =
+    decryptStoredOtrEvent(otrEvent, storage.writeClosure(id)).flatMap {
       case Left(Duplicate) =>
         verbose(l"Ignoring duplicate message")
-        storage.removeEncryptedEvent(index)
+        storage.removeEncryptedEvent(id)
       case Left(err) =>
         val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
         error(l"Got error when decrypting: $e")
         tracking().msgDecryptionFailed(otrEvent.convId, selfId)
-        storage.writeError(index, e)
+        storage.writeError(id, e)
       case Right(_) =>
         Future.successful(())
     }

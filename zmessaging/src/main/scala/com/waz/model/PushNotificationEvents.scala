@@ -17,20 +17,20 @@
  */
 package com.waz.model
 
-import com.waz.db.Dao
+import com.waz.db.{Dao, Dao2}
 import com.waz.db.Col._
-import com.waz.sync.client.EncodedEvent
+import com.waz.sync.client.{EncodedEvent, PushNotificationEncoded}
 import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 
 object PushNotificationEvents {
-  implicit object EncryptedPushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
+  implicit object EncryptedPushNotificationEventsDao extends Dao2[PushNotificationEvent, Uid, Int] {
     private val PushId = id[Uid]('pushId).apply(_.pushId)
     private val Index = int('event_index)(_.index)
     private val EventStr = text('event)(_.event.str)
     private val Transient = bool('transient)(_.transient)
 
-    override val idCol = Index
+    override val idCol = (PushId, Index)
     override val table = Table("EncryptedPushNotificationEvents", PushId, Index, EventStr, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
@@ -46,14 +46,14 @@ object PushNotificationEvents {
       list(db.query(table.name, null, null, null, null, null, "event_index ASC"))
   }
 
-  implicit object DecryptedPushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
+  implicit object DecryptedPushNotificationEventsDao extends Dao2[PushNotificationEvent, Uid, Int] {
     private val PushId = id[Uid]('pushId).apply(_.pushId)
     private val Index = int('event_index)(_.index)
     private val EventStr = text('event)(_.event.str)
     private val Plain = opt(blob('plain))(_.plain)
     private val Transient = bool('transient)(_.transient)
 
-    override val idCol = Index
+    override val idCol = (PushId, Index)
     override val table = Table("DecryptedPushNotificationEvents", PushId, Index, EventStr, Plain, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
@@ -75,6 +75,6 @@ final case class PushNotificationEvent(pushId:    Uid,
                                        decrypted: Boolean = false,
                                        event:     EncodedEvent,
                                        plain:     Option[Array[Byte]] = None,
-                                       transient: Boolean) extends Identifiable[Int] {
-  override val id: Int = index
+                                       transient: Boolean) extends Identifiable[(Uid, Int)] {
+  override val id: (Uid, Int) = (pushId, index)
 }
