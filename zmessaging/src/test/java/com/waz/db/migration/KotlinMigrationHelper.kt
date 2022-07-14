@@ -19,7 +19,8 @@ import com.waz.zclient.storage.db.messages.LikesEntity
 import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
 import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesEntity
-import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
+import com.waz.zclient.storage.db.notifications.DecryptedPushNotificationEventEntity
+import com.waz.zclient.storage.db.notifications.EncryptedPushNotificationEventEntity
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesEntity
 import com.waz.zclient.storage.db.receipts.ReadReceiptsEntity
@@ -144,9 +145,16 @@ object KotlinMigrationHelper {
         }
 
     @JvmStatic
-    fun assertPushNotEventEntity(roomDB: UserDatabase, pushEventEntity: PushNotificationEventEntity) =
+    fun assertEncryptedPushNotEventEntity(roomDB: UserDatabase, pushEventEntity: EncryptedPushNotificationEventEntity) =
         runBlocking {
-            val entity = roomDB.pushNotificationEventDao().allPushNotificationEvents()[0]
+            val entity = roomDB.encryptedPushNotificationEventDao().allEncryptedPushNotificationEvents()[0]
+            check(pushEventEntity, entity)
+        }
+
+    @JvmStatic
+    fun assertDecryptedPushNotEventEntity(roomDB: UserDatabase, pushEventEntity: DecryptedPushNotificationEventEntity) =
+        runBlocking {
+            val entity = roomDB.decryptedPushNotificationEventDao().allDecryptedPushNotificationEvents()[0]
             check(pushEventEntity, entity)
         }
 
