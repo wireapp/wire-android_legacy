@@ -7,7 +7,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 val USER_DATABASE_MIGRATION_138_TO_139 = object : Migration(138, 139) {
     override fun migrate(database: SupportSQLiteDatabase) {
 
-        println("NOW MIGRATING FROM 138 TO 139")
         val previousTableName = "PushNotificationEvents"
         val createTableEncrypted = """
           CREATE TABLE IF NOT EXISTS EncryptedPushNotificationEvents(
