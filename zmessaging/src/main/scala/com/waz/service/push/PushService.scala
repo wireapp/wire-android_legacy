@@ -93,7 +93,6 @@ final class PushServiceImpl(selfUserId:        UserId,
   override val processing: SourceSignal[Boolean] = Signal(false)
 
   override def syncNotifications(syncMode: SyncMode): Future[Unit] = Serialized.future("fetchInProgress") {
-    verbose(l"I'm syncing notifications")
     (syncMode match {
       case ProcessNotifications(notifications) => storeNotifications(notifications)
       case SyncHistory(source, withRetries)    => syncHistory(source, withRetries)
@@ -120,7 +119,7 @@ final class PushServiceImpl(selfUserId:        UserId,
         decrypted <- eventsStorage.getDecryptedRows
         decoded   =  decrypted.flatMap(otrEventDecoder.decode)
         _         <- if (decoded.nonEmpty) pipeline(decoded) else Future.successful(())
-        _         <- eventsStorage.removeDecryptedEvents(decrypted.map(_.id))
+        _         <- eventsStorage.removeRows(decrypted.map(_.index))
         _         <- Future.successful(processing ! false)
         _         = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
       } yield ()

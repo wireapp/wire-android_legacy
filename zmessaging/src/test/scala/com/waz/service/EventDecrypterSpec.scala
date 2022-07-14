@@ -64,7 +64,7 @@ class EventDecrypterSpec extends AndroidFreeSpec {
         Future.successful(())
       }
 
-    (storage.setAsDecrypted _).expects((encryptedEvent.pushId, encryptedEvent.index)).once().returning(Future.successful(()))
+    (storage.setAsDecrypted _).expects(index).once().returning(Future.successful(()))
 
     result(decrypter.processEncryptedEvents(Seq(encryptedEvent)))
   }

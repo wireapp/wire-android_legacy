@@ -34,10 +34,8 @@ import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesDeletionDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
-import com.waz.zclient.storage.db.notifications.DecryptedPushNotificationEventDao
-import com.waz.zclient.storage.db.notifications.DecryptedPushNotificationEventEntity
-import com.waz.zclient.storage.db.notifications.EncryptedPushNotificationEventDao
-import com.waz.zclient.storage.db.notifications.EncryptedPushNotificationEventEntity
+import com.waz.zclient.storage.db.notifications.PushNotificationEventDao
+import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesDao
@@ -72,8 +70,7 @@ import com.waz.zclient.storage.db.users.service.UsersDao
         ConversationFoldersEntity::class, FoldersEntity::class,
         AssetsEntity::class, DownloadAssetsEntity::class,
         UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
-        EncryptedPushNotificationEventEntity::class, DecryptedPushNotificationEventEntity::class,
-        EditHistoryEntity::class, ButtonsEntity::class,
+        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonsEntity::class,
         MessageContentIndexEntity::class],
     version = UserDatabase.VERSION
 )
@@ -98,8 +95,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun conversationsDao(): ConversationsDao
     abstract fun keyValuesDao(): KeyValuesDao
     abstract fun propertiesDao(): PropertiesDao
-    abstract fun encryptedPushNotificationEventDao(): EncryptedPushNotificationEventDao
-    abstract fun decryptedPushNotificationEventDao(): DecryptedPushNotificationEventDao
+    abstract fun pushNotificationEventDao(): PushNotificationEventDao
     abstract fun foldersDao(): FoldersDao
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
