@@ -79,8 +79,8 @@
     <string name="people_picker__search_result_conversations_header_title">Gruplar</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Grup</string>
     <string name="people_picker__search_result_connections_searched_header_title">Kişiler</string>
-    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
-    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
+    <string name="people_picker__search_result_others_header_title">Wire ile Bağlan</string>
+    <string name="people_picker__search_result_others_header_federated">%1$s ile Bağlan</string>
     <string name="people_picker__search_result__expander_title">%1$s\'nun tümünü göster →</string>
     <string name="people_picker__search_people">KİŞİLER</string>
     <string name="people_picker__search_services">HİZMETLER</string>
@@ -261,9 +261,9 @@
     <string name="incoming__controls__ongoing__flip">ÇEVİR</string>
     <string name="ongoing__poor_connection_message">KÖTÜ BAĞLANTI NEDENİYLE GÖRÜNTÜ DURDU</string>
     <string name="calling__self_preview_unavailable_long">KAMERA KULLANILAMIYOR</string>
-    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__microphone">MİKROFON</string>
     <string name="incoming__controls__ongoing__camera">KAMERA</string>
-    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">DİĞER KAMERA</string>
     <string name="calling__header__joining">Bağlanıyor&#8230;</string>
     <string name="calling__header__outgoing_subtitle">Çalıyor&#8230;</string>
     <string name="calling__header__outgoing_video_subtitle">Çalıyor&#8230;</string>
@@ -293,7 +293,7 @@
     <string name="group_calling_confirm">Ara</string>
     <string name="calling_self">%s (Siz)</string>
     <string name="calling_no_active_video_speakers">Aktif görüntülü arama katılımcısı yok...</string>
-    <string name="calling_no_active_speakers">No active speakers...</string>
+    <string name="calling_no_active_speakers">Aktif katılımcı yok...</string>
     <string name="calling_toggle_all">TÜMÜ</string>
     <string name="calling_toggle_speakers">KONUŞMACILAR</string>
     <string name="calling_double_tap_enter_fullscreen_message">Tam ekrana geçmek için bir kutucuğa çift dokunun</string>
@@ -392,7 +392,7 @@
     <string name="pref_account_username_title">Kullanıcı Adı</string>
     <string name="pref_account_phone_title">Telefon</string>
     <string name="pref_account_team_title">Takım</string>
-    <string name="pref_account_domain_title">Domain</string>
+    <string name="pref_account_domain_title">Alan Adı</string>
     <string name="pref_account_add_phone_title">Telefon numarası ekleyin</string>
     <string name="pref_account_email_title">E-posta</string>
     <string name="pref_account_add_email_title">E-posta ekle</string>
@@ -1089,7 +1089,7 @@
     <string name="empty_services_list">Hizmetler, iş akışınızı iyileştirebilecek yardımcılardır. Onları etkinleştirmek için yöneticinize sorun.</string>
     <string name="empty_services_list_admin">Hizmetler, iş akışınızı iyileştirebilecek yardımcılardır.</string>
     <string name="empty_services_content_description">No services found</string>
-    <string name="empty_search_content_description">No users found</string>
+    <string name="empty_search_content_description">Kullanıcı Bulunamadı</string>
     <string name="create_group_conversation">Grup oluştur</string>
     <string name="create_guest_room_conversation">Misafir odası oluştur</string>
     <string name="manage_services">Hizmetleri yönet</string>
@@ -1132,7 +1132,7 @@
     <string name="open_this_conversation_to_people_outside_your_team">Bu konuşmayı ekibinizin dışındaki servislere ve insanlara da açın.</string>
     <string name="allow_guests">Misafirlere ve hizmetlere izin ver</string>
     <string name="guest_options_title">Misafirler ve hizmetler</string>
-    <string name="ephemeral_options_title">Self-deleting messages</string>
+    <string name="ephemeral_options_title">Kendini yok eden iletiler</string>
     <string name="notifications_options_title">Bildirimler</string>
     <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
     <string name="notifications_explanation_text">Her şeyden (sesli ve görüntülü aramalar dahil) veya yalnızca sizden bahsettiğinizde haberdar olabilirsiniz.</string>

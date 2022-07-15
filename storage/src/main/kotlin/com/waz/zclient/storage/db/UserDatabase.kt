@@ -34,8 +34,10 @@ import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesDeletionDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
-import com.waz.zclient.storage.db.notifications.PushNotificationEventDao
-import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
+import com.waz.zclient.storage.db.notifications.DecryptedPushNotificationEventDao
+import com.waz.zclient.storage.db.notifications.DecryptedPushNotificationEventEntity
+import com.waz.zclient.storage.db.notifications.EncryptedPushNotificationEventDao
+import com.waz.zclient.storage.db.notifications.EncryptedPushNotificationEventEntity
 import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesDao
@@ -46,17 +48,7 @@ import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientDao
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_128_TO_129
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_129_TO_130
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_130_TO_131
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_131_TO_132
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_132_TO_133
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_133_TO_134
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_134_TO_135
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_135_TO_136
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_136_TO_137
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_137_TO_138
+import com.waz.zclient.storage.db.users.migration.*
 import com.waz.zclient.storage.db.users.model.UsersEntity
 import com.waz.zclient.storage.db.users.service.UsersDao
 
@@ -70,7 +62,8 @@ import com.waz.zclient.storage.db.users.service.UsersDao
         ConversationFoldersEntity::class, FoldersEntity::class,
         AssetsEntity::class, DownloadAssetsEntity::class,
         UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
-        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonsEntity::class,
+        EncryptedPushNotificationEventEntity::class, DecryptedPushNotificationEventEntity::class,
+        EditHistoryEntity::class, ButtonsEntity::class,
         MessageContentIndexEntity::class],
     version = UserDatabase.VERSION
 )
@@ -95,7 +88,8 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun conversationsDao(): ConversationsDao
     abstract fun keyValuesDao(): KeyValuesDao
     abstract fun propertiesDao(): PropertiesDao
-    abstract fun pushNotificationEventDao(): PushNotificationEventDao
+    abstract fun encryptedPushNotificationEventDao(): EncryptedPushNotificationEventDao
+    abstract fun decryptedPushNotificationEventDao(): DecryptedPushNotificationEventDao
     abstract fun foldersDao(): FoldersDao
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
@@ -103,7 +97,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun buttonsDao(): ButtonsDao
 
     companion object {
-        const val VERSION = 138
+        const val VERSION = 139
 
         @JvmStatic
         val migrations = arrayOf(
@@ -117,7 +111,8 @@ abstract class UserDatabase : RoomDatabase() {
             USER_DATABASE_MIGRATION_134_TO_135,
             USER_DATABASE_MIGRATION_135_TO_136,
             USER_DATABASE_MIGRATION_136_TO_137,
-            USER_DATABASE_MIGRATION_137_TO_138
+            USER_DATABASE_MIGRATION_137_TO_138,
+            USER_DATABASE_MIGRATION_138_TO_139
         )
     }
 }

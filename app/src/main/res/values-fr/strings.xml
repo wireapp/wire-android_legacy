@@ -79,8 +79,8 @@
     <string name="people_picker__search_result_conversations_header_title">Groupes</string>
     <string name="people_picker__search_result_team_conversations_header_title">Groupes de %1$s</string>
     <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
-    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
-    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
+    <string name="people_picker__search_result_others_header_title">Se connecter avec Wire</string>
+    <string name="people_picker__search_result_others_header_federated">Se connecter avec %1$s</string>
     <string name="people_picker__search_result__expander_title">Tout afficher (%1$s) ↓</string>
     <string name="people_picker__search_people">CONTACTS</string>
     <string name="people_picker__search_services">SERVICES</string>
@@ -263,7 +263,7 @@
     <string name="calling__self_preview_unavailable_long">APPAREIL PHOTO INDISPONIBLE</string>
     <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
     <string name="incoming__controls__ongoing__camera">APPAREIL PHOTO</string>
-    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">RETOURNER CAMÉRA</string>
     <string name="calling__header__joining">Connexion&#8230;</string>
     <string name="calling__header__outgoing_subtitle">Sonnerie&#8230;</string>
     <string name="calling__header__outgoing_video_subtitle">Sonnerie&#8230;</string>
@@ -392,7 +392,7 @@
     <string name="pref_account_username_title">Nom d\'utilisateur</string>
     <string name="pref_account_phone_title">Téléphone</string>
     <string name="pref_account_team_title">Équipe</string>
-    <string name="pref_account_domain_title">Domain</string>
+    <string name="pref_account_domain_title">Domaine</string>
     <string name="pref_account_add_phone_title">Ajouter un numéro de téléphone</string>
     <string name="pref_account_email_title">E-mail</string>
     <string name="pref_account_add_email_title">Ajouter une adresse e-mail</string>
@@ -437,7 +437,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
     <string name="pref_options_vbr_title">Échantillonnage variable (VBR)</string>
-    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
+    <string name="pref_options_vbr_summary">Cela permet aux appels audio d\'utiliser moins de données et de mieux fonctionner sur les réseaux plus lents. Désactivez pour utiliser l\'encodage en débit constant (CBR). Ce paramètre n\'affecte que les appels 1:1; les appels de conférence utilisent toujours l\'encodage CBR.</string>
     <string name="pref_options_alerts_category_title">Alertes</string>
     <string name="pref_options_calls_category_title">Appels</string>
     <string name="pref_options_sounds_title">Sons</string>
@@ -820,7 +820,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="no_conversation_in_list__message">Commencez une conversation ou créez un groupe.</string>
     <string name="default_deleted_username">Défaut</string>
     <string name="cursor__type_a_message">ÉCRIVEZ UN MESSAGE</string>
-    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
+    <string name="cursor__ephemeral_message">MESSAGE ÉPHÉMÈRE</string>
     <string name="tooltip_record">Enregistrer une vidéo</string>
     <string name="tooltip_camera">Ajouter une photo</string>
     <string name="tooltip_sketch">Dessiner une image</string>
@@ -897,7 +897,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="usernames__take_over__choose">CHOISISSEZ LE VÔTRE</string>
     <string name="usernames__take_over__keep">GARDER CELUI-CI</string>
     <string name="ephemeral_message__timeout__off">Désactivé</string>
-    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
+    <string name="ephemeral_message__options_header">MESSAGES ÉPHÉMÈRES</string>
     <string name="guests_option_on">Activé</string>
     <plurals name="unit_years">
         <item quantity="one">%1$s an</item>
@@ -995,7 +995,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="participant_tab_guest_indicator_label">Externe</string>
     <string name="participant_tab_external_indicator_label">EXTERNE</string>
     <string name="participant_tab_group_admin_indicator_label">ADMIN DU GROUPE</string>
-    <string name="federated_indicator">FEDERATED</string>
+    <string name="federated_indicator">FÉDÉRÉ</string>
     <string name="availability_none">Aucun</string>
     <string name="availability_available">Disponible</string>
     <string name="availability_away">Absent(e)</string>
@@ -1089,8 +1089,8 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="loading_services">Chargement des services&#8230;</string>
     <string name="empty_services_list">Les services sont des programmes qui peuvent améliorer votre flux de travail. Pour les activer, contactez votre administrateur.</string>
     <string name="empty_services_list_admin">Les services sont des programmes qui peuvent améliorer votre flux de travail.</string>
-    <string name="empty_services_content_description">No services found</string>
-    <string name="empty_search_content_description">No users found</string>
+    <string name="empty_services_content_description">Aucun service trouvé</string>
+    <string name="empty_search_content_description">Aucun utilisateur trouvé</string>
     <string name="create_group_conversation">Créer un groupe</string>
     <string name="create_guest_room_conversation">Créer une Guest Room</string>
     <string name="manage_services">Gérer les Services</string>
@@ -1135,7 +1135,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="guest_options_title">Contacts externes et services</string>
     <string name="ephemeral_options_title">Messages auto-supprimés</string>
     <string name="notifications_options_title">Notifications</string>
-    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
+    <string name="ephemeral_explanation_text">Les messages éphémères seront activés pour tous les participants à cette conversation.</string>
     <string name="notifications_explanation_text">Vous pouvez choisir d\'être notifié pour tous les évènements (y compris les appels audios et vidéos) ou uniquement lorsque vous êtes mentionné.</string>
     <string name="show_all_participants">Tout afficher (%1$s)</string>
     <string name="participant_was_removed_from_team">%s a été supprimé(e) de l\'équipe</string>
@@ -1227,7 +1227,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="add_services_button_text">Gérer les services</string>
     <string name="empty_search_button_text">En savoir plus</string>
     <string name="empty_search_same_domain_text">Trouver des contacts sur Wire par nom ou par @identifiant</string>
-    <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
+    <string name="empty_search_other_domains_text">Trouver des personnes d\'un autre domaine par @username@domainname</string>
     <string name="wire_notification_name">Notification Wire</string>
     <string name="wire_ping_name">Signe Wire</string>
     <string name="reply_self_name">Vous</string>
@@ -1368,16 +1368,16 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="start_sso_notice">Ne saisissez vos identifiants que si vous êtes sûr d\'être connecté à votre organisation.</string>
     <!-- Legal Hold -->
     <string name="legal_hold_info_title">Conservation à des fins juridiques</string>
-    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
-    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
+    <string name="legal_hold_self_user_info_message">La conservation à des fins juridiques a été activée pour votre compte.\n\nTous les messages seront conservés pour un accès futur, y compris les messages supprimés, modifiés et éphémères.\n\nVos contact seront informés de l\'enregistrement.</string>
+    <string name="legal_hold_conversation_info_message">La conservation à des fins juridiques a été activée pour votre compte.\n\nTous les messages seront conservés pour un accès futur, y compris les messages supprimés, modifiés et éphémères.</string>
     <string name="legal_hold_info_list_title">Soumis à la conservation à des fins juridiques</string>
     <string name="legal_hold_request_dialog_title">Conservation à des fins juridiques demandée</string>
-    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
-    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_message_for_sso">Tous les messages futurs seront enregistrés par l\'appareil avec l\'empreinte digitale:\n%1$sCela inclut les messages supprimés, modifiés et éphémères dans toutes les conversations.</string>
+    <string name="legal_hold_request_dialog_message">Tous les messages futurs seront enregistrés par l\'appareil avec l\'empreinte digitale:\n%1$sCela inclut les messages supprimés, modifiés et éphémères dans toutes les conversations.\nEntrez votre mot de passe pour confirmer.</string>
     <string name="legal_hold_request_dialog_positive_button_text">Accepter</string>
     <string name="legal_hold_request_dialog_negative_button_text">Pas maintenant</string>
     <string name="legal_hold_request_dialog_wrong_password_error">Mot de passe incorrect</string>
-    <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
+    <string name="legal_hold_all_subjects_title">SUJETS EN ATTENTE LÉGALE</string>
     <string name="legal_hold_device_name">Conservation à des fins juridiques</string>
     <string name="legal_hold_deactivated_dialog_title">Conservation à des fins juridiques désactivée</string>
     <string name="legal_hold_deactivated_dialog_message">Les futurs messages ne seront pas enregistrés.</string>
@@ -1390,7 +1390,7 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <string name="legal_hold_cannot_connect_alert_message">Vous ne pouvez pas vous connecter à cet utilisateur à cause de la conservation à des fins juridiques.</string>
     <string name="legal_hold_cannot_connect_alert_negative_button">EN SAVOIR PLUS</string>
     <!-- Join Conversation via Deep Link -->
-    <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
+    <string name="join_conversation_confirmation_message">Vous avez été invité dans une conversation :\n%s</string>
     <string name="join_conversation_confirmation_join_button_text">Rejoindre</string>
     <string name="join_conversation_confirmation_cancel_button_text">Annuler</string>
     <string name="join_conversation_conversation_join_error_title">Vous n\'avez pas pu rejoindre la conversation</string>
@@ -1401,25 +1401,25 @@ Cette option ne s\'applique pas aux conversations de groupe.</string>
     <!-- File sharing feature config -->
     <string name="file_sharing_enabled_info_dialog_message">Le partage et la réception de fichiers de n\'importe quel type est activé.</string>
     <string name="file_sharing_disabled_info_dialog_message">Le partage et la réception de fichiers de n\'importe quel type est désactivé.</string>
-    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
+    <string name="file_sharing_restriction_info_image">LA RÉCEPTION D\'IMAGES EST INTERDITE</string>
+    <string name="file_sharing_restriction_info_video">LA RÉCEPTION DE VIDÉOS EST INTERDITE</string>
+    <string name="file_sharing_restriction_info_audio">LA RÉCEPTION DE FICHIERS AUDIO EST INTERDITE</string>
+    <string name="file_sharing_restriction_info_file">LA RÉCEPTION DE FICHIERS EST INTERDITE</string>
+    <string name="file_sharing_restriction_info_generic">PARTAGE DE FICHIERS RESTREINT</string>
     <!-- Self Deleting Messages feature config -->
-    <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
-    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
-    <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled">L\'envoi de messages éphémères est activé.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">L\'envoi de messages éphémères est obligatoire. Le délai d\'attente pour la suppression est de %s secondes.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_disabled">L\'envoi de messages éphémères est désactivé.</string>
     <!-- Conference Calling Restriction feature config -->
     <string name="conference_calling_restriction_dialog_title">Mettre à niveau vers Entreprise</string>
-    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
-    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
-    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_description">Votre équipe est actuellement sur le plan de base gratuit. Passez à la version Enterprise pour accéder à des fonctionnalités telles que le lancement de conférences et bien plus encore.
+&lt;br /&gt;<![CDATA[<a href="https://wire.com/en/pricing/">En savoir plus sur les tarifs de Wire\</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">PASSEZ À LA VITESSE SUPÉRIEURE MAINTENANT</string>
     <string name="conference_calling_restriction_dialog_negative_button">ANNULER</string>
-    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
-    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
-        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
-    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
-    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
-    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+    <string name="upgraded_plan_dialog_title">Wire Entreprise</string>
+    <string name="upgraded_plan_dialog_description">Votre équipe a été mise à niveau vers Wire Enterprise, ce qui vous donne accès à des fonctionnalités telles que les conférences téléphoniques et plus encore.
+        &lt;br /&gt;<![CDATA[<a href="https://wire.com/en/products/enterprise-collaboration/">En savoir plus sur Wire Enterprise</a>]]></string>
+    <string name="conference_calling_unavailable_dialog_title">Fonction indisponible</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">L\'option permettant de lancer une conférence téléphonique n\'est disponible que dans la version payante de Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">Pour lancer une conférence téléphonique, votre équipe doit passer à la formule Entreprise.</string>
 </resources>
