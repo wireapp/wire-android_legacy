@@ -303,9 +303,9 @@
     <string name="group_calling_confirm">Звонок</string>
     <string name="calling_self">%s (Вы)</string>
     <string name="calling_no_active_video_speakers">Нет активных видеоспикеров...</string>
-    <string name="calling_no_active_speakers">Нет активных выступающих...</string>
+    <string name="calling_no_active_speakers">Активные динамики отсутствуют...</string>
     <string name="calling_toggle_all">ВСЕ</string>
-    <string name="calling_toggle_speakers">ВЫСТУПАЮЩИЕ</string>
+    <string name="calling_toggle_speakers">ДИНАМИКИ</string>
     <string name="calling_double_tap_enter_fullscreen_message">Дважды коснитесь плитки для перехода в полноэкранный режим</string>
     <string name="calling_double_tap_exit_fullscreen_message">Дважды коснитесь, чтобы вернуться, сведите или раздвиньте для изменения масштаба</string>
     <string name="calling_pinch_to_zoom_message">Сведите или раздвиньте для изменения масштаба</string>
@@ -457,7 +457,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Настройки</string>
     <string name="pref_options_vbr_title">Кодирование с переменным битрейтом</string>
-    <string name="pref_options_vbr_summary">Это значительно снижает потребление данных при аудиозвонках и улучшает работу при медленном соединении. Выключите, чтобы использовать кодирование с постоянным битрейтом (CBR). Эта настройка влияет только на звонки 1:1; конференц-звонки всегда используют кодирование CBR.</string>
+    <string name="pref_options_vbr_summary">Благодаря этой опции аудиозвонки расходуют меньше данных и лучше работают при использовании низкоскоростных сетей. Выключите, чтобы использовать кодирование с постоянным битрейтом (CBR). Эта настройка влияет только на звонки 1:1; конференц-звонки всегда используют кодирование CBR.</string>
     <string name="pref_options_alerts_category_title">Оповещения</string>
     <string name="pref_options_calls_category_title">Звонки</string>
     <string name="pref_options_sounds_title">Звуки</string>
@@ -1220,7 +1220,7 @@
     <string name="guest_time_left_hours">Осталось %1$s час.</string>
     <string name="guest_time_left_hours_minutes">Осталось %1$s.%2$s час.</string>
     <string name="guest_time_left_minutes">Осталось менее %1$s мин.</string>
-    <string name="backup_description">Создайте резервную копию, чтобы сохранить историю бесед. Она пригодится для восстановления истории в случае потери или замены устройства.
+    <string name="backup_description">Чтобы сохранить историю бесед, сделайте резервную копию. С ее помощью можно восстановить историю, если вы потеряете устройство или перейдете на новое.
         \n\nВыберите надежный пароль для защиты резервной копии.</string>
     <string name="pref_account_backup_title">Резервная копия бесед</string>
     <string name="backup_password_dialog_title">Установить пароль</string>
