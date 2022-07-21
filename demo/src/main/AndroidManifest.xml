@@ -1,0 +1,39 @@
+<manifest
+    package="com.evernote.android.job.demo"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/demo"
+        android:theme="@style/AppTheme"
+        tools:ignore="UnusedAttribute">
+
+        <activity
+            android:name="com.evernote.android.job.demo.MainActivity"
+            android:label="@string/demo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".SyncHistoryActivity"
+            android:label="@string/demo"/>
+
+        <receiver
+            android:name=".DemoJobCreator$AddReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.evernote.android.job.ADD_JOB_CREATOR"/>
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>
