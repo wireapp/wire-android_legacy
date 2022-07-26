@@ -49,8 +49,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
   setClipChildren(false)
 
   protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesPagedListAdapter)(implicit ec: EventContext): Unit = {
-    verbose(l"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
-
+    
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
     // XXX: once views get bigger, we may need to optimise this, we don't need to remove views that will get reused, currently this seems to be fast enough
     (0 until getChildCount).reverseIterator.map(getChildAt) foreach {
