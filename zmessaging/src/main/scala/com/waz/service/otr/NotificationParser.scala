@@ -31,10 +31,10 @@ final class NotificationParserImpl(selfId:       UserId,
 
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
-      case ev: GenericMessageEvent     => parse(ev)
-      case ev: UserConnectionEvent     => parse(ev)
-      case ev: RenameConversationEvent => parse(ev)
-      case ev: DeleteConversationEvent => parse(ev)
+      case ev: GenericMessageEvent     => parse(ev).recover { case _ => None }
+      case ev: UserConnectionEvent     => parse(ev).recover { case _ => None }
+      case ev: RenameConversationEvent => parse(ev).recover { case _ => None }
+      case ev: DeleteConversationEvent => parse(ev).recover { case _ => None }
       case _                           => Future.successful(None)
     }.map(_.flatten.toSet)
 
