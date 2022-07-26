@@ -28,13 +28,17 @@ final class NotificationParserImpl(selfId:       UserId,
   import Threading.Implicits.Background
 
   private val selfUser = usersStorage.signal(selfId)
-
+  private val recoverFromNotificationParsingError: PartialFunction[Throwable, Option[NotificationData]] = {
+    case e =>
+      error(l"error while parsing (2) event:", e)
+      None
+  }
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
-      case ev: GenericMessageEvent     => parse(ev).recover { case _ => None }
-      case ev: UserConnectionEvent     => parse(ev).recover { case _ => None }
-      case ev: RenameConversationEvent => parse(ev).recover { case _ => None }
-      case ev: DeleteConversationEvent => parse(ev).recover { case _ => None }
+      case ev: GenericMessageEvent     => parse(ev).recover(recoverFromNotificationParsingError)
+      case ev: UserConnectionEvent     => parse(ev).recover(recoverFromNotificationParsingError)
+      case ev: RenameConversationEvent => parse(ev).recover(recoverFromNotificationParsingError)
+      case ev: DeleteConversationEvent => parse(ev).recover(recoverFromNotificationParsingError)
       case _                           => Future.successful(None)
     }.map(_.flatten.toSet)
 
