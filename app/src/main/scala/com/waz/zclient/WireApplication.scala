@@ -29,7 +29,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.fragment.app.{FragmentActivity, FragmentManager}
 import androidx.multidex.MultiDexApplication
-import com.evernote.android.job.{Job, JobCreator, JobManager}
+import com.wire.android.job.{Job, JobCreator, JobManager}
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._

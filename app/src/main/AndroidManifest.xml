@@ -308,7 +308,7 @@
 
         <!--For Evernote Background jobs-->
         <service
-            android:name="com.evernote.android.job.gcm.PlatformGcmService"
+            android:name="com.wire.android.job.gcm.PlatformGcmService"
             android:enabled="true"
             android:exported="true"
             android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"
@@ -319,30 +319,30 @@
         </service>
 
         <service
-            android:name="com.evernote.android.job.JobRescheduleService"
+            android:name="com.wire.android.job.JobRescheduleService"
             android:exported="false" />
 
         <service
-            android:name="com.evernote.android.job.v21.PlatformJobService"
+            android:name="com.wire.android.job.v21.PlatformJobService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
-            android:name="com.evernote.android.job.v14.PlatformAlarmService"
+            android:name="com.wire.android.job.v14.PlatformAlarmService"
             android:exported="false" />
 
         <receiver
-            android:name="com.evernote.android.job.v14.PlatformAlarmReceiver"
+            android:name="com.wire.android.job.v14.PlatformAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <!-- Keep the filter for legacy intents -->
-                <action android:name="com.evernote.android.job.v14.RUN_JOB" />
+                <action android:name="com.wire.android.job.v14.RUN_JOB" />
                 <action android:name="net.vrallev.android.job.v14.RUN_JOB" />
             </intent-filter>
         </receiver>
 
         <receiver
-            android:name="com.evernote.android.job.JobBootReceiver"
+            android:name="com.wire.android.job.JobBootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

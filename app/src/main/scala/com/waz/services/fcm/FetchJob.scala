@@ -17,9 +17,9 @@
  */
 package com.waz.services.fcm
 
-import com.evernote.android.job.Job.Result
-import com.evernote.android.job.util.support.PersistableBundleCompat
-import com.evernote.android.job.{Job, JobManager, JobRequest}
+import com.wire.android.job.Job.Result
+import com.wire.android.job.util.support.PersistableBundleCompat
+import com.wire.android.job.{Job, JobManager, JobRequest}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground

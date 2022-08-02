@@ -19,9 +19,3 @@ include ':app', ':common-test', ':custom-checkstyle', ':storage',
     ':zmessaging', 'macrosupport'
 
 rootProject.name = 'zclient-root'
-
-includeBuild('android-job') {
-    dependencySubstitution {
-        substitute module('com.wire:android-job') with project(':library')
-    }
-}
