@@ -419,12 +419,7 @@ dependencies {
     implementation BuildDependencies.kotlinXSerialization
 
     //third party libraries
-    if (fdroidBuild) {
-        // fork with google dependencies removed
-        implementation BuildDependencies.androidJobFork
-    } else {
-        implementation BuildDependencies.androidJob
-    }
+    implementation BuildDependencies.androidJob
     implementation(BuildDependencies.threetenbpAndroid) {
         exclude group: 'org.threeten', module: 'threetenbp'
     }

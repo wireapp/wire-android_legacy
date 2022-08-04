@@ -17,9 +17,9 @@
  */
 package com.waz.jobs
 
-import com.evernote.android.job.Job.Result
-import com.evernote.android.job.util.support.PersistableBundleCompat
-import com.evernote.android.job._
+import com.wire.android.job.Job.Result
+import com.wire.android.job.util.support.PersistableBundleCompat
+import com.wire.android.job._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging

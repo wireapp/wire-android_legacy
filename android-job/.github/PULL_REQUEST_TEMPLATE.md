@@ -1,1 +1,0 @@
-Thanks for contributing to the library! The library should remain really lightweight, so please consider creating an issue first to discuss the problem you're facing. After that contributions are appreciated.
