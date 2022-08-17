@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.log
 
-import com.evernote.android.job.Job
+import com.wire.android.job.Job
 import com.waz.avs.VideoPreview
 import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent

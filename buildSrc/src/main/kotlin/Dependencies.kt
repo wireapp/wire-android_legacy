@@ -143,8 +143,7 @@ object BuildDependencies {
         "rxAndroid" to "io.reactivex.rxjava2:rxandroid:${Versions.RX_ANDROID}"
     ))
     val kotlinXSerialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.KOTLINX_SERIALIZATION}"
-    val androidJob = "com.evernote:android-job:${Versions.ANDROID_JOB}"
-    val androidJobFork = "com.wire:android-job:${Versions.ANDROID_JOB}"
+    val androidJob = "com.wire:android-job:${Versions.ANDROID_JOB}"
     val threetenbpAndroid = "com.jakewharton.threetenabp:threetenabp:${Versions.THREE_TEN_BP_ANDROID}"
     val threetenbpJava = "org.threeten:threetenbp:${Versions.THREE_TEN_BP_JAVA}"
     val rebound = "com.facebook.rebound:rebound:${Versions.REBOUND}"
