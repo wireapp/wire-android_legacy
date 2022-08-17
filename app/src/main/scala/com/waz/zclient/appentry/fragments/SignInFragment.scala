@@ -236,7 +236,7 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
     uiSignInState.head.map {
       case SignInMethod(Login, _, _) =>
         tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
-        phoneButton.foreach(_.setVisible(true))
+        phoneButton.foreach(_.setVisible(!ALLOW_ONLY_EMAIL_LOGIN))
       case SignInMethod(Register, _, false) =>
         tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
         phoneButton.foreach(_.setVisible(false))
