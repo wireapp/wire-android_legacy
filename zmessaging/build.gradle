@@ -4,6 +4,9 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply from: 'deflake.gradle'
 
+import org.gradle.internal.os.OperatingSystem
+OperatingSystem os = OperatingSystem.current();
+
 // Android
 android {
     compileSdkVersion Versions.COMPILE_SDK_VERSION
@@ -14,7 +17,11 @@ android {
         targetSdkVersion Versions.TARGET_SDK_VERSION
 
         ndk {
-            abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
+            if(os.isWindows()) {
+                abiFilters "armeabi-v7a", "x86"
+            } else {
+                abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
+            }
         }
 
     }
