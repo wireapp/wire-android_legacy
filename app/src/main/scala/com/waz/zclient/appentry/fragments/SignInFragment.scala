@@ -30,6 +30,7 @@ import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator}
+import com.waz.zclient.BuildConfig.ALLOW_ONLY_EMAIL_LOGIN
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
@@ -147,7 +148,7 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
 
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
-    phoneButton.foreach(_.setVisible(!onlyLogin && !registration))
+    phoneButton.foreach(_.setVisible(!onlyLogin && !registration && !ALLOW_ONLY_EMAIL_LOGIN))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -235,7 +236,7 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
     uiSignInState.head.map {
       case SignInMethod(Login, _, _) =>
         tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
-        phoneButton.foreach(_.setVisible(true))
+        phoneButton.foreach(_.setVisible(!ALLOW_ONLY_EMAIL_LOGIN))
       case SignInMethod(Register, _, false) =>
         tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
         phoneButton.foreach(_.setVisible(false))
