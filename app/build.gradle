@@ -91,6 +91,7 @@ android {
         buildConfigField 'String',  'BACKEND_URL',                   "\"$buildtimeConfiguration.configuration.backendUrl\""
         buildConfigField 'String',  'WEBSOCKET_URL',                 "\"$buildtimeConfiguration.configuration.websocketUrl\""
         buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',      "$buildtimeConfiguration.configuration.allow_account_creation"
+        buildConfigField 'boolean', 'ALLOW_ONLY_EMAIL_LOGIN',        "$buildtimeConfiguration.configuration.allow_only_email_login"
         buildConfigField 'boolean', 'ALLOW_SSO',                     "$buildtimeConfiguration.configuration.allowSSO"
         buildConfigField 'String',  'SUPPORT_EMAIL',                 "\"$buildtimeConfiguration.configuration.supportEmail\""
         buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',       "\"$buildtimeConfiguration.configuration.firebasePushSenderId\""
