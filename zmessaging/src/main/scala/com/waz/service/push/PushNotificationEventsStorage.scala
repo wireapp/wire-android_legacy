@@ -78,6 +78,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     for {
       event <- encryptedStorage.get(index)
       _ <- decryptedStorage.insert(event.get)
+      _ <- encryptedStorage.remove(event.get.id)
     } yield()
   }
 
