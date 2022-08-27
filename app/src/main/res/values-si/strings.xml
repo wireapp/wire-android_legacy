@@ -483,7 +483,7 @@
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
     <string name="pref_devices_device_fingerprint_summary">Wire gives every device a unique fingerprint. Compare them and verify your devices and conversations.</string>
     <string name="pref_devices_device_actions_category_title">ක්‍රියාමාර්ග</string>
-    <string name="pref_devices_device_reset_session_title">Reset session</string>
+    <string name="pref_devices_device_reset_session_title">වාරය යළි සකසන්න</string>
     <string name="pref_devices_device_reset_session_summary">If fingerprints don\'t match, reset the session to generate new encryption keys on both sides.</string>
     <string name="pref_devices_device_remove_title">උපාංගය ඉවත් කරන්න</string>
     <string name="pref_devices_device_remove_summary">Remove this device if you have stopped using it. You will be logged out of this device immediately.</string>
@@ -776,7 +776,7 @@
     <string name="otr__participant__tab_devices">උපාංග</string>
     <string name="otr__participant__information">තොරතුරු</string>
     <string name="otr__participant__single_device__my_fingerprint_link">මගේ උපාංගයේ ඇඟිලිසළකුණ පෙන්වන්න</string>
-    <string name="otr__participant__single_device__reset_session_link">Reset session</string>
+    <string name="otr__participant__single_device__reset_session_link">වාරය යළි සකසන්න</string>
     <string name="otr__participant__my_device__description">Your device fingerprint</string>
     <string name="otr__participant__my_device__show_all_devices_link">මාගේ සියලුම උපාංග පෙන්වන්න</string>
     <string name="otr__participant__single_device__description">Verify that this matches the fingerprint shown on %1$s\'s device.</string>
@@ -786,8 +786,8 @@
     <string name="otr__first_launch__sub_header">පෞද්ගලිකත්ව හේතූන් මත, ඔබගේ සංවාද ඉතිහාසය මෙහි නොපෙන්වනු ඇත.</string>
     <string name="otr__first_launch__button">හරි</string>
     <string name="otr__signin__info_text">පිවිසෙන්න</string>
-    <string name="otr__reset_session__message_ok">Session has been reset</string>
-    <string name="otr__reset_session__message_fail">Could not reset the session</string>
+    <string name="otr__reset_session__message_ok">වාරය යළි සකස් කර ඇත</string>
+    <string name="otr__reset_session__message_fail">වාරය සකස් කිරීමට නොහැකිය</string>
     <string name="otr__reset_session__button_ok">හරි</string>
     <string name="otr__reset_session__button_fail">නැවත උත්සාහ කරන්න</string>
     <string name="user_profile_email_field_name">වි-තැපෑල</string>
@@ -1230,18 +1230,18 @@
     <string name="wire_notification_name">වයර් දැනුම්දීම</string>
     <string name="wire_ping_name">Wire Ping</string>
     <string name="reply_self_name">ඔබ</string>
-    <string name="reply_message_type_image">IMAGE</string>
+    <string name="reply_message_type_image">රූපය</string>
     <string name="reply_message_type_video">දෘශ්‍යකය</string>
     <string name="reply_message_type_audio">ශ්‍රව්‍ය පණිවිඩය</string>
     <string name="reply_message_type_location">ස්ථානය</string>
     <string name="reply_message_type_asset">ඇමිණුම</string>
     <string name="reply_message_type_unknown">ඔබට මෙම පණිවිඩය දැකීමට නොහැකිය.</string>
     <string name="deep_link_generic_error_title">වලංගු නොවන සබැඳියකි.</string>
-    <string name="deep_link_generic_error_message">The link you opened is not valid.</string>
-    <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
+    <string name="deep_link_generic_error_message">ඔබ විවෘත කළ සබැඳිය වලංගු නැත</string>
+    <string name="deep_link_conversation_error_title">මෙම සංවාදය විවෘත කළ නොහැකිය</string>
     <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
-    <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
-    <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
+    <string name="deep_link_user_error_title">මෙම පුද්ගලයා හමු නොවිණි</string>
+    <string name="deep_link_user_error_message">ඔබට මෙම ගිණුම සමඟ අවසර නැත හෝ එය තවදුරටත් නොපවතියි.</string>
     <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
     <!-- Custom Backend -->
     <string name="custom_backend_info_title">\"%1$s\" ට සම්බන්ධිතයි</string>
@@ -1257,10 +1257,10 @@
     <string name="custom_backend_not_found_error_title">මෙම සේවාදායකයට ළඟා වීමට නොහැකිය</string>
     <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
         administrator know about this issue.</string>
-    <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
+    <string name="custom_backend_dialog_logged_in_error_title">සේවාදායක මාරු කළ නොහැකිය</string>
     <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
     <string name="root_detected_dialog_title">Jailbreak/root detected</string>
-    <string name="root_detected_dialog_message">You can not use Wire on this device.</string>
+    <string name="root_detected_dialog_message">මෙම උපාංගයේ වයර් භාවිතා කළ නොහැකිය</string>
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">%s වෙතින් මුල් පණිවිඩය</string>
     <string name="quote_timestamp_message_date">%s වෙතින් මුල් පණිවිඩය</string>
@@ -1268,13 +1268,13 @@
     <string name="read_receipts_remotely_disabled_title">ඔබ කියවූ බවට ලදුපත් අබල කර ඇත</string>
     <string name="read_receipts_remotely_changed_message">ඔබගේ ගිණුමේ සැකසුම් තුළ මෙම විකල්පය වෙනස් කළ හැකිය.</string>
     <string name="security_policy_title">වයර් ආරක්ෂණ ප්‍රතිපත්තිය</string>
-    <string name="security_policy_description">Allow Wire to make your device more secure.</string>
+    <string name="security_policy_description">උපාංගය තවත් ආරක්‍ෂා කිරීමට වයර් වෙත ඉඩදෙන්න</string>
     <string name="security_policy_setup_dialog_title">ආරක්ෂණ ප්‍රතිපත්තිය සබලකරන්න</string>
     <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
     <string name="security_policy_setup_dialog_button">සැකසුම් විවෘතකරන්න</string>
     <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
     <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
-    <string name="invalid_cookie_dialog_title">Your session expired</string>
+    <string name="invalid_cookie_dialog_title">වාරය ඉකුත් වී ඇත</string>
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
     <string name="conversation_folder_name_favorites">ප්‍රියතම</string>
     <string name="conversation_folder_name_group">සමූහ</string>
@@ -1410,15 +1410,15 @@
     <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
     <!-- Conference Calling Restriction feature config -->
-    <string name="conference_calling_restriction_dialog_title">Upgrade to Enterprise</string>
+    <string name="conference_calling_restriction_dialog_title">ව්‍යවසාය වෙත උත්ශ්‍රේණිය</string>
     <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
-    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_positive_button">උත්ශ්‍රෙණි කරන්න</string>
     <string name="conference_calling_restriction_dialog_negative_button">අවලංගු</string>
     <string name="upgraded_plan_dialog_title">වයර් ව්‍යවසාය</string>
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
-    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
+    <string name="conference_calling_unavailable_dialog_title">විශේෂාංගය නොතිබේ</string>
     <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
     <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
 </resources>
