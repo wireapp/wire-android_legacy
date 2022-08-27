@@ -1413,7 +1413,7 @@
     <string name="conference_calling_restriction_dialog_title">ව්‍යවසාය වෙත උත්ශ්‍රේණිය</string>
     <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
-    <string name="conference_calling_restriction_dialog_positive_button">උත්ශ්‍රෙණි කරන්න</string>
+    <string name="conference_calling_restriction_dialog_positive_button">උත්ශ්‍රේණි කරන්න</string>
     <string name="conference_calling_restriction_dialog_negative_button">අවලංගු</string>
     <string name="upgraded_plan_dialog_title">වයර් ව්‍යවසාය</string>
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
