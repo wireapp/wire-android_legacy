@@ -11,8 +11,8 @@ val USER_DATABASE_MIGRATION_139_TO_140 = object : Migration(139, 140) {
             execSQL("DELETE FROM EncryptedPushNotificationEvents")
             // Deleting decrypted events is tricky: they can not be decrypted again. Deleting a
             // message that was not processed yet causes the message to be lost forever.
-            // Distinguishing which event was already processed and is still (wrongfully) in this
-            // table will add a lot of complexity. It would be possible for some message types,
+            // We can't distinguishing which events are already processed but are still
+            // (wrongfully) in this table. It would be possible for some message types,
             // but it will be impossible for other. At the cost of losing some encrypted messages, the
             // easiest solution is to just delete the entire table.
             execSQL("DELETE FROM DecryptedPushNotificationEvents")
