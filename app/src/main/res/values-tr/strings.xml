@@ -149,10 +149,10 @@
     <string name="content__system__someone_left">Biri ayrıldı</string>
     <string name="content__system__other_was_removed">%1$s çıkarıldı</string>
     <string name="content__system__someone_was_removed">Birisi çıkarıldı</string>
-    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] yasal bekletme etkinleştirildiği için bu görüşmeden kaldırıldı.  _DAHA FAZLA BİLGİ EDİNİN_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">Birisi yasal bekletme etkinleştirildiği için bu görüşmeden kaldırıldı.  _DAHA FAZLA BİLGİ EDİNİN_</string>
+    <string name="content__system__legalhold_conflict__other_was_removed">%1$s yasal bekletme etkinleştirildiği için bu görüşmeden kaldırıldı.  _DAHA FAZLA BİLGİ EDİNİN_</string>
+    <string name="content__system__legalhold_conflict__others_were_removed">%1$s yasal bekletme etkinleştirildiği için bu görüşmeden kaldırıldı.  _DAHA FAZLA BİLGİ EDİNİN_</string>
     <!-- Create conversation -->
     <string name="content__system__you_started_conversation">Sohbeti başlattınız</string>
     <string name="content__system__other_started_conversation">%1$s sohbeti başlattı</string>
@@ -189,7 +189,7 @@
     <string name="content__otr__unverified_device__message">[[SEN]], _%1$s KİŞİSİNİN CİHAZLARINDAN_ BİRİNİN DOĞRULAMASINI KALDIRDIN</string>
     <string name="content__otr__your_unverified_device__message">[[SEN]] _CİHAZLARINDAN_ BİRİNİN DOĞRULAMASINI KALDIRDIN</string>
     <string name="content__otr__new_member__message">YENİ İNSANLAR KATILDI. _CİHAZLARI DOĞRULA_</string>
-    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold. _LEARN MORE_</string>
+    <string name="content__otr__legalhold_enabled__message">Bu konuşma yasal tutuluyor. _DAHA FAZLA BİLGİ EDİNİN_</string>
     <string name="content__otr__legalhold_disabled__message">Bu konuşma için yasal bekletme özelliği devre dışı bırakıldı</string>
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
@@ -337,7 +337,7 @@
         <item quantity="other">Hâlâ mesajlarınızı göndermek istiyor musunuz?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">Yasal Tutma Nedir?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Cihazları doğrula&#8230;</string>
     <string name="conversation__legal_hold_confirmation__positive_action">Yine de gönder</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">TAMAM</string>
@@ -437,7 +437,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Ayarlar</string>
     <string name="pref_options_vbr_title">Değişken Bit Hızı Kodlaması</string>
-    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
+    <string name="pref_options_vbr_summary">Bu, sesli aramaların daha az veri kullanmasını ve daha yavaş ağlarda iyi çalışmasını sağlar. Sabit bit hızı kodlamasını (CBR) kullanmak için kapatın. Bu ayar yalnızca 1:1 aramaları etkiler; konferans aramaları her zaman CBR kodlamasını kullanır.</string>
     <string name="pref_options_alerts_category_title">Uyarılar</string>
     <string name="pref_options_calls_category_title">Aramalar</string>
     <string name="pref_options_sounds_title">Sesler</string>
@@ -477,7 +477,7 @@
     <string name="pref_devices_device_id">ID: %1$s</string>
     <string name="pref_devices_device_verified">Doğrulandı</string>
     <string name="pref_devices_device_not_verified">Doğrulanmadı</string>
-    <string name="legal_hold_device_content_description">Legal Hold device</string>
+    <string name="legal_hold_device_content_description">Yasal bekletme detayları</string>
     <string name="pref_devices_warning_summary">Yukarıdaki cihazı tanımıyorsanız, onu kaldırın ve parolanızı sıfırlayın.</string>
     <string name="pref_devices_device_screen_title">Cihaz detayları</string>
     <string name="pref_devices_device_fingerprint_category_title">Anahtar Parmak İzi</string>
@@ -666,8 +666,8 @@
     <string name="sharing__user_not_logged_in__dialog__title">Lütfen giriş yapın</string>
     <string name="sharing__user_not_logged_in__dialog__message">Wire\'ı aç ve paylaşmak için giriş yap.</string>
     <string name="sharing__user_not_logged_in__dialog__confirm">TAMAM</string>
-    <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
-    <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
+    <string name="sharing__file_sharing_prohibited__dialog__title">Dosya paylaşım kısıtlamaları</string>
+    <string name="sharing__file_sharing_prohibited__dialog__message">Bu özellik devre dışı bırakıldığı için bu dosyayı paylaşamazsınız.</string>
     <string name="sharing__file_sharing_prohibited__dialog__confirm">TAMAM</string>
     <!-- Sync errors -->
     <string name="in_app_notification__sync_error__create_group_convo__title">Oluşturulamıyor</string>
@@ -819,7 +819,7 @@
     <string name="no_conversation_in_list__message">Bir konuşma başlat ya da bir grup oluştur.</string>
     <string name="default_deleted_username">Varsayılan</string>
     <string name="cursor__type_a_message">BİR MESAJ YAZIN</string>
-    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
+    <string name="cursor__ephemeral_message">KENDİ KENDİNİ SİLEN MESAJ</string>
     <string name="tooltip_record">Video Kaydet</string>
     <string name="tooltip_camera">Fotoğraf Ekle</string>
     <string name="tooltip_sketch">Bir Resim Çiz</string>
@@ -896,7 +896,7 @@
     <string name="usernames__take_over__choose">KENDİNİZİNKİNİ SEÇİN</string>
     <string name="usernames__take_over__keep">BUNU SAKLA</string>
     <string name="ephemeral_message__timeout__off">Kapalı</string>
-    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
+    <string name="ephemeral_message__options_header">KENDİ KENDİNİ SİLEN MESAJLAR</string>
     <string name="guests_option_on">Açık</string>
     <plurals name="unit_years">
         <item quantity="one">%1$s yıl</item>
@@ -924,7 +924,7 @@
     </plurals>
     <string name="ephemeral_message_footer_multiple_units">Kalan %1$s ve %2$s</string>
     <string name="ephemeral_message_footer_single_unit">%1$s kaldı</string>
-    <string name="collection_header_images">IMAGES</string>
+    <string name="collection_header_images">GÖRÜNTÜLER</string>
     <string name="collection_header_files">DOSYALAR</string>
     <string name="collection_header_links">BAĞLANTILAR</string>
     <string name="collection_header_today">BUGÜN</string>
@@ -994,7 +994,7 @@
     <string name="participant_tab_guest_indicator_label">Misafir</string>
     <string name="participant_tab_external_indicator_label">HARİCİ</string>
     <string name="participant_tab_group_admin_indicator_label">GRUP YÖNETİCİSİ</string>
-    <string name="federated_indicator">FEDERATED</string>
+    <string name="federated_indicator">BİRLEŞTİRİLMİŞ</string>
     <string name="availability_none">Hiçbiri</string>
     <string name="availability_available">Müsait</string>
     <string name="availability_away">Uzakta</string>
@@ -1088,7 +1088,7 @@
     <string name="loading_services">Hizmetler yükleniyor&#8230;</string>
     <string name="empty_services_list">Hizmetler, iş akışınızı iyileştirebilecek yardımcılardır. Onları etkinleştirmek için yöneticinize sorun.</string>
     <string name="empty_services_list_admin">Hizmetler, iş akışınızı iyileştirebilecek yardımcılardır.</string>
-    <string name="empty_services_content_description">No services found</string>
+    <string name="empty_services_content_description">Hiç bir hizmet bulunamadı</string>
     <string name="empty_search_content_description">Kullanıcı Bulunamadı</string>
     <string name="create_group_conversation">Grup oluştur</string>
     <string name="create_guest_room_conversation">Misafir odası oluştur</string>
@@ -1134,11 +1134,11 @@
     <string name="guest_options_title">Misafirler ve hizmetler</string>
     <string name="ephemeral_options_title">Kendini yok eden iletiler</string>
     <string name="notifications_options_title">Bildirimler</string>
-    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
+    <string name="ephemeral_explanation_text">Bu konuşmadaki tüm katılımcılar için kendi kendini silen mesajlar açılacaktır</string>
     <string name="notifications_explanation_text">Her şeyden (sesli ve görüntülü aramalar dahil) veya yalnızca sizden bahsettiğinizde haberdar olabilirsiniz.</string>
     <string name="show_all_participants">Tümünü göster (%1$s)</string>
     <string name="participant_was_removed_from_team">%s takımdan çıkarıldı</string>
-    <string name="all_participants">Participants (%1$s)</string>
+    <string name="all_participants">Katılımcılar (%1$s)</string>
     <string name="allow_guests_error_title">Bir şeyler yanlış gitti</string>
     <string name="allow_guests_error_body">Misafirlere veya hizmetlere izin verilemedi. Lütfen tekrar deneyin.</string>
     <string name="allow_guests_warning_body">Mevcut misafirler ve hizmetler sohbetten kaldırılacak. Yeni misafir ve hizmetlere izin verilmeyecektir.</string>
@@ -1225,7 +1225,7 @@
     <string name="generic_service_warning">Hizmetler bu sohbetin içeriğine erişebilir</string>
     <string name="add_services_button_text">Hizmetleri yönet</string>
     <string name="empty_search_button_text">Daha fazla bilgi</string>
-    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_same_domain_text">Wire\'daki insanları isim veya @kullanıcıadı\'na göre bulun</string>
     <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
     <string name="wire_notification_name">Wire Bildirimi</string>
     <string name="wire_ping_name">Wire Pingi</string>
@@ -1419,6 +1419,6 @@
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
     <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
-    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
-    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">Konferans araması başlatma seçeneği yalnızca Wire\'ın ücretli sürümünde mevcuttur.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">Bir konferans araması başlatmak için ekibinizin Kurumsal plana yükseltme yapması gerekir.</string>
 </resources>
