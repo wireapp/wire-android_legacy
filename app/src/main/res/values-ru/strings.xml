@@ -845,7 +845,7 @@
     <string name="audio_message_constant_bit_rate">ПОСТОЯННЫЙ БИТРЕЙТ</string>
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">Бесед пока нет</string>
-    <string name="all_archived__header">Отправлено в архив</string>
+    <string name="all_archived__header">Архивировано</string>
     <string name="no_conversation_in_list__message">Начните беседу или создайте группу.</string>
     <string name="default_deleted_username">По умолчанию</string>
     <string name="cursor__type_a_message">ВВЕДИТЕ СООБЩЕНИЕ</string>
@@ -1337,7 +1337,7 @@
     <string name="conversation_folder_name_favorites">Избранное</string>
     <string name="conversation_folder_name_group">Группы</string>
     <string name="conversation_folder_name_one_to_one">Контакты</string>
-    <string name="folders_move_to">ПЕРЕМЕЩЕНИЕ</string>
+    <string name="folders_move_to">ПЕРЕМЕСТИТЬ</string>
     <string name="folders_no_custom_folder_found">Создайте новую папку кнопкой +</string>
     <string name="folders_create_new_folder">СОЗДАНИЕ НОВОЙ ПАПКИ</string>
     <string name="folders_create_new_folder_action">СОЗДАТЬ</string>
