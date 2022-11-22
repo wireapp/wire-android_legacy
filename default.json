@@ -42,7 +42,7 @@
         "safe_logging": true
     },
     "experimental": {
-        "applicationId": "com.wire.x",
+        "applicationId": "com.wire.android.dev",
         "userId": "",
         "_comment": "appName must match the value of 'app_name' in strings.xml",
         "appName": "Wire Exp",
