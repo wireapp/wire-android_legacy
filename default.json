@@ -10,7 +10,7 @@
         "safe_logging": false
     },
     "dev": {
-        "applicationId": "com.wire.android.dev.debug",
+        "applicationId": "com.wire.android.dev",
         "userId": "",
         "_comment": "appName must match the value of 'app_name' in strings.xml",
         "appName": "Wire Dev",
