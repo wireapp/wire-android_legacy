@@ -51,8 +51,8 @@
     <string name="conversation_input_bar_dialog_ok">හරි</string>
     <!--*********************************************** ERRORS ***********************************************-->
     <string name="permissions_denied_dialog_settings">සැකසුම්</string>
-    <string name="camera_not_available">CAMERA NOT AVAILABLE</string>
-    <string name="camera_permissions_denied_title">Camera not available</string>
+    <string name="camera_not_available">රූගතය නොතිබේ</string>
+    <string name="camera_permissions_denied_title">රූගතය නොතිබේ</string>
     <string name="camera_permissions_denied_message">To take and send photos, grant permission to access the camera</string>
     <!-- Registration and Sign in -->
     <string name="welcome__terms_of_service">ඉදිරියට යෑමෙන් ඔබ _භාවිත නියම_ වලට එකඟ වේ.</string>
@@ -378,7 +378,7 @@
     <!-- About screen -->
     <string name="pref_category_title">සැකසුම්</string>
     <string name="pref_developer_screen_title">සංවර්ධක සැකසුම්</string>
-    <string name="pref_dev_avs_screen_title">AVS Settings</string>
+    <string name="pref_dev_avs_screen_title">AVS සැකසුම්</string>
     <string name="pref_profile_screen_title">පැතිකඩ</string>
     <!-- Account -->
     <string name="pref_account_screen_title">ගිණුම</string>
@@ -386,7 +386,7 @@
     <string name="pref_account_edit_name_title">නම සංස්කරණය කරන්න</string>
     <string name="pref_account_details_category_title">තොරතුරු</string>
     <string name="pref_account_actions_category_title">ක්‍රියාමාර්ග</string>
-    <string name="pref_account_appearance_category_title">Appearance</string>
+    <string name="pref_account_appearance_category_title">පෙනුම</string>
     <string name="pref_account_personal_information_category_title">පුද්ගලික තොරතුරු</string>
     <string name="pref_account_conversations_category_title">ඉතිහාසය</string>
     <string name="pref_account_username_title">පරිශීලක නාමය</string>
@@ -400,8 +400,8 @@
     <string name="pref_account_sign_out_title">නික්මෙන්න</string>
     <string name="pref_account_color_title">වර්ණය</string>
     <string name="pref_account_picture_title">ඡායාරූපය</string>
-    <string name="pref_account_delete_title">Delete Account</string>
-    <string name="pref_account_delete_warning_title">Delete account</string>
+    <string name="pref_account_delete_title">ගිණුම මකන්න</string>
+    <string name="pref_account_delete_warning_title">ගිණුම මකන්න</string>
     <string name="pref_account_delete_warning_message_email">We will send an email to:\n[[%1$s]]\nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_warning_message_sms">We will send a SMS to:\n[[%1$s]]\nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_warning_verify">හරි</string>
@@ -419,7 +419,7 @@
     <string name="pref_advanced_send_anonymous_crash_reports_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
     <string name="pref_advanced_send_anonymous_usage_data_title">නිර්නාමික භාවිත දත්ත යවන්න</string>
     <string name="pref_advanced_send_anonymous_usage_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
-    <string name="pref_advanced_receive_news_and_offers_title">Receive Newsletter</string>
+    <string name="pref_advanced_receive_news_and_offers_title">පුවත් පත්‍රිකා ලබාගන්න</string>
     <string name="pref_advanced_receive_news_and_offers_summary">Receive news and product updates from Wire via email.</string>
     <!-- App Lock -->
     <string name="pref_options_app_lock">අවසර කේතය</string>
@@ -455,11 +455,11 @@
     <string name="pref_options_dark_theme_title">අඳුරු තේමාව</string>
     <string name="pref_options_hide_screen_title">තිරයේ අන්තර්ගතය සඟවන්න</string>
     <string name="pref_options_hide_screen_summary">Wire\'s contents will no longer be visible in the task switcher</string>
-    <string name="pref_options_image_download_title">Download pictures</string>
+    <string name="pref_options_image_download_title">ඡායාරූප බාගන්න</string>
     <string name="pref_options_image_download_always">සැමවිටම</string>
     <string name="pref_options_image_download_wifi">වයි-ෆයි පමණි</string>
     <string name="pref_options_media_category_title">මාධ්‍යය</string>
-    <string name="pref_options_requested_category_title">By popular demand</string>
+    <string name="pref_options_requested_category_title">ජනප්‍රියත්‍වය අනුව</string>
     <string name="pref_options_cursor_send_button_title">යැවීමේ බොත්තම</string>
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
     <string name="pref_options_message_previews">පණිවිඩ පෙරදසුන්</string>
@@ -476,8 +476,8 @@
     <string name="pref_devices_device_activation_subtitle">Activated [[%1$s]]</string>
     <string name="pref_devices_device_id">හැඳුනුම: %1$s</string>
     <string name="pref_devices_device_verified">සත්‍යාපනය කළා</string>
-    <string name="pref_devices_device_not_verified">Not verified</string>
-    <string name="legal_hold_device_content_description">Legal Hold device</string>
+    <string name="pref_devices_device_not_verified">සත්‍යාපනය කර නැත</string>
+    <string name="legal_hold_device_content_description">නෛතික රැඳවුම් උපාංගය</string>
     <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
     <string name="pref_devices_device_screen_title">උපාංගයේ විස්තර</string>
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
