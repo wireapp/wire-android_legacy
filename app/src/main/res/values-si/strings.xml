@@ -149,10 +149,10 @@
     <string name="content__system__someone_left">යමෙක් හැරගියා</string>
     <string name="content__system__other_was_removed">%1$s was removed</string>
     <string name="content__system__someone_was_removed">Someone was removed</string>
-    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__you_were_removed">නෛතික රැඳවුම ක්‍රියාත්මක වූ හෙයින් [[You]] මෙම සංවාදයෙන් ඉවත් කෙරිණි. _තව දැනගන්න_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">නෛතික රැඳවුම ක්‍රියාත්මක වූ හෙයින් යමෙක් මෙම සංවාදයෙන් ඉවත් කෙරිණි. _තව දැනගන්න_</string>
+    <string name="content__system__legalhold_conflict__other_was_removed">නෛතික රැඳවුම ක්‍රියාත්මක වූ හෙයින් %1$s මෙම සංවාදයෙන් ඉවත් කෙරිණි. _තව දැනගන්න_</string>
+    <string name="content__system__legalhold_conflict__others_were_removed">නෛතික රැඳවුම ක්‍රියාත්මක වූ හෙයින් %1$s මෙම සංවාදයෙන් ඉවත් කෙරිණි. _තව දැනගන්න_</string>
     <!-- Create conversation -->
     <string name="content__system__you_started_conversation">ඔබ සංවාදය ආරම්භ කළා</string>
     <string name="content__system__other_started_conversation">%1$s started the conversation</string>
@@ -189,8 +189,8 @@
     <string name="content__otr__unverified_device__message">[[YOU]] UNVERIFIED ONE OF _%1$s\'s DEVICES_</string>
     <string name="content__otr__your_unverified_device__message">[[YOU]] UNVERIFIED ONE OF _YOUR DEVICES_</string>
     <string name="content__otr__new_member__message">NEW PEOPLE JOINED. _VERIFY DEVICES_</string>
-    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold. _LEARN MORE_</string>
-    <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
+    <string name="content__otr__legalhold_enabled__message">මෙම සංවාදය නෛතික රැඳවුම යටතේ තිබේ _තව දැනගන්න_</string>
+    <string name="content__otr__legalhold_disabled__message">මෙම සංවාදය සඳහා නෛතික රැඳවුම අක්‍රිය කෙරිණි</string>
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
     <string name="content__file__status__uploading__minimized">උඩුගත වෙමින්&#8230;</string>
@@ -331,14 +331,14 @@
     </plurals>
     <string name="conversation__degraded_confirmation__negative_action_self">ඔබගේ උපාංග පෙන්වන්න</string>
     <string name="conversation_degraded_confirmation__header__you">ඔබ</string>
-    <string name="conversation__legal_hold_confirmation__header">The conversation is now subject to legal hold.</string>
+    <string name="conversation__legal_hold_confirmation__header">මෙම සංවාදය දැන් නෛතික රැඳවුමට භාජනය වේ.</string>
     <plurals name="conversation__legal_hold_confirmation__message">
-        <item quantity="one">ඔබට තවමත් ඔබගේ පණිවිඩය යැවීමට අවශ්‍යද?</item>
-        <item quantity="other">ඔබට තවමත් ඔබගේ පණිවිඩ යැවීමට අවශ්‍යද?</item>
+        <item quantity="one">තවමත් ඔබගේ පණිවිඩය යැවීමට අවශ්‍යද?</item>
+        <item quantity="other">තවමත් ඔබගේ පණිවිඩ යැවීමට අවශ්‍යද?</item>
     </plurals>
-    <string name="conversation__legal_hold_confirmation__negative_action">නීතිමය රැඳවීමක් යනු කුමක් ද?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
-    <string name="conversation__legal_hold_confirmation__positive_action">කෙසේ වූවද යවන්න</string>
+    <string name="conversation__legal_hold_confirmation__negative_action">නෛතික රැඳවුමක් යනු කුමක් ද?</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">උපාංග සත්‍යාපනය&#8230;</string>
+    <string name="conversation__legal_hold_confirmation__positive_action">කෙසේ වුවද යවන්න</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">හරි</string>
     <string name="confirmation_menu__cancel">අවලංගු</string>
@@ -509,7 +509,7 @@
     <!-- Support -->
     <string name="pref_support_screen_title">සහාය</string>
     <string name="pref_support_website_title">වයර් සහාය වියමන අඩවිය</string>
-    <string name="pref_support_contact_title">Contact Support</string>
+    <string name="pref_support_contact_title">සහාය අමතන්න</string>
     <!-- About -->
     <string name="pref_about_screen_title">පිළිබඳව</string>
     <string name="pref_about_website_title">වයර් වියමන අඩවිය</string>
@@ -536,18 +536,18 @@
     <string name="pref__account_action__dialog__add_email_password__email">වි-තැපෑල</string>
     <string name="pref__account_action__dialog__add_email_password__title">වි-තැපැල් ලිපිනය එකතු කරන්න</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_email">වලංගු නොවන වි-තැපැල් ලිපිනයකි</string>
-    <string name="pref__account_action__dialog__add_email_password__error__invalid_password">At least 8 characters</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_password">අවම වශයෙන් අකුරු 2 ක්</string>
     <string name="pref__account_action__dialog__edit_phone__title">දුක. අංකය සංස්කරණය</string>
     <string name="pref__account_action__dialog__add_phone__title">දුක. අංකය එකතු කරන්න</string>
     <string name="pref__account_action__dialog__add_phone__error__country"> රටෙහි කේතය වලංගු නොවේ</string>
     <string name="pref__account_action__dialog__add_phone__error__number">වලංගු නොවන දුරකථන අංකයකි</string>
-    <string name="pref__account_action__dialog__add_phone__confirm__title">Confirm number</string>
+    <string name="pref__account_action__dialog__add_phone__confirm__title">අංකය තහවුරුව</string>
     <string name="pref__account_action__dialog__add_phone__confirm__message">We will send a notification code to:\n%s</string>
     <string name="pref__account_action__dialog__delete_phone_or_email__confirm__title">ඉවත් කරන්න</string>
     <string name="pref__account_action__dialog__delete_phone_or_email__confirm__message">Are you sure you want to remove %s from your Wire account?</string>
-    <string name="pref__account_action__dialog__delete_phone__error">Unable to delete phone number</string>
+    <string name="pref__account_action__dialog__delete_phone__error">දු.ක. අංකය මැකීමට නොහැකිය</string>
     <string name="pref__account_action__dialog__change_email__title">වි-තැපැල් ලිපිනය සංස්කරණය</string>
-    <string name="pref__account_action__dialog__change_username__rules">At least 2 characters. a–z, 0–9, and _ only</string>
+    <string name="pref__account_action__dialog__change_username__rules">අවම වශයෙන් අකුරු 2 ක්. a—z, 0—9 හා _ පමණි.</string>
     <string name="pref__account_action__dialog__change_username__title">පරිශීලක නාමය</string>
     <string name="pref__account_action__dialog__change_username__error_already_taken">දැනටමත් ගෙන ඇත</string>
     <string name="pref__account_action__dialog__change_username__error_unknown">Connection error, please try again</string>
@@ -559,7 +559,7 @@
     <!-- SHARING -->
     <string name="alert_dialog__confirmation">හරි</string>
     <string name="alert_dialog__no_network__header">අන්තර්ජාල සම්බන්ධතාවයක් නැත</string>
-    <string name="sign_up__set_picture__choose">Choose your own</string>
+    <string name="sign_up__set_picture__choose">ඔබම තෝරන්න</string>
     <string name="sign_up__set_picture__keep">මෙය තබා ගන්න</string>
     <string name="sign_up__set_picture__guidance">Wire is so much nicer with a picture.</string>
     <string name="sign_up__set_picture__loading">Loading photo</string>
@@ -770,14 +770,14 @@
     <string name="otr__participant__device_class__unknown">නොදන්නා</string>
     <string name="otr__participant__device_class__phone">දුරකථනය</string>
     <string name="otr__participant__device_class__tablet">Tablet</string>
-    <string name="otr__participant__device_class__desktop">Desktop computer</string>
-    <string name="otr__participant__device_class__legal_hold">නීතිමය රැඳවීම</string>
+    <string name="otr__participant__device_class__desktop">වැඩතල පරිගණකයකි</string>
+    <string name="otr__participant__device_class__legal_hold">නෛතික රැඳවුම</string>
     <string name="otr__participant__tab_details">විස්තර</string>
     <string name="otr__participant__tab_devices">උපාංග</string>
     <string name="otr__participant__information">තොරතුරු</string>
     <string name="otr__participant__single_device__my_fingerprint_link">මගේ උපාංගයේ ඇඟිලිසළකුණ පෙන්වන්න</string>
     <string name="otr__participant__single_device__reset_session_link">වාරය යළි සකසන්න</string>
-    <string name="otr__participant__my_device__description">Your device fingerprint</string>
+    <string name="otr__participant__my_device__description">ඔබගේ උපාංගයේ ඇඟිලිසටහන</string>
     <string name="otr__participant__my_device__show_all_devices_link">මාගේ සියලුම උපාංග පෙන්වන්න</string>
     <string name="otr__participant__single_device__description">Verify that this matches the fingerprint shown on %1$s\'s device.</string>
     <string name="otr__participant__single_device__how_to_link">_මම කොහොමද එය කරන්නේ?_</string>
@@ -795,49 +795,49 @@
     <string name="change_settings">සැකසුම් වෙනස් කරන්න</string>
     <string name="conversation_list__action_join_call">එක්වන්න</string>
     <!-- Conversation Toolbar -->
-    <string name="conversation_toolbar__collection">Collection</string>
+    <string name="conversation_toolbar__collection">එකතුව</string>
     <string name="conversation_toolbar__call_video">දෘශ්‍ය ඇමතුම</string>
     <string name="conversation_toolbar__call_audio">ශ්‍රව්‍ය ඇමතුම</string>
     <!-- Asset upload errors -->
-    <string name="asset_upload_error__not_found__title">File not found</string>
+    <string name="asset_upload_error__not_found__title">ගොනුව හමු නොවිණි</string>
     <string name="asset_upload_error__not_found__message">Unable to retrieve the specified file</string>
     <string name="asset_upload_error__not_found__button">හරි</string>
     <string name="asset_upload_error__file_too_large__title">ගොනුව ඉතා විශාලය</string>
     <string name="asset_upload_error__file_too_large__message_default">Uploading large files is not supported.</string>
     <string name="asset_upload_error__file_too_large__message">You can send files up to %1$s.</string>
     <string name="asset_upload_error__file_too_large__button">හරි</string>
-    <string name="asset_upload_warning__large_file__title">You\'re not on Wi-Fi</string>
+    <string name="asset_upload_warning__large_file__title">වයි-ෆයි නැත</string>
     <string name="asset_upload_warning__large_file__message_default">Are you sure you want to send a large file via the mobile network?</string>
     <string name="asset_upload_warning__large_file__message">Are you sure you want to send %1$s via the mobile network?</string>
     <!-- Video message errors -->
     <string name="audio_message_error__missing_audio_permissions">To send audio messages, grant permission to record audio.</string>
     <!-- Audio bit rate mode -->
-    <string name="audio_message_constant_bit_rate">CONSTANT BIT RATE</string>
+    <string name="audio_message_constant_bit_rate">අචල බිටු අනුපාතය</string>
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">තවම සංවාද නැත</string>
     <string name="all_archived__header">සියල්ල සංරක්ෂණය කළා</string>
     <string name="no_conversation_in_list__message">සංවාදයක් අරඹන්න හෝ සමූහයක් සාදන්න</string>
     <string name="default_deleted_username">පෙරනිමි</string>
-    <string name="cursor__type_a_message">TYPE A MESSAGE</string>
-    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
-    <string name="tooltip_record">Record Video</string>
-    <string name="tooltip_camera">Add Photo</string>
-    <string name="tooltip_sketch">Draw A Picture</string>
+    <string name="cursor__type_a_message">පණිවිඩයක් ලියන්න</string>
+    <string name="cursor__ephemeral_message">ස්වයං මැකෙන පණිවිඩ</string>
+    <string name="tooltip_record">දෘශ්‍ය පටිගතය</string>
+    <string name="tooltip_camera">රූපයක් යොදන්න</string>
+    <string name="tooltip_sketch">යමක් අඳින්න</string>
     <string name="tooltip_ping">නාද කරන්න</string>
-    <string name="tooltip_emoji">Emoji</string>
+    <string name="tooltip_emoji">ඉමොජි</string>
     <string name="tooltip_location">ස්ථානය</string>
     <string name="tooltip_more">තව ක්‍රියාමාර්ග</string>
     <string name="tooltip_audio_message">Tap and hold to send an audio message</string>
     <string name="tooltip_file">ගොනුව යවන්න</string>
     <string name="tooltip_gif">චලනරූ</string>
-    <string name="tooltip_mention">Add Mention</string>
+    <string name="tooltip_mention">සැඳහුමක් යොදන්න</string>
     <!-- Delete -->
-    <string name="conversation__message_action__delete_for_me">Delete only for me?</string>
-    <string name="conversation__message_action__delete_for_everyone">Delete for everyone?</string>
+    <string name="conversation__message_action__delete_for_me">මා සඳහා මකන්නද?</string>
+    <string name="conversation__message_action__delete_for_everyone">සැමට මකන්නද?</string>
     <string name="conversation__message_action__delete_details">මෙය ආපසු කළ නොහැකිය.</string>
     <string name="conversation__message_action__delete__dialog__cancel">අවලංගු කරන්න</string>
     <string name="conversation__message_action__delete__dialog__ok">මකන්න</string>
-    <string name="conversation__message_action__delete__confirmation">Message Deleted</string>
+    <string name="conversation__message_action__delete__confirmation">පණිවිඩය මැකිණි</string>
     <string name="conversation__action_mode__copy__description">%1$s වෙතින් පණිවිඩය</string>
     <string name="conversation__action_mode__copy__toast">පිටපත් විය</string>
     <string name="conversation__action_mode__fwd__dialog__title">Preparing content</string>
@@ -847,9 +847,9 @@
     <string name="audio_message__recording__slide_control__slide_hint">SWIPE UP TO SEND</string>
     <string name="audio_message__recording__slide_control__tap_hint">යැවීමට තට්ටු කරන්න</string>
     <string name="audio_message__recording__tap_to_record">Tap to record a message\nyou can _GLYPH_ it after that</string>
-    <string name="audio_message__recording__failure__title">Can\'t record audio</string>
+    <string name="audio_message__recording__failure__title">හඬ පටිගතයට නොහැකිය</string>
     <string name="audio_message__recording__failure__message">කරුණාකර නැවත උත්සාහ කරන්න.</string>
-    <string name="audio_message__recording__limit_reached__title">Recording stopped</string>
+    <string name="audio_message__recording__limit_reached__title">පටිගතය නතර විය</string>
     <string name="audio_message__recording__limit_reached__message">Audio messages are limited to 25MB. Send this message?</string>
     <string name="audio_message__recording__limit_reached__confirmation">යවන්න</string>
     <string name="hint_change_filter">Choose a filter above</string>
@@ -861,19 +861,19 @@
     <string name="message_bottom_menu_action_save">සුරකින්න</string>
     <string name="message_bottom_menu_action_open">විවෘත කරන්න</string>
     <string name="message_bottom_menu_action_delete">මකන්න</string>
-    <string name="message_bottom_menu_action_delete_local">Delete for me</string>
-    <string name="message_bottom_menu_action_delete_global">Delete for everyone</string>
+    <string name="message_bottom_menu_action_delete_local">මා සඳහා මකන්න</string>
+    <string name="message_bottom_menu_action_delete_global">සැමට මකන්න</string>
     <string name="message_bottom_menu_action_reveal">Reveal in conversation</string>
     <string name="message_bottom_menu_action_reply">පිළිතුර</string>
     <string name="message_bottom_menu_action_save_ok">Picture saved</string>
     <string name="message_bottom_menu_action_details">විස්තර</string>
     <string name="message_details_title">පණිවිඩයේ විස්තර</string>
-    <string name="message_liked_title">LIKED</string>
-    <string name="message_read_title">READ</string>
+    <string name="message_liked_title">කැමතියි</string>
+    <string name="message_read_title">කියවා ඇත</string>
     <string name="message_details_sent">යැවිණි</string>
-    <string name="message_details_last_edited">Edited</string>
-    <string name="tab_title_read">READ</string>
-    <string name="tab_title_likes">LIKED</string>
+    <string name="message_details_last_edited">සංශෝධිතයි</string>
+    <string name="tab_title_read">කියවා ඇත</string>
+    <string name="tab_title_likes">කැමතියි</string>
     <string name="messages_reads_turned_off">මෙම පණිවිඩය යවන විට කියවූ බවට ලදුපත් සක්‍රීයව තිබුනේ නැත.</string>
     <string name="messages_no_reads">මෙම පණිවිඩය කිසිවෙකු තවමත් කියවා නැත.</string>
     <string name="messages_no_likes">මෙම පණිවිඩයට කිසිවෙකු තවමත් මනාපය දක්වා නැත.</string>
@@ -1000,12 +1000,12 @@
     <string name="availability_away">බැහැර</string>
     <string name="availability_busy">කාර්යබහුලයි</string>
     <string name="availability_text_available">AVAILABLE</string>
-    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_away">නොසිටියි</string>
     <string name="availability_text_busy">කාර්යබහුලයි</string>
     <string name="availability_setstatus">තත්වයක් සකසන්න</string>
-    <string name="availability_notification_warning_away_title">You are set to Away</string>
+    <string name="availability_notification_warning_away_title">නොසිටින බව යොදා ඇත</string>
     <string name="availability_notification_warning_away">You will appear as Away to other people. You will not receive notifications about any incoming calls or messages.</string>
-    <string name="availability_notification_warning_busy_title">You are set to Busy</string>
+    <string name="availability_notification_warning_busy_title">කාර්යබහුල බව යොදා ඇත</string>
     <string name="availability_notification_warning_busy">You will appear as Busy to other people. You will only receive notifications for mentions, replies, and calls in conversations that are not muted.</string>
     <string name="availability_notification_warning_available_title">You are set to Available</string>
     <string name="availability_notification_warning_available">You will appear as Available to other people. You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
@@ -1020,7 +1020,7 @@
     <string name="preferences_profile_new">නව කණ්ඩායමක් හෝ ගිණුමක්</string>
     <string name="preferences_profile_add_account">ගිණුමක් එකතු කරන්න</string>
     <string name="preferences_profile_create_team">කණ්ඩායමක් සාදන්න</string>
-    <string name="preferences_profile_in_team">in %1$s</string>
+    <string name="preferences_profile_in_team">%1$s හි</string>
     <string name="new_devices_dialog_title">You have connected a device to your Wire account</string>
     <string name="new_devices_dialog_info">If you didn\'t do this, remove the device and reset your password.</string>
     <string name="new_devices_dialog_manage_devices">උපාංග කළමනාකරණය</string>
@@ -1044,7 +1044,7 @@
     <string name="teams_set_name_hint">සම්පූර්ණ නම</string>
     <string name="app_entry_create_account">පුද්ගලික</string>
     <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
-    <string name="app_entry_create_team">Pro</string>
+    <string name="app_entry_create_team">ආධික්‍යය</string>
     <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
     <string name="app_entry_login_sub">දැනටමත් ගිණුමක් තිබේද?</string>
     <string name="app_entry_login">පිවිසෙන්න</string>
@@ -1065,13 +1065,13 @@
     <string name="app_entry_sso_dialog_message">සමාගමේ තනි-පිවිසුම් (SSO) ප්‍රවේශ කේතය ඇතුල් කරන්න.</string>
     <string name="app_entry_sso_input_hint"></string>
     <string name="action_button_state_play">ධාවනය</string>
-    <string name="action_button_state_pause">pause</string>
+    <string name="action_button_state_pause">විරාමය</string>
     <string name="action_button_state_close">වසන්න</string>
     <string name="action_button_state_redo">පසුසේ</string>
     <string name="action_button_state_none">කිසිවක් නැත</string>
     <string name="pick_user_teams_invite">කණ්ඩායමට එක්වීමට මිනිසුන්ට ආරාධනා කරන්න</string>
     <string name="teams_invitations_skip">මගහරින්න</string>
-    <string name="teams_invitations_done">DONE</string>
+    <string name="teams_invitations_done">අහවරයි</string>
     <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
     <string name="teams_invitations_error_already_sent">දැනටමත් යවා ඇත</string>
     <string name="teams_invitations_error_generic">SOMETHING WENT WRONG, PLEASE TRY AGAIN</string>
@@ -1095,7 +1095,7 @@
     <string name="manage_services">සේවා කළමනාකරණය</string>
     <string name="next_button">ඊළඟ</string>
     <string name="skip_button">මගහරින්න</string>
-    <string name="done_button">DONE</string>
+    <string name="done_button">අහවරයි</string>
     <string name="new_group_header">සමූහයක් සාදන්න</string>
     <string name="add_participants_empty_header">සහභාගීවන්නන් එකතුකරන්න</string>
     <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
@@ -1366,27 +1366,27 @@
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
     <!-- Legal Hold -->
-    <string name="legal_hold_info_title">නීතිමය රැඳවීම</string>
+    <string name="legal_hold_info_title">නෛතික රැඳවුම</string>
     <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
     <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
     <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
-    <string name="legal_hold_request_dialog_title">Legal Hold Requested</string>
+    <string name="legal_hold_request_dialog_title">නෛතික රැඳවුමක් ඉල්ලා ඇත</string>
     <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
     <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
-    <string name="legal_hold_request_dialog_positive_button_text">පිළිගන්නවා</string>
+    <string name="legal_hold_request_dialog_positive_button_text">පිළිගනිමි</string>
     <string name="legal_hold_request_dialog_negative_button_text">දැන් නොවේ</string>
     <string name="legal_hold_request_dialog_wrong_password_error">සාවද්‍ය මුරපදයකි</string>
     <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
-    <string name="legal_hold_device_name">නීතිමය රැඳවීම</string>
-    <string name="legal_hold_deactivated_dialog_title">Legal Hold Deactivated</string>
+    <string name="legal_hold_device_name">නෛතික රැඳවුම</string>
+    <string name="legal_hold_deactivated_dialog_title">නෛතික රැඳවුම අක්‍රිය කෙරිණි</string>
     <string name="legal_hold_deactivated_dialog_message">මින් මතු පණිවිඩ පටිගත නොවේ.</string>
-    <string name="legal_hold_activated_dialog_title">Legal Hold is Active</string>
+    <string name="legal_hold_activated_dialog_title">නෛතික රැඳවුම ක්‍රියාත්මකයි</string>
     <string name="legal_hold_participant_missing_consent_alert_title">අමුත්තන් එකතු කිරීමට නොහැකිය</string>
-    <string name="legal_hold_participant_missing_consent_alert_message">Due to legal hold, only team members can be added to this conversation.</string>
+    <string name="legal_hold_participant_missing_consent_alert_message">නෛතික රැඳවුම නිසා මෙම සංවාදයට කණ්ඩායමේ සාමාජිකයින් පමණක් එකතු කිරීමට හැකිය.</string>
     <string name="legal_hold_participant_missing_consent_alert_negative_button">තව දැනගන්න</string>
-    <string name="legal_hold_user_blocked_message">This user is blocked due to legal hold. _LEARN MORE_</string>
-    <string name="legal_hold_cannot_connect_alert_title">මෙම පරිශීලකයාට සම්බන්ධ විය නොහැකිය</string>
-    <string name="legal_hold_cannot_connect_alert_message">You cannot connect to this user due to legal hold.</string>
+    <string name="legal_hold_user_blocked_message">නෛතික රැඳවුම නිසා මෙම පරිශීලකයාව අවහිර කෙරිණි. _තව දැනගන්න_</string>
+    <string name="legal_hold_cannot_connect_alert_title">මෙම පරිශීලකයාට සම්බන්ධ වීමට නොහැකිය</string>
+    <string name="legal_hold_cannot_connect_alert_message">නෛතික රැඳවුම නිසා මෙම පරිශීලකයාට සම්බන්ධ වීමට නොහැකිය.</string>
     <string name="legal_hold_cannot_connect_alert_negative_button">තව දැනගන්න</string>
     <!-- Join Conversation via Deep Link -->
     <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
