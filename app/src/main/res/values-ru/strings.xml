@@ -457,7 +457,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Настройки</string>
     <string name="pref_options_vbr_title">Кодирование с переменным битрейтом</string>
-    <string name="pref_options_vbr_summary">Благодаря этой опции аудиозвонки расходуют меньше данных и лучше работают при использовании низкоскоростных сетей. Выключите, чтобы использовать кодирование с постоянным битрейтом (CBR). Эта настройка влияет только на звонки 1:1; конференц-звонки всегда используют кодирование CBR.</string>
+    <string name="pref_options_vbr_summary">Благодаря этой опции аудиозвонки расходуют меньше данных и лучше работают при использовании низкоскоростных сетей. Выключите, чтобы использовать кодирование с постоянным битрейтом (CBR). Эта настройка влияет только на звонки 1:1; групповые звонки всегда используют кодирование CBR.</string>
     <string name="pref_options_alerts_category_title">Оповещения</string>
     <string name="pref_options_calls_category_title">Звонки</string>
     <string name="pref_options_sounds_title">Звуки</string>
@@ -1469,14 +1469,14 @@
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Отправка самоудаляющихся сообщений выключена.</string>
     <!-- Conference Calling Restriction feature config -->
     <string name="conference_calling_restriction_dialog_title">Перейти на Enterprise</string>
-    <string name="conference_calling_restriction_dialog_description">В настоящее время ваша команда использует бесплатный тарифный план Basic. Перейдите на тарифный план Enterprise, чтобы получить доступ к таким возможностям, как конференц-связь и многим другим.
-    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Узнайте больше о тарифах в Wire</a>]]></string>
+    <string name="conference_calling_restriction_dialog_description">В настоящее время ваша команда использует бесплатный план Basic. Перейдите на Enterprise, чтобы получить доступ к групповым вызовам и другим возможностям.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Узнайте больше о тарифах Wire</a>]]></string>
     <string name="conference_calling_restriction_dialog_positive_button">ПЕРЕЙТИ СЕЙЧАС</string>
     <string name="conference_calling_restriction_dialog_negative_button">ОТМЕНА</string>
     <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
-    <string name="upgraded_plan_dialog_description">Ваша команда была обновлена до Wire Enterprise, что позволяет вам получить доступ к таким возможностям, как конференц-связь и многим другим.
+    <string name="upgraded_plan_dialog_description">Ваша команда перешла на Wire Enterprise, что позволяет использовать групповые звонки и другие возможности.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Узнайте больше о Wire Enterprise</a>]]></string>
     <string name="conference_calling_unavailable_dialog_title">Возможность недоступна</string>
-    <string name="conference_calling_unavailable_dialog_description_personal_user">Возможность инициировать конференц-связь доступна только в платной версии Wire.</string>
-    <string name="conference_calling_unavailable_dialog_description_team_member_user">Чтобы использовать конференц-связь, вашей команде необходимо перейти на план Enterprise.</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">Возможность инициировать групповой вызов доступна только в платной версии Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">Чтобы выполнить групповой вызов вашей команде необходимо перейти на план Enterprise.</string>
 </resources>
