@@ -38,8 +38,8 @@ These differences are:
 In order to build Wire for Android locally, it is necessary to install the following tools on the local machine:
 
 - JDK 8
-- Android SDK
-- Android NDK
+- Android SDK (Tested with 11 (R) )
+- Android NDK (21.4.7075529)
 
 ## How to build locally
 
@@ -116,6 +116,14 @@ When importing project in Android Studio **do not allow** gradle plugin update. 
 In Android studio, this can be done in `File` -> `Project Structure` -> `Project` -> `Android Gradle Plugin Version` -> `3.2.1`
 
 Be sure to set the Java JDK to 8 in `File` -> `Settings` -> `Build, Execution, Deployment` -> `Build Tools` -> `Gradle` -> `Gradle JDK` -> `1.8`
+
+Adding the NDK suggested by Android Studio might not work. You need to manually pick NDK 21. You can do this via `Tool` -> `SDK Manager` -> `SDK Tools` tab -> Select `Show package details` under the table -> Expand `NDK (Side by side)` in the table and find version `21`.
+
+After this, you need to add a reference to NDK in your `local.properties`:
+
+```
+ndk.dir=C\:\\Users\\YOUR USER HERE!\\AppData\\Local\\Android\\Sdk\\ndk\\21.4.7075529
+```
 
 ### Translations
 Translation: https://crowdin.com/projects/wire
