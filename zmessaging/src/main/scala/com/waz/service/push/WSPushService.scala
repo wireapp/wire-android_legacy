@@ -160,7 +160,7 @@ final class WSPushServiceImpl(userId:              UserId,
         deactivate()
         activate(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case SocketEvent.Message(_, NotificationsResponseEncoded(notifs @ _*)) =>
-        verbose(l"WebSocket notifications received (${notifs.length})")
+        verbose(l"WebSocket notifications received (${notifs.length}): ${notifs.mkString(", ")}")
         notifications ! notifs
       case event =>
         error(l"Unknown WebSocket event received: $event")
