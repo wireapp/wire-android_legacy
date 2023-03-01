@@ -22,7 +22,6 @@ import androidx.paging.PagedList
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.service.messages.MessageAndLikes
 import com.wire.signals.{EventContext, EventStream, SourceStream}
-import com.waz.zclient.log.LogUI._
 import ScrollController._
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
