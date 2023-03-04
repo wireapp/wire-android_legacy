@@ -163,8 +163,8 @@ final class GlobalModuleImpl(val context:             AContext,
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(() => backend.baseUrlWithApi.toString)
   private val customUserAgentHttpInterceptor: Interceptor        = new OkHttpUserAgentInterceptor()
-  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(Threading.IO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = true, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(Threading.IO)
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = true, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
