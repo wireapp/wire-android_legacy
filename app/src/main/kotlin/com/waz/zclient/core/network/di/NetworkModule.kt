@@ -81,9 +81,7 @@ object NetworkDependencyProvider {
             .addLoggingInterceptor()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {
-        if (BuildConfig.DEBUG) {
-            addInterceptor(HttpLoggingInterceptor().setLevel(Level.BODY))
-        }
+        addInterceptor(HttpLoggingInterceptor().setLevel(Level.BODY))
     }
 }
 
