@@ -67,7 +67,6 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   )
 
   private def insertDecryptedVersion(event: PushNotificationEvent, plain: Option[Array[Byte]]): Future[Unit] = {
-    verbose(l"insertDecryptedVersion(event: $event, plain: $plain)")
     val newEvent = event.copy(decrypted = true, plain = plain)
     for {
       _ <- decryptedStorage.insert(newEvent)
@@ -76,7 +75,6 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   }
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
-    verbose(l"setAsDecrypted: index: $index)")
     for {
       event <- encryptedStorage.get(index)
       _ <- decryptedStorage.insert(event.get)
@@ -84,18 +82,15 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     } yield()
   }
 
-  override def writeClosure(index: EventIndex): PlainWriter = {
-    verbose(l"writeClosure(index: $index)")
+  override def writeClosure(index: EventIndex): PlainWriter =
     (plain: Array[Byte]) => {
       for {
         event <- encryptedStorage.get(index)
         _ <- insertDecryptedVersion(event.get, Some(plain))
       } yield()
     }
-  }
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] = {
-    verbose(l"writeError(index: $index, error: $error)")
       for {
         event  <- encryptedStorage.get(index)
         _      <- decryptedStorage.insert(event.get.copy(event = MessageEvent.errorToEncodedEvent(error), plain = None))
@@ -104,7 +99,6 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   }
 
   override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
-    verbose(l"saveAll(pushNotifications: $pushNotifications)")
     val eventsToSave = pushNotifications.flatMap { pn =>
       val (valid, invalid) = pn.events.zipWithIndex.partition(_._1.isForUs(clientId))
       invalid.foreach { event => verbose(l"Skipping otr event not intended for us: ${event._1}") }
@@ -113,24 +107,18 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     encryptedStorage.insertAll(eventsToSave).map { _.toSeq }
   }
 
-  override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] = {
-    verbose(l"encryptedEvents()")
+  override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => EncryptedPushNotificationEventsDao.listAll() }
-  }
 
-  override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] = {
-    verbose(l"getDecryptedRows()")
+  override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => DecryptedPushNotificationEventsDao.listAll() }
-  }
 
-  override def getAllRows: Future[IndexedSeq[PushNotificationEvent]] = {
-    verbose(l"getAllRows()")
+  override def getAllRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db =>
         val encrypted = EncryptedPushNotificationEventsDao.listAll()
         val decrypted = DecryptedPushNotificationEventsDao.listAll()
         encrypted ++ decrypted
     }
-  }
 
   def removeDecryptedEvents(rows: Iterable[EventIndex]): Future[Unit] = decryptedStorage.removeAll(rows)
 
@@ -139,13 +127,11 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   //This method is called once on app start, so invoke the handler in case there are any events to be processed
   //This is safe as the handler only allows one invocation at a time.
   override def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit] = {
-    verbose(l"registerEventHandler(handler: $handler)")
     encryptedStorage.onAdded.foreach(_ => handler())
     processStoredEvents(handler)
   }
 
   private def processStoredEvents(processor: () => Future[Unit]): Future[Unit] = {
-    verbose(l"processStoredEvents(processor: $processor)")
     getAllRows.flatMap { notifications =>
       if (notifications.nonEmpty) {
         processor()
