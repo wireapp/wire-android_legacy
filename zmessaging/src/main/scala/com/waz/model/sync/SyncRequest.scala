@@ -18,6 +18,9 @@
 package com.waz.model.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccentColor, Availability, _}
@@ -32,7 +35,7 @@ import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
-sealed abstract class SyncRequest {
+sealed abstract class SyncRequest extends DerivedLogTag {
   val cmd: SyncCommand
 
   /**
@@ -474,7 +477,7 @@ object SyncRequest {
     case _ => Unchanged
   }
 
-    implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] with StorageCodecs {
+    implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest]  with StorageCodecs {
     import JsonDecoder._
 
     override def apply(implicit js: JSONObject): SyncRequest = {
@@ -487,6 +490,8 @@ object SyncRequest {
       def trackingId = decodeId[TrackingId]('trackingId)
       def qualifiedId = decodeQualifiedId('qualifiedId)
       val cmd = js.getString("cmd")
+
+      implicit val logTag: LogTag = LogTag(getClass.getSimpleName)
 
       try {
         SyncCommand.fromName(cmd) match {
@@ -557,10 +562,16 @@ object SyncRequest {
           case Cmd.SyncLegalHoldRequest      => SyncLegalHoldRequest
           case Cmd.SyncClientsForLegalHold   => SyncClientsForLegalHold(rConvId)
           case Cmd.PostClientCapabilities    => PostClientCapabilities
-          case Cmd.Unknown                   => Unknown
+          case Cmd.Unknown                   => {
+            error(l"Unknown CMD `${cmd}` from sync job json: ${js.toString()}")
+            Unknown
+          }
         }
       } catch {
-        case NonFatal(e) => Unknown
+        case NonFatal(e) => {
+          error(l"Error `$e` when decoding sync job json: ${js.toString}")
+          Unknown
+        }
       }
     }
   }
