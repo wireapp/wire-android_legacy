@@ -99,6 +99,7 @@ class SyncSchedulerImpl(accountId:   UserId,
   override def report(pw: PrintWriter) = reportString.map(pw.println)
 
   private def execute(job: SyncJob): Unit = {
+    debug(l"execute($job)")
     val t = System.currentTimeMillis()
     val future = executor(job)
     executions += job.id -> future
@@ -126,6 +127,8 @@ class SyncSchedulerImpl(accountId:   UserId,
     }
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]): Future[A] = {
+    debug(l"awaitPreconditions($job)")
+
     val entry = new WaitEntry(job)
     waitEntries.put(job.id, entry)
 
@@ -142,9 +145,16 @@ class SyncSchedulerImpl(accountId:   UserId,
     }
   }
 
-  private def getStartTime(job: SyncJob): Long =
-    if (job.offline && network.isOnline.currentValue.getOrElse(false)) 0  // start right away if request last failed due to possible network errors
-    else job.startTime
+  private def getStartTime(job: SyncJob): Long = {
+    debug(l"getStartTime($job)")
+    if (job.offline && network.isOnline.currentValue.getOrElse(false)) {
+      verbose(l"Last request failed due to possible network errors, starting job now for: $job")
+      0
+    }  // start right away if request last failed due to possible network errors
+    else {
+      job.startTime
+    }
+  }
 
   class WaitEntry(private var job: SyncJob) extends DerivedLogTag { self =>
     private val promise = Promise[Unit]()
@@ -152,6 +162,7 @@ class SyncSchedulerImpl(accountId:   UserId,
     private var delayFuture: CancellableFuture[Unit] = setup(job)
 
     private def setup(job: SyncJob) = {
+      debug(l"setup($job)")
       val t = System.currentTimeMillis()
       val startJob = getStartTime(job)
       val d = math.max(0, startJob - t).millis
@@ -161,8 +172,13 @@ class SyncSchedulerImpl(accountId:   UserId,
         _ <- Future.traverse(job.dependsOn)(await)
         _ <- queue.acquire(job.priority)
       } yield {
-        if (job == self.job) promise.trySuccess(())
-        else queue.release() // this wait entry was already updated, releasing acquired lock
+        if (job == self.job) {
+          promise.trySuccess(())
+        }
+        else {
+          queue.release()
+          verbose(l"Entry already updated, releasing acquired lock for job: $job")
+        } // this wait entry was already updated, releasing acquired lock
       }
       delay
     }
