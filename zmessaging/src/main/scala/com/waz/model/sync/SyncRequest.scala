@@ -25,6 +25,7 @@ import com.waz.service.assets.{Codec, StorageCodecs, UploadAssetStatus}
 import com.waz.service.{PropertyKey, SearchQuery}
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._
+import com.waz.utils.JsonEncoder.array
 import com.waz.utils._
 import org.json.JSONObject
 
@@ -581,11 +582,9 @@ object SyncRequest {
 
       req match {
         case SyncUser(users)                  => o.put("users", arrString(users.toSeq map (_.str)))
-        case SyncQualifiedUsers(qIds)         =>
-          o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
+        case SyncQualifiedUsers(qIds)         => putQualifiedIds(o, "qualified_ids", qIds)
         case SyncSearchResults(users)         => o.put("users", arrString(users.toSeq map (_.str)))
-        case SyncQualifiedSearchResults(qIds) =>
-          o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
+        case SyncQualifiedSearchResults(qIds) => putQualifiedIds(o, "qualified_ids", qIds)
         case SyncConversation(convs)          => o.put("convs", arrString(convs.toSeq map (_.str)))
         case SyncConvLink(conv)               => o.put("conv", conv.str)
         case SyncSearchQuery(queryCacheKey)   => o.put("queryCacheKey", queryCacheKey.cacheKey)
@@ -627,7 +626,7 @@ object SyncRequest {
           o.put("users", arrString(users.toSeq map (_.str)))
           o.put("conversation_role", conversationRole.label)
         case PostQualifiedConvJoin(_, users, conversationRole) =>
-          o.put("users", users.map(QualifiedId.Encoder(_)))
+          putQualifiedIds(o, "users", users)
           o.put("conversation_role", conversationRole.label)
         case PostConvLeave(_, user)  => putId("user", user)
         case PostQualifiedConvLeave(_, qId)  =>
@@ -695,7 +694,7 @@ object SyncRequest {
           o.put("client", client.str)
           o.put("qualifiedId", QualifiedId.Encoder(qId))
         case SyncClientsBatch(qIds) =>
-          o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
+          putQualifiedIds(o, "qualified_ids", qIds)
         case SyncPreKeys(qId, clients) =>
           o.put("qualifiedId", QualifiedId.Encoder(qId))
           o.put("clients", arrString(clients.toSeq.map(_.str)))
@@ -719,6 +718,12 @@ object SyncRequest {
           o.put("rConv", convId.str)
       }
     }
+  }
+
+  private def putQualifiedIds(o: JSONObject, jsonKey: String, qIds: Set[QualifiedId]) = {
+    o.put(jsonKey, array(qIds) { (array, item) =>
+      array.put(QualifiedId.Encoder(item))
+    })
   }
 }
 
