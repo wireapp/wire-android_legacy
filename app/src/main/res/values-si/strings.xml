@@ -126,7 +126,7 @@
         <item quantity="one">[[%1$s]] added %2$s and _%3$s other to the conversation_</item>
         <item quantity="other">[[%1$s]] added %2$s and _%3$s others to the conversation_</item>
     </plurals>
-    <string name="content__system__someone_added_you">[[%1$s]] added you to the conversation</string>
+    <string name="content__system__someone_added_you">[[%1$s]] ඔබව සංවාදයට එක් කර ඇත</string>
     <plurals name="content__system__someone_added_people_and_you_with_others">
         <item quantity="one">[[%1$s]] added %2$s, you and _%3$s other to the conversation_</item>
         <item quantity="other">[[%1$s]] added %2$s, you and _%3$s others to the conversation_</item>
@@ -220,15 +220,15 @@
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
     <!-- Conversation actions -->
     <string name="conversation__action__clear_content">අන්තර්ගතය හිස් කරන්න&#8230;</string>
-    <string name="conversation__action__delete_group">Delete group&#8230;</string>
+    <string name="conversation__action__delete_group">සමූහය මකන්න&#8230;</string>
     <string name="conversation__action__archive">සංරක්ෂණය</string>
-    <string name="conversation__action__unarchive">Unarchive</string>
-    <string name="conversation__action__add_participants">සහභාගීවන්නන් එකතුකරන්න</string>
+    <string name="conversation__action__unarchive">අසංරක්‍ෂණය</string>
+    <string name="conversation__action__add_participants">සහභාගීන් යොදන්න</string>
     <string name="conversation__action__create_group">සමූහයක් සාදන්න</string>
     <string name="conversation__action__open_conversation">සංවාදය විවෘත කරන්න</string>
     <string name="conversation__action__notifications">දැනුම්දීම්&#8230;</string>
     <string name="conversation__action__silence">නිශ්ශබ්ද</string>
-    <string name="conversation__action__unsilence">Unmute</string>
+    <string name="conversation__action__unsilence">නොනිහඬ</string>
     <string name="conversation__action__leave">සමූහය හැරයන්න&#8230;</string>
     <string name="conversation__action__call">අමතන්න</string>
     <string name="conversation__action__picture">ඡායාරූපය</string>
@@ -519,7 +519,7 @@
     <string name="pref_about_version_title">අනුවාදය %s</string>
     <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
     <!-- Pref invite -->
-    <string name="pref_invite_title">Invite people to join Wire</string>
+    <string name="pref_invite_title">වයර් වෙත ආරාධනා කරන්න</string>
     <!-- Preference Account Actions -->
     <string name="pref__account_action__phone_verification__title">දුරකථන අංකය සත්‍යාපනය කරන්න</string>
     <string name="pref__account_action__phone_verification__description">Enter the verification code we sent to %s</string>
@@ -980,7 +980,7 @@
     <string name="conversation_list__typing">Typing a message&#8230;</string>
     <string name="conversation_list__someone">යමෙක්</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>
-    <string name="conversation_list__added_you">[[%1$s]] added you</string>
+    <string name="conversation_list__added_you">[[%1$s]] ඔබව එක් කළා</string>
     <string name="conversation_list__left_you">ඔබ හැරගියා</string>
     <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
     <string name="conversation_list__header__title">සංවාද</string>
@@ -1097,8 +1097,8 @@
     <string name="skip_button">මගහරින්න</string>
     <string name="done_button">අහවරයි</string>
     <string name="new_group_header">සමූහයක් සාදන්න</string>
-    <string name="add_participants_empty_header">සහභාගීවන්නන් එකතුකරන්න</string>
-    <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
+    <string name="add_participants_empty_header">සහභාගීන් යොදන්න</string>
+    <string name="add_participants_count_header">සහභාගීන් යොදන්න (%1$s)</string>
     <string name="new_conv_no_results">ප්‍රතිඵල නැත</string>
     <string name="new_conv_no_contacts">සබඳතා නැත</string>
     <plurals name="participants_divider_services">
@@ -1156,7 +1156,7 @@
     <string name="link_copied_toast">සබැඳිය පිටපත් විය!</string>
     <string name="revoke_link_message">නව අමුත්තන්ට මෙම සබැඳිය සමඟ එක්වීමට නොහැකි වනු ඇත. වත්මන් අමුත්තන්ට තවමත් ප්‍රවේශය ඇත.</string>
     <string name="revoke_link_confirm">Revoke Link</string>
-    <string name="invite_button_description">People outside your team can join this conversation.</string>
+    <string name="invite_button_description">මෙම සංවාදයට ඔබගේ කණ්ඩායමෙන් පිටත පුද්ගලයින්ට එක් වීමට හැකිය</string>
     <string name="invite_people">මිනිසුන්ට ආරාධනා කරන්න</string>
     <string name="guest_room_name">අමුත්තන්ගේ කාමරය</string>
     <string name="guest_time_left_hours">%1$sh left</string>
