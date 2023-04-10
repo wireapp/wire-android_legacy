@@ -115,7 +115,7 @@
     <string name="content__system__you_renamed_conv">[[You]] සංවාදය නැවත නම් කළා</string>
     <!-- Read receipts: System messages -->
     <string name="content__system__read_receipts_on">කියවූ බවට ලදුපත් සක්‍රීයයි</string>
-    <string name="content__system__read_receipts_off">කියවූ බවට ලදුපත් අක්‍රීයයි</string>
+    <string name="content__system__read_receipts_off">කියවූ බවට ලදුපත් අක්‍රියයි</string>
     <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] සැමට කියවූ බටව ලදුපත් සක්‍රිය කළා</string>
     <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] සැමට කියවූ බටව ලදුපත් අක්‍රිය කළා</string>
     <string name="content__system__read_receipts_you_turned_on">[[You]] සැමට කියවූ බටව ලදුපත් සක්‍රිය කළා</string>
@@ -221,7 +221,7 @@
     <!-- Conversation actions -->
     <string name="conversation__action__clear_content">අන්තර්ගතය හිස් කරන්න&#8230;</string>
     <string name="conversation__action__delete_group">සමූහය මකන්න&#8230;</string>
-    <string name="conversation__action__archive">සංරක්ෂණය</string>
+    <string name="conversation__action__archive">සංරක්‍ෂණය</string>
     <string name="conversation__action__unarchive">අසංරක්‍ෂණය</string>
     <string name="conversation__action__add_participants">සහභාගීන් යොදන්න</string>
     <string name="conversation__action__create_group">සමූහයක් සාදන්න</string>
@@ -595,7 +595,7 @@
     <string name="notification__message__one_to_one__shared_video">දෘශ්‍යකයක් බෙදාගැනිණි</string>
     <string name="notification__message__one_to_one__shared_audio">ශ්‍රව්‍ය පණිවිඩයක් බෙදාගැනිණි</string>
     <string name="notification__message__one_to_one__shared_location">ස්ථානයක් බෙදාගත්තා</string>
-    <string name="notification__message_one_to_one_message_preview">පණිවිඩයක් යැව්වා</string>
+    <string name="notification__message_one_to_one_message_preview">පණිවිඩයක් එවා ඇත</string>
     <!-- %1$s == username, %2$s == conversation -->
     <string name="notification__message__group__prefix__other">%1$s in %2$s \u0020</string>
     <string name="notification__message__group__renamed_conversation">renamed the conversation to %1$s</string>
@@ -604,7 +604,7 @@
     <string name="notification__message__single__accept_request">You and %1$s are now connected</string>
     <string name="notification__message__group__default_conversation_name">සමූහ සංවාදය</string>
     <string name="notification__message__send_failed">පණිවිඩය යැවීමට අසමත්විය</string>
-    <string name="notification__message__ephemeral">පණිවිඩයක් යැව්වා</string>
+    <string name="notification__message__ephemeral">පණිවිඩයක් එවා ඇත</string>
     <string name="notification__message_with_mention__ephemeral">ඔබව සඳහන් කළා</string>
     <string name="notification__message_with_quote__ephemeral">ඔබට පිළිතුරු දී ඇත</string>
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
@@ -736,7 +736,7 @@
     <string name="sketch__emoji_keyboard__size_label__medium">MEDIUM</string>
     <string name="sketch__emoji_keyboard__size_label__large">LARGE</string>
     <string name="toolbar__sketch__action_close">වසන්න</string>
-    <string name="drawing__text_hint">TYPE A MESSAGE</string>
+    <string name="drawing__text_hint">පණිවිඩයක් ලියන්න</string>
     <!-- Location sharing -->
     <string name="location_sharing__tip">Drag the map to change location</string>
     <string name="location_sharing__permission_error">Unable to retrieve current location, permissions denied</string>
@@ -770,7 +770,7 @@
     <string name="otr__participant__device_class__unknown">නොදන්නා</string>
     <string name="otr__participant__device_class__phone">දුරකථනය</string>
     <string name="otr__participant__device_class__tablet">Tablet</string>
-    <string name="otr__participant__device_class__desktop">වැඩතල පරිගණකයකි</string>
+    <string name="otr__participant__device_class__desktop">වැඩතල පරිගණකය</string>
     <string name="otr__participant__device_class__legal_hold">නෛතික රැඳවුම</string>
     <string name="otr__participant__tab_details">විස්තර</string>
     <string name="otr__participant__tab_devices">උපාංග</string>
@@ -815,7 +815,7 @@
     <string name="audio_message_constant_bit_rate">අචල බිටු අනුපාතය</string>
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">තවම සංවාද නැත</string>
-    <string name="all_archived__header">සියල්ල සංරක්ෂණය කළා</string>
+    <string name="all_archived__header">සියල්ල සංරක්‍ෂිතයි</string>
     <string name="no_conversation_in_list__message">සංවාදයක් අරඹන්න හෝ සමූහයක් සාදන්න</string>
     <string name="default_deleted_username">පෙරනිමි</string>
     <string name="cursor__type_a_message">පණිවිඩයක් ලියන්න</string>
@@ -895,7 +895,7 @@
     <string name="usernames__take_over__summary">Claim your unique name on Wire. _Learn more._</string>
     <string name="usernames__take_over__choose">CHOOSE YOUR OWN</string>
     <string name="usernames__take_over__keep">KEEP THIS ONE</string>
-    <string name="ephemeral_message__timeout__off">අක්‍රීයයි</string>
+    <string name="ephemeral_message__timeout__off">අක්‍රියයි</string>
     <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
     <string name="guests_option_on">සක්‍රියයි</string>
     <plurals name="unit_years">
@@ -924,7 +924,7 @@
     </plurals>
     <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
     <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
-    <string name="collection_header_images">IMAGES</string>
+    <string name="collection_header_images">ඡායාරූප</string>
     <string name="collection_header_files">ගොනු</string>
     <string name="collection_header_links">සබැඳි</string>
     <string name="collection_header_today">අද</string>
@@ -972,7 +972,7 @@
     <string name="conversation_list__shared__location">ස්ථානයක් බෙදාගත්තා</string>
     <string name="conversation_list__missed_call">මගහැරුණු ඇමතුම</string>
     <string name="conversation_list__pinged">නාද කළා</string>
-    <string name="conversation_list__ephemeral">යමෙක් පණිවිඩයක් යැව්වා</string>
+    <string name="conversation_list__ephemeral">යමෙක් පණිවිඩයක් එවා ඇත</string>
     <string name="conversation_list__single_eph_and_mention">ඔබව සඳහන් කළා</string>
     <string name="conversation_list__group_eph_and_mention">යමෙක් ඔබව සඳහන් කළා</string>
     <string name="conversation_list__single_eph_and_quote">ඔබට පිළිතුරු දී ඇත</string>
@@ -985,7 +985,7 @@
     <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
     <string name="conversation_list__header__title">සංවාද</string>
     <string name="conversation_list__header__folders_title">බහාලුම්</string>
-    <string name="conversation_list__header__archive_title">සංරක්ෂණය</string>
+    <string name="conversation_list__header__archive_title">සංරක්‍ෂණය</string>
     <string name="conversation_list__single_with_quote">පිළිතුර: %1$s</string>
     <string name="conversation_list__group_with_quote">%1$s: %2$s වෙතින් පිළිතුර</string>
     <string name="conversation_list__single_without_quote">%1$s</string>
@@ -1126,7 +1126,7 @@
     <string name="create_conv_options_subtitle_allow_guests">අමුත්තන්ට ඉඩදෙන්න</string>
     <string name="create_conv_options_subtitle_read_receipts">කියවූ බවට ලදුපත්</string>
     <string name="create_conv_options_subtitle_on">සක්‍රීයයි</string>
-    <string name="create_conv_options_subtitle_off">අක්‍රීයයි</string>
+    <string name="create_conv_options_subtitle_off">අක්‍රියයි</string>
     <string name="participant_group_admin_toggle_text">සමූහයේ පරිපාලක</string>
     <string name="participant_group_admin_toggle_info_text">When this is on, the admin can add or remove people and services, update group settings, and change a participant’s role.</string>
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to services and people outside your team.</string>
@@ -1235,7 +1235,7 @@
     <string name="reply_message_type_audio">ශ්‍රව්‍ය පණිවිඩය</string>
     <string name="reply_message_type_location">ස්ථානය</string>
     <string name="reply_message_type_asset">ඇමිණුම</string>
-    <string name="reply_message_type_unknown">ඔබට මෙම පණිවිඩය දැකීමට නොහැකිය.</string>
+    <string name="reply_message_type_unknown">පණිවිඩයක් ලියන්න</string>
     <string name="deep_link_generic_error_title">වලංගු නොවන සබැඳියකි.</string>
     <string name="deep_link_generic_error_message">ඔබ විවෘත කළ සබැඳිය වලංගු නැත</string>
     <string name="deep_link_conversation_error_title">මෙම සංවාදය විවෘත කළ නොහැකිය</string>
