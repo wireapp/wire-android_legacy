@@ -122,8 +122,8 @@ class SyncSchedulerImpl(accountId:   UserId,
   }
 
   override def withConv[A](job: SyncJob, conv: ConvId)(f: ConvLock => Future[A]) =
-    countWaiting(job.id, getStartTime(job)) { queue.acquire(conv) } flatMap { lock =>
-      Try(f(lock)).recover { case t => Future.failed[A](t) }.get.andThen { case _ => lock.release() }
+    countWaiting(job.id, getStartTime(job)) { queue.acquire(conv, job.id) } flatMap { lock =>
+      Try(f(lock)).recover { case t => Future.failed[A](t) }.get.andThen { case _ => lock.release(job.id) }
     }
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]): Future[A] = {
@@ -141,7 +141,7 @@ class SyncSchedulerImpl(accountId:   UserId,
     jobReady.onComplete(_ => waitEntries -= job.id)
 
    countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
-      returning(f)(_.onComplete(_ => queue.release()))
+      returning(f)(_.onComplete(_ => queue.release(job.id)))
     }
   }
 
@@ -170,13 +170,13 @@ class SyncSchedulerImpl(accountId:   UserId,
       for {
         _ <- delay.recover { case CancelException => () } .future
         _ <- Future.traverse(job.dependsOn)(await)
-        _ <- queue.acquire(job.priority)
+        _ <- queue.acquire(job.priority, job.id)
       } yield {
         if (job == self.job) {
           promise.trySuccess(())
         }
         else {
-          queue.release()
+          queue.release(job.id)
           verbose(l"Entry already updated, releasing acquired lock for job: $job")
         } // this wait entry was already updated, releasing acquired lock
       }

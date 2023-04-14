@@ -18,13 +18,13 @@
 package com.waz.sync.queue
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.ConvId
+import com.waz.model.{ConvId, SyncId}
 import com.waz.model.sync.SyncJob.Priority
 import com.wire.signals.SerialDispatchQueue
 
+import java.util.UUID
 import scala.collection.immutable.Queue
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
@@ -47,22 +47,35 @@ class SyncSerializer extends DerivedLogTag {
   }
 
   private def processQueue(): Unit = {
+    val id = UUID.randomUUID()
+    debug(l"SSM1<$id> Processing SyncQueue: size ${queue.size}")
     while (queue.nonEmpty) {
+      debug(l"SSM1<$id> Queue is not empty: ${queue.size}")
       val handle = queue.dequeue()
+      debug(l"SSM1<$id> Found handle $handle")
       if (!handle.isCompleted) {
+        debug(l"SSM1<$id> Handle $handle is not complete, priority ${handle.priority} vs. next job priority ${nextJobMinPriority}")
         if (handle.priority > nextJobMinPriority) {
+          debug(l"SSM1<$id> Enqueuing handle due to priority: $handle")
           queue.enqueue(handle)
           return //TODO remove return
         }
 
-        if (handle.promise.trySuccess(())) runningJobs += 1
-        else queue.enqueue(handle)
+        if (handle.promise.trySuccess(())) {
+          debug(l"SSM1<$id> Running jobs+1 for $handle")
+          runningJobs += 1
+        }
+        else {
+          debug(l"SSM1<$id> Enqueuing handle as promise is not success $handle")
+          queue.enqueue(handle)
+        }
       }
     }
+    debug(l"SSM1 Done processing SyncQueue <$id>")
   }
 
-  def acquire(priority: Int): Future[Unit] = {
-    verbose(l"acquire($priority), running: $runningJobs")
+  def acquire(priority: Int, id: SyncId): Future[Unit] = {
+    verbose(l"acquire($priority) for $id, running: $runningJobs")
     val handle = new PriorityHandle(priority)
     Future {
       queue += handle
@@ -71,8 +84,8 @@ class SyncSerializer extends DerivedLogTag {
     handle.future
   }
 
-  def release(): Unit = Future {
-    verbose(l"release, running: $runningJobs")
+  def release(id: SyncId): Unit = Future {
+    verbose(l"release for $id, running: $runningJobs")
     runningJobs -= 1
     processQueue()
   }
@@ -84,8 +97,8 @@ class SyncSerializer extends DerivedLogTag {
     }
   }
 
-  def acquire(res: ConvId): Future[ConvLock] = {
-    verbose(l"acquire($res)")
+  def acquire(res: ConvId, id: SyncId): Future[ConvLock] = {
+    verbose(l"acquire($res) for $id")
     val handle = new ConvHandle(res)
     Future {
       convQueue :+= handle
@@ -94,8 +107,8 @@ class SyncSerializer extends DerivedLogTag {
     handle.future
   }
 
-  def release(r: ConvId): Unit = Future {
-    verbose(l"release($r)")
+  def release(r: ConvId, id: SyncId): Unit = Future {
+    verbose(l"release($r) for $id")
     convs -= r
     processConvQueue()
   }
@@ -136,5 +149,5 @@ object SyncSerializer {
 
 case class ConvLock(convId: ConvId, queue: SyncSerializer) {
   private val released = new AtomicBoolean(false)
-  def release() = if (released.compareAndSet(false, true)) queue.release(convId)
+  def release(id: SyncId) = if (released.compareAndSet(false, true)) queue.release(convId, id)
 }
