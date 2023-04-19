@@ -19,12 +19,12 @@ package com.waz.utils
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized}
 
+import java.util.UUID
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -35,7 +35,7 @@ trait EventProcessingQueue[A <: Event] {
 
   protected implicit val evClassTag: ClassTag[A]
   protected val selector: A => Boolean = { _ => true }
-  
+
   def enqueue(event: A): Future[Any]
 
   def enqueue(events: Seq[A]): Future[Any]
@@ -107,7 +107,7 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
     Future.successful(())
 
   protected def processQueue(): Future[Any] = {
-    verbose(l"processQueue")
+    verbose(l"processQueue (queue: $this)")
     post(processQueueNow())
   }
 
@@ -118,7 +118,7 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
 
   protected def processQueueNow(): Future[Any] = {
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
-    verbose(l"processQueueNow, events: $events")
+    verbose(l"processQueueNow (queue: $this), events: $events")
     if (events.nonEmpty) fromTry(processor(events)).recoverWithLog()
     else Future.successful(())
   }
@@ -131,24 +131,37 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
 }
 
 class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Future[Any], name: String = "") extends SerialProcessingQueue[A](processor, name)  {
+  private implicit val logTag: LogTag = LogTag(name)
   private implicit val dispatcher = SerialDispatchQueue(name = if (name.isEmpty) "ThrottledProcessingQueue_" + hashCode() else name)
   private val waiting = new AtomicBoolean(false)
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L
 
-  override protected def processQueue(): Future[Any] =
+  override protected def processQueue(): Future[Any] = {
+    val tag = UUID.randomUUID()
+    verbose(l"SSM2 <$tag> processQueue (throttled), preparing to wait...")
     if (waiting.compareAndSet(false, true)) {
+      verbose(l"SSM2 <$tag> wait successful")
       post {
         val d = math.max(0, lastDispatched - System.currentTimeMillis() + delay.toMillis)
+        verbose(l"SSM2 <$tag> setting delay ${d.millis}ms")
         waitFuture = CancellableFuture.delay(d.millis)
         if (!waiting.get()) waitFuture.cancel() // to avoid race conditions with `flush`
         waitFuture.future.flatMap { _ =>
+          verbose(l"SSM2 <$tag> timeout successful, processQueueNow")
           CancellableFuture.lift(processQueueNow())
         } .recover {
-          case e: Throwable => waiting.set(false)
+          case e: Throwable => {
+            verbose(l"SSM2 <$tag> timeout fail, recover from $e")
+            waiting.set(false)
+          }
         }
       }
-    } else waitFuture.future
+    } else {
+      verbose(l"SSM2 <$tag> wait NOT successful")
+      waitFuture.future
+    }
+  }
 
 
   override protected def processQueueNow(): Future[Any] = {
