@@ -21,7 +21,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao
-import com.waz.utils.ThrottledProcessingQueue
+import com.waz.utils.{SerialProcessingQueue}
 import com.wire.signals.SourceStream
 
 import scala.collection.mutable
@@ -41,7 +41,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   val onUpdated = new SourceStream[(SyncJob, SyncJob)] // (prev, updated)
   val onRemoved = new SourceStream[SyncJob]
 
-  private val saveQueue = new ThrottledProcessingQueue[SyncId](SaveDelay, { ids =>
+  private val saveQueue = new SerialProcessingQueue[SyncId]({ ids =>
     val toAdd = new mutable.HashMap[SyncId, SyncJob]
     val toDelete = new mutable.HashSet[SyncId]
     ids.foreach { id =>
