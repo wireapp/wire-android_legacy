@@ -177,7 +177,7 @@ class SyncSchedulerImpl(accountId:   UserId,
       val startJob = getStartTime(job)
       val d = math.max(0, startJob - t).millis
       val delay = CancellableFuture.delay(d)
-      verbose(l"SSM4<${job.id}> setup delay: $delay")
+      verbose(l"SSM4<${job.id}> setup delay ${d}ms (future: $delay)")
       for {
         _ <- delay.recover { case CancelException => () } .future
         _ = verbose(l"SSM4<${job.id}> delay done")
