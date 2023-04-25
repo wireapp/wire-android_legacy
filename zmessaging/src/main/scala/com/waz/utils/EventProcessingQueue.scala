@@ -112,15 +112,27 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
   }
 
   private final def fromTry[T](f: => Future[T]): Future[T] = Try(f) match {
-    case Success(value) => value
-    case Failure(ex)    => Future.failed(ex)
+    case Success(value) => {
+      verbose(l"SSM5 fromTry -> success")
+      value
+    }
+    case Failure(ex)    => {
+      verbose(l"SSM5 fromTry -> failure")
+      Future.failed(ex)
+    }
   }
 
   protected def processQueueNow(): Future[Any] = {
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
     verbose(l"processQueueNow (queue: $this), events: $events")
-    if (events.nonEmpty) fromTry(processor(events)).recoverWithLog()
-    else Future.successful(())
+    if (events.nonEmpty) {
+      verbose(l"SSM5 queue is not empty, fromTry")
+      fromTry(processor(events)).recoverWithLog()
+    }
+    else {
+      verbose(l"SSM5 queue is empty")
+      Future.successful(())
+    }
   }
 
   // post some task on this queue, effectively blocking all other processing while this task executes

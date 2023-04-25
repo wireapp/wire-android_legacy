@@ -18,12 +18,14 @@
 package com.waz.content
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{toLogHelper, verbose}
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao
-import com.waz.utils.{SerialProcessingQueue}
+import com.waz.utils.SerialProcessingQueue
 import com.wire.signals.SourceStream
 
+import java.util.UUID
 import scala.collection.mutable
 import scala.concurrent.duration._
 
@@ -42,19 +44,25 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   val onRemoved = new SourceStream[SyncJob]
 
   private val saveQueue = new SerialProcessingQueue[SyncId]({ ids =>
+    val tag = UUID.randomUUID()
+    verbose(l"SSM5<$tag> SyncStorage serial processing queue processor called for ids: $ids")
     val toAdd = new mutable.HashMap[SyncId, SyncJob]
     val toDelete = new mutable.HashSet[SyncId]
     ids.foreach { id =>
+      verbose(l"SSM5<$tag> processing for id $id")
       jobsMap.get(id) match {
         case Some(job) =>
+          verbose(l"SSM5<$tag> found job $id")
           toAdd += (id -> job)
           toDelete -= job.id
         case None =>
+          verbose(l"SSM5<$tag> job not found! $id")
           toDelete += id
           toAdd -= id
       }
     }
     db.withTransaction { implicit db =>
+      verbose(l"SSM5<$tag> saving to db... (deleting: $toDelete, adding: ${toAdd.keySet})")
       SyncJobDao.deleteEvery(toDelete)
       SyncJobDao.insertOrReplace(toAdd.values)
     }
