@@ -41,22 +41,29 @@ def prepareCustomizationEnvironment() {
         throw new GradleException('Custom repo specified, but not client folder')
     }
 
-    def grGitUser = System.getenv("GRGIT_USER") ?: properties.getProperty("GRGIT_USER") ?: ''
-    if (grGitUser.isEmpty()) {
-        throw new GradleException('Custom repo specified, but no grgit user provided')
-    }
-    def grGitPassword = System.getenv("GRGIT_PASSWORD") ?: properties.getProperty("GRGIT_PASSWORD") ?: ''
-
     def customDirPath = customCheckoutDir + '/' + customFolder + '/' + clientFolder
     def customConfigFile = new File("$customDirPath/custom.json")
 
-    // clean up
-    if (file(customCheckoutDir).exists()) {
-        delete file(customCheckoutDir)
+    if (file(customCheckoutDir).exists() && properties.getProperty("force_local_custom_folder") == "true") {
+        project.logger.quiet("Re-using esisting custom folder")
+    } else {
+        project.logger.quiet("Preparing to check out custom folder")
+
+        def grGitUser = System.getenv("GRGIT_USER") ?: properties.getProperty("GRGIT_USER") ?: ''
+        if (grGitUser.isEmpty()) {
+            throw new GradleException('Custom repo specified, but no grgit user provided')
+        }
+        def grGitPassword = System.getenv("GRGIT_PASSWORD") ?: properties.getProperty("GRGIT_PASSWORD") ?: ''
+
+        // clean up
+        if (file(customCheckoutDir).exists()) {
+            delete file(customCheckoutDir)
+        }
+
+        def credentials = new Credentials(grGitUser, grGitPassword)
+        Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
     }
 
-    def credentials = new Credentials(grGitUser, grGitPassword)
-    Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
     project.logger.quiet("Using custom repository $customRepository -> folder $customFolder")
 
     def customConfig = jsonReader.parseText(customConfigFile.text)
