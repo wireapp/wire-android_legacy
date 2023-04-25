@@ -132,15 +132,24 @@ class SyncSchedulerImpl(accountId:   UserId,
     val entry = new WaitEntry(job)
     waitEntries.put(job.id, entry)
 
+    verbose(l"SSM3 <${job.id}> awaitPrecondition step 1")
     val jobReady = for {
       _ <- accounts.accountState(accountId).filter(_ != LoggedOut).head
+      _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 2")
       _ <- network.isOnline.onTrue
+      _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 3")
       _ <- entry.future
     } yield {}
 
-    jobReady.onComplete(_ => waitEntries -= job.id)
+    verbose(l"SSM3 <${job.id}> awaitPrecondition step 4")
+    jobReady.onComplete(_ => {
+        verbose(l"SSM3 <${job.id}> awaitPrecondition step CC1")
+        waitEntries -= job.id
+      }
+    )
 
    countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
+      verbose(l"SSM3 <${job.id}> awaitPrecondition step CC2")
       returning(f)(_.onComplete(_ => queue.release(job.id)))
     }
   }
@@ -152,6 +161,7 @@ class SyncSchedulerImpl(accountId:   UserId,
       0
     }  // start right away if request last failed due to possible network errors
     else {
+      debug(l"was not offline for job ($job), returning start time ${job.startTime}")
       job.startTime
     }
   }
@@ -167,15 +177,21 @@ class SyncSchedulerImpl(accountId:   UserId,
       val startJob = getStartTime(job)
       val d = math.max(0, startJob - t).millis
       val delay = CancellableFuture.delay(d)
+      verbose(l"SSM4<${job.id}> setup delay: $delay")
       for {
         _ <- delay.recover { case CancelException => () } .future
+        _ = verbose(l"SSM4<${job.id}> delay done")
         _ <- Future.traverse(job.dependsOn)(await)
+        _ = verbose(l"SSM4<${job.id}> dependency done")
         _ <- queue.acquire(job.priority, job.id)
+        _ = verbose(l"SSM4<${job.id}> priority acquired")
       } yield {
         if (job == self.job) {
+          verbose(l"SSM4<${job.id}> self job confirmed")
           promise.trySuccess(())
         }
         else {
+          verbose(l"SSM4<${job.id}> self job NOT confirmed")
           queue.release(job.id)
           verbose(l"Entry already updated, releasing acquired lock for job: $job")
         } // this wait entry was already updated, releasing acquired lock

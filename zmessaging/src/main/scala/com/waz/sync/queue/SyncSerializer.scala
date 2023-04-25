@@ -55,7 +55,7 @@ class SyncSerializer extends DerivedLogTag {
       debug(l"SSM1<$id> Found handle $handle")
       if (!handle.isCompleted) {
         debug(l"SSM1<$id> Handle $handle is not complete, priority ${handle.priority} vs. next job priority ${nextJobMinPriority}")
-        if (handle.priority > nextJobMinPriority) {
+        if (handle.priority > nextJobMinPriority) { // IF this is not high enough priority, put it back, stop
           debug(l"SSM1<$id> Enqueuing handle due to priority: $handle")
           queue.enqueue(handle)
           return //TODO remove return
@@ -76,7 +76,7 @@ class SyncSerializer extends DerivedLogTag {
 
   def acquire(priority: Int, id: SyncId): Future[Unit] = {
     verbose(l"acquire($priority) for $id, running: $runningJobs")
-    val handle = new PriorityHandle(priority)
+    val handle = new PriorityHandle(priority, id)
     Future {
       queue += handle
       processQueue()
@@ -125,14 +125,14 @@ object SyncSerializer {
     def isCompleted = promise.isCompleted
   }
 
-  case class PriorityHandle(priority: Int) extends WaitHandle[Unit] {
+  case class PriorityHandle(priority: Int, syncId: SyncId) extends WaitHandle[Unit] {
 
     override def equals(o: scala.Any): Boolean = o match {
-      case h @ PriorityHandle(p) => p == priority && h.id == id
+      case h @ PriorityHandle(p, _) => p == priority && h.id == id
       case _ => false
     }
 
-    override def toString: String = s"PriorityHandle($priority, id: $id, completed: $isCompleted)"
+    override def toString: String = s"PriorityHandle($priority, sync: $syncId, id: $id, completed: $isCompleted)"
   }
 
   object PriorityHandle {
