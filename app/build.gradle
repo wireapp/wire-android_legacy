@@ -186,9 +186,9 @@ android {
         release {
             testCoverageEnabled = false
             proguardFiles 'proguard-android-optimize-wire.txt', 'proguard-rules.txt'
-            minifyEnabled true
+            minifyEnabled false
             multiDexEnabled true
-            shrinkResources true
+            //shrinkResources true
             manifestPlaceholders = [applicationVmSafeMode: "false",
                                     localyticsGcmSenderId: "\\ 826316279849"]
         }
