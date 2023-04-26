@@ -87,7 +87,7 @@ class SyncExecutor(account:     UserId,
           Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
         case Some(updated) =>
           verbose(l"SSM6<${job.id}> execute: step 3B")
-          handler(account, updated.request)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
+          handler(account, updated.request, job.id)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
             .recover {
               case e: Throwable =>
                 verbose(l"SSM6<${job.id}> execute: error 93")

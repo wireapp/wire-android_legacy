@@ -71,14 +71,37 @@ class SyncSchedulerImpl(accountId:   UserId,
   private val runningCount = Signal.zip(executionsCount, waiting.map(_.size)).map { case (r, w) => r - w }
 
   content.syncStorage { storage =>
+    val tag = UUID.randomUUID()
+    verbose(l"SSM9<TAG:$tag> SyncScheduler content.syncStorage. Executing jobs: ${storage.getJobs.map(_.id)}")
     storage.getJobs.toSeq.sortBy(_.timestamp) foreach execute
-    storage.onAdded.on(dispatcher) { execute }
+    storage.onAdded.on(dispatcher) { job =>
+      verbose(l"SSM9<TAG:$tag> onAdded ${job.id}, will execute")
+      execute(job)
+    }
     storage.onUpdated
-      .filter { case (prev, job) => prev.priority != job.priority || prev.startTime != job.startTime }
+      .filter { case (prev, job) =>
+        verbose(l"SSM9<TAG:$tag> onUpdated step1: prev ${prev.id}, job ${job.id}")
+        val shouldKeep = prev.priority != job.priority || prev.startTime != job.startTime
+        verbose(l"SSM9<TAG:$tag> shouldKeep = ${shouldKeep}")
+        shouldKeep
+      }
       .on(dispatcher) {
         case (prev, job) =>
-          waiting.mutate { jobs => if (jobs.contains(job.id)) jobs.updated(job.id, getStartTime(job)) else jobs }
-          waitEntries.get(job.id) foreach (_.onUpdated(job))
+          verbose(l"SSM9<TAG:$tag> onUpdated step2: prev ${prev.id}, job ${job.id}")
+          waiting.mutate { jobs =>
+            if (jobs.contains(job.id)) {
+              verbose(l"SSM9<TAG:$tag> onUpdated step3: job ${job.id} is contained, updating start time")
+              jobs.updated(job.id, getStartTime(job))
+            } else {
+              verbose(l"SSM9<TAG:$tag> onUpdated step3: job ${job.id} is NOT contained")
+              jobs
+            } }
+
+          verbose(l"SSM9<TAG:$tag> onUpdated step4 for job ${job.id}")
+          waitEntries.get(job.id) foreach {
+            verbose(l"SSM9<TAG:$tag> onUpdated step5 for job ${job.id}")
+            _.onUpdated(job)
+          }
       }
   }
 
@@ -99,12 +122,14 @@ class SyncSchedulerImpl(accountId:   UserId,
   override def report(pw: PrintWriter) = reportString.map(pw.println)
 
   private def execute(job: SyncJob): Unit = {
-    debug(l"execute($job)")
-    val t = System.currentTimeMillis()
+    val tag = UUID.randomUUID()
+    verbose(l"SSM10<TAG:${tag}> execute(${job.id}) step1")
     val future = executor(job)
     executions += job.id -> future
     executionsCount.mutate(_ + 1)
+    verbose(l"SSM10<TAG:${tag}> execute(${job.id}) step2")
     future onComplete { res =>
+      verbose(l"SSM10<TAG:${tag}> execute(${job.id}) step3")
       executions -= job.id
       executionsCount.mutate(_ - 1)
       res.failed.foreach(t => t.printStackTrace())
@@ -145,6 +170,7 @@ class SyncSchedulerImpl(accountId:   UserId,
       _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 3")
       _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M75 ($tag)")
       _ <- entry.future
+      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M75FF ($tag)")
     } yield {}
 
     verbose(l"SSM7<${job.id}> awaitPreconditions: step M76 ($tag)")
@@ -209,9 +235,20 @@ class SyncSchedulerImpl(accountId:   UserId,
     }
 
     def isCompleted = promise.isCompleted
-    def onRestart() = delayFuture.cancel()
-    def onOnline() = if (job.offline) delayFuture.cancel()
+    def onRestart() = {
+      verbose(l"SSM8<${job.id}> onRestart. cancel delayFuture")
+
+      delayFuture.cancel()
+    }
+    def onOnline() = {
+      verbose(l"SSM8<${job.id}> onOnline. Job is offline: ${job.offline}")
+      if (job.offline) {
+        verbose(l"SSM8<${job.id}> cancel delayFuture because offline")
+        delayFuture.cancel()
+      }
+    }
     def onUpdated(updated: SyncJob): Unit = {
+      verbose(l"SSM8<${job.id}> Updated job with ${updated.id}. Calling setup.")
       job = updated
       delayFuture = setup(updated)
     }

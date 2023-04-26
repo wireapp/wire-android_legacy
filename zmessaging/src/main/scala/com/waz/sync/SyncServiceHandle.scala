@@ -286,21 +286,23 @@ class AndroidSyncServiceHandle(account:         UserId,
 
 trait SyncHandler {
   import SyncHandler._
-  def apply(account: UserId, req: SyncRequest)(implicit reqInfo: RequestInfo): Future[SyncResult]
+  def apply(account: UserId, req: SyncRequest, jobId: SyncId)(implicit reqInfo: RequestInfo): Future[SyncResult]
 }
 
 object SyncHandler {
   case class RequestInfo(attempt: Int, requestStart: Instant, network: Option[NetworkMode] = None)
 }
 
-class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
+class AccountSyncHandler(accounts: AccountsService) extends SyncHandler with DerivedLogTag {
   import SyncHandler._
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  override def apply(accountId: UserId, req: SyncRequest)(implicit reqInfo: RequestInfo): Future[SyncResult] =
+  override def apply(accountId: UserId, req: SyncRequest, jobId: SyncId)(implicit reqInfo: RequestInfo): Future[SyncResult] = {
+    verbose(l"SSM11<JOB:${jobId}> AccountSyncHandler apply for req ${req.cmd.name}: step 1")
     accounts.getZms(accountId).flatMap {
       case Some(zms) =>
+        verbose(l"SSM11<JOB:${jobId}> AccountSyncHandler step 2")
         req match {
           case SyncSelfClients                                 => zms.otrClientsSync.syncSelfClients()
           case SyncClientsBatch(users)                         => zms.otrClientsSync.syncClients(users)
@@ -371,8 +373,14 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncLegalHoldRequest                            => zms.legalHoldSync.syncLegalHoldRequest()
           case SyncClientsForLegalHold(convId)                 => zms.legalHoldSync.syncClientsForLegalHoldVerification(convId)
           case PostClientCapabilities                          => zms.otrClientsSync.postCapabilities()
-          case Unknown                                         => Future.successful(Failure("Unknown sync request"))
+          case Unknown                                         =>
+            verbose(l"SSM11<JOB:${jobId}> AccountSyncHandler step 4:Unknown")
+            Future.successful(Failure("Unknown sync request"))
       }
-      case None => Future.successful(Failure(s"Account $accountId is not logged in"))
+      case None => {
+        verbose(l"SSM11<JOB:${jobId}> AccountSyncHandler step 4:None")
+        Future.successful(Failure(s"Account $accountId is not logged in"))
+      }
+  }
   }
 }
