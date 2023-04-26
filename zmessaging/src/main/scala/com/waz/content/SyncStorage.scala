@@ -18,7 +18,7 @@
 package com.waz.content
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE.{toLogHelper, verbose}
+import com.waz.log.LogSE._
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao

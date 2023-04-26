@@ -18,7 +18,6 @@
 package com.waz.sync.queue
 
 import java.io.PrintWriter
-
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -32,6 +31,7 @@ import com.wire.signals.CancellableFuture.CancelException
 import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Signal}
 import com.waz.utils.{WhereAmI, returning}
 
+import java.util.UUID
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
@@ -127,29 +127,38 @@ class SyncSchedulerImpl(accountId:   UserId,
     }
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]): Future[A] = {
+    val tag = UUID.randomUUID()
+    verbose(l"SSM7<${job.id}> awaitPreconditions: step M71 ($tag)")
     debug(l"awaitPreconditions($job)")
 
     val entry = new WaitEntry(job)
+    verbose(l"SSM7<${job.id}> awaitPreconditions: step M72 ($tag)")
     waitEntries.put(job.id, entry)
+    verbose(l"SSM7<${job.id}> awaitPreconditions: step M73 ($tag)")
 
     verbose(l"SSM3 <${job.id}> awaitPrecondition step 1")
     val jobReady = for {
       _ <- accounts.accountState(accountId).filter(_ != LoggedOut).head
+      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M74 ($tag)")
       _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 2")
       _ <- network.isOnline.onTrue
       _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 3")
+      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M75 ($tag)")
       _ <- entry.future
     } yield {}
 
+    verbose(l"SSM7<${job.id}> awaitPreconditions: step M76 ($tag)")
     verbose(l"SSM3 <${job.id}> awaitPrecondition step 4")
     jobReady.onComplete(_ => {
-        verbose(l"SSM3 <${job.id}> awaitPrecondition step CC1")
+      verbose(l"SSM7<${job.id}> awaitPreconditions: step M77 ($tag)")
+      verbose(l"SSM3 <${job.id}> awaitPrecondition step CC1")
         waitEntries -= job.id
       }
     )
 
    countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
-      verbose(l"SSM3 <${job.id}> awaitPrecondition step CC2")
+     verbose(l"SSM7<${job.id}> awaitPreconditions: step M78 ($tag)")
+     verbose(l"SSM3 <${job.id}> awaitPrecondition step CC2")
       returning(f)(_.onComplete(_ => queue.release(job.id)))
     }
   }
