@@ -666,7 +666,7 @@
     <string name="sharing__user_not_logged_in__dialog__title">කරුණාකර පිවිසෙන්න</string>
     <string name="sharing__user_not_logged_in__dialog__message">වයර් විවෘත කර බෙදා ගැනීමට පිවිසෙන්න.</string>
     <string name="sharing__user_not_logged_in__dialog__confirm">හරි</string>
-    <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
+    <string name="sharing__file_sharing_prohibited__dialog__title">ගොනු බෙදාගැනීමේ සීමා</string>
     <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
     <string name="sharing__file_sharing_prohibited__dialog__confirm">හරි</string>
     <!-- Sync errors -->
@@ -1043,7 +1043,7 @@
     <string name="teams_set_name_title">ඔබගේ නම</string>
     <string name="teams_set_name_hint">සම්පූර්ණ නම</string>
     <string name="app_entry_create_account">පුද්ගලික</string>
-    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
+    <string name="app_entry_create_account_sub">පවුලේ අය හා යහළුවන් සමඟ පෞද්ගලික කතාබහට</string>
     <string name="app_entry_create_team">ආධික්‍යය</string>
     <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
     <string name="app_entry_login_sub">දැනටමත් ගිණුමක් තිබේද?</string>
@@ -1181,9 +1181,9 @@
     <string name="restore_override_alert_title">ඉතිහාසය ප්‍රත්‍යර්පණය</string>
     <string name="restore_override_alert_text">The backup contents will replace the conversation history on this device. You can only restore history from a backup of the same platform.</string>
     <string name="restore_override_alert_ok">Choose Backup File</string>
-    <string name="back_up_progress">BACKING UP&#8230;</string>
-    <string name="back_up_progress_complete">COMPLETE</string>
-    <string name="restore_progress">RESTORING&#8230;</string>
+    <string name="back_up_progress">උපස්ථ වෙමින්&#8230;</string>
+    <string name="back_up_progress_complete">සම්පූර්ණයි</string>
+    <string name="restore_progress">ප්‍රත්‍යර්පණය වෙමින්&#8230;</string>
     <string name="pref_account_backup_warning_title">Set an email and password.</string>
     <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
     <string name="pref_account_backup_warning_ok">හරි</string>
@@ -1305,7 +1305,7 @@
     <string name="sso_login_dialog_message">Please enter your SSO code:</string>
     <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
     <!-- Welcome -->
-    <string name="welcome_to_wire">වයර් වෙත සාදරයෙන් පිළිගනිමු</string>
+    <string name="welcome_to_wire">පිළිගනිමු</string>
     <string name="welcome_enterprise_log_in">ව්‍යවසාය පිවිසුම</string>
     <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
     <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
