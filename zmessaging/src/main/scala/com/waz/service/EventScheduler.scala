@@ -24,6 +24,7 @@ import com.waz.model.{Event, RConvEvent, RConvId}
 import com.waz.threading.Threading
 import com.waz.utils._
 
+import java.util.UUID
 import scala.collection.breakOut
 import scala.concurrent.Future.{successful, traverse}
 import scala.concurrent.{Future, Promise}
@@ -34,7 +35,12 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
 
   private val queue = new GroupedEventProcessingQueue[Event, RConvId](RConvEvent, (c, e) => executeSchedule(c, createSchedule(e)), "EventScheduler")
 
-  def enqueue(events: Traversable[Event]): Future[Unit] = queue.enqueue(events.to[Vector]).recoverWithLog()
+  def enqueue(events: Traversable[Event], tag: UUID): Future[Unit] = {
+    verbose(l"SSPS3<TAG:$tag> EventScheduler step 1")
+    val f = queue.enqueue(events.to[Vector], tag).recoverWithLog()
+    verbose(l"SSPS3<TAG:$tag> EventScheduler step 2")
+    f
+  }
 
   def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
 

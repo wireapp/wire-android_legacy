@@ -43,7 +43,7 @@ class IntegrationsSyncHandlerImpl(convs:      ConversationsContentUpdater,
     convs.convById(cId).collect { case Some(c) => c.remoteId }.flatMap { rId =>
       client.addBot(rId, pId, iId).future.flatMap {
         case Right(event) =>
-          pipeline(Seq(event)).map(_ => SyncResult.Success)
+          pipeline(Seq(event), None).map(_ => SyncResult.Success)
         case Left(resp@ErrorResponse(502, _, "bad-gateway")) =>
           Future.successful(Failure(resp))
         case Left(error) =>
@@ -55,7 +55,7 @@ class IntegrationsSyncHandlerImpl(convs:      ConversationsContentUpdater,
     convs.convById(cId).collect { case Some(c) => c.remoteId }.flatMap { rId =>
       client.removeBot(rId, userId).future.flatMap {
         case Right(event) =>
-          pipeline(Seq(event)).map(_ => SyncResult.Success)
+          pipeline(Seq(event), None).map(_ => SyncResult.Success)
         case Left(error) =>
           Future.successful(SyncResult(error))
       }

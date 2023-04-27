@@ -121,7 +121,7 @@ final class PushServiceImpl(selfUserId:        UserId,
       val offset = System.currentTimeMillis()
       for {
         _         <- Future.successful(processing ! true)
-        _         = verbose(l"SSPS1<TAG:$tag> processing set to true, step 1")
+        _         = verbose(l"SSPS1<TAG:$tag> step 1: processing set to true")
         encrypted <- eventsStorage.encryptedEvents
         _         = verbose(l"SSPS1<TAG:$tag> step 2")
         _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
@@ -130,13 +130,14 @@ final class PushServiceImpl(selfUserId:        UserId,
         _         = verbose(l"SSPS1<TAG:$tag> step 4")
         decoded   =  decrypted.flatMap(otrEventDecoder.decode)
         _         = verbose(l"SSPS1<TAG:$tag> step 5")
-        _         <- if (decoded.nonEmpty) {
-          verbose(l"SSPS1<TAG:$tag> step 6a")
-          pipeline(decoded)
-        } else {
-          verbose(l"SSPS1<TAG:$tag> step 6b")
-          Future.successful(())
-        }
+        _         <-
+          if (decoded.nonEmpty) {
+            verbose(l"SSPS1<TAG:$tag> step 6a")
+            pipeline(decoded, Some(tag))
+          } else {
+            verbose(l"SSPS1<TAG:$tag> step 6b")
+            Future.successful(())
+          }
         _         = verbose(l"SSPS1<TAG:$tag> step 7")
         _         <- eventsStorage.removeDecryptedEvents(decrypted.map(_.id))
         _         = verbose(l"SSPS1<TAG:$tag> step 8")

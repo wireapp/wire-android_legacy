@@ -20,6 +20,7 @@ package com.waz.utils
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized}
@@ -38,14 +39,14 @@ trait EventProcessingQueue[A <: Event] {
 
   def enqueue(event: A): Future[Any]
 
-  def enqueue(events: Seq[A]): Future[Any]
+  def enqueue(events: Seq[A], tag: UUID): Future[Any]
 
   def enqueueEvent(event: Event): Future[Any] = event match {
     case ev: A if selector(ev) => enqueue(ev)
     case _ => Future.successful(()) // ignore
   }
 
-  def enqueueEvents(events: Seq[Event]): Future[Any] = enqueue(events collect { case ev: A if selector(ev) => ev })
+  def enqueueEvents(events: Seq[Event], tag: UUID): Future[Any] = enqueue(events collect { case ev: A if selector(ev) => ev }, tag)
 }
 
 object EventProcessingQueue {
@@ -57,7 +58,7 @@ object EventProcessingQueue {
       import com.waz.threading.Threading.Implicits.Background
       override protected implicit val evClassTag = classTag
       override def enqueue(event: A): Future[Any] = eventProcessor(event)
-      override def enqueue(events: Seq[A]): Future[Any] = Future.traverse(events)(eventProcessor)
+      override def enqueue(events: Seq[A], tag: UUID): Future[Any] = Future.traverse(events)(eventProcessor)
     }
   }
 }
@@ -67,7 +68,7 @@ class SerialEventProcessingQueue[A <: Event](processor: Seq[A] => Future[Any], n
 
 class GroupedEventProcessingQueue[A <: Event, Key]
   (groupBy: A => Key, processor: (Key, Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
-  extends EventProcessingQueue[A] {
+  extends EventProcessingQueue[A] with DerivedLogTag {
 
   private implicit val dispatcher = SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
 
@@ -78,10 +79,18 @@ class GroupedEventProcessingQueue[A <: Event, Key]
 
   override def enqueue(event: A): Future[Any] = Future(queue(groupBy(event))).flatMap(_.enqueue(event))
 
-  override def enqueue(events: Seq[A]): Future[Vector[Any]] =
+  override def enqueue(events: Seq[A], tag: UUID): Future[Vector[Any]] = {
+    verbose(l"SSEQ<TAG:$tag> EventProcessingQueue enqueue step 1")
     Future.traverse(events.groupBy(groupBy).toVector) {
-      case (key, es) => Future(queue(key)).flatMap(_.enqueue(es))
+      case (key, es) =>
+        verbose(l"SSEQ<TAG:$tag> EventProcessingQueue enqueue step 2")
+        Future(queue(key)).flatMap({
+            verbose(l"SSEQ<TAG:$tag> EventProcessingQueue enqueue step 3")
+            _.enqueue(es, tag)
+          }
+        )
     }
+  }
 
   def post[T](k: Key)(task: => Future[T]): Future[T] = Future {
     queue(k).post(task)
@@ -100,15 +109,21 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
 
   def !(event: A): Future[Any] = enqueue(event)
 
-  def enqueue(events: Seq[A]): Future[Any] = if (events.nonEmpty) {
-    events.foreach(queue.offer)
-    processQueue()
-  } else
-    Future.successful(())
-
-  protected def processQueue(): Future[Any] = {
-    verbose(l"processQueue (queue: $this)")
-    post(processQueueNow())
+  def enqueue(events: Seq[A], tag: UUID): Future[Any] =
+    if (events.nonEmpty) {
+      verbose(l"SSEQ<TAG:$tag> SerialProcessingQueue enqueue step 1")
+      events.foreach(queue.offer)
+      verbose(l"SSEQ<TAG:$tag> SerialProcessingQueue enqueue step 2")
+      val f = processQueue(Some(tag))
+      verbose(l"SSEQ<TAG:$tag> SerialProcessingQueue enqueue step 3")
+      f
+    } else {
+      verbose(l"SSEQ<TAG:$tag> SerialProcessingQueue enqueue step 4")
+      Future.successful(())
+    }
+  protected def processQueue(tag: Option[UUID] = None): Future[Any] = {
+    verbose(l"processQueue (queue: $this) tag: $tag")
+    post(processQueueNow(tag))
   }
 
   private final def fromTry[T](f: => Future[T]): Future[T] = Try(f) match {
@@ -122,15 +137,16 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
     }
   }
 
-  protected def processQueueNow(): Future[Any] = {
+  protected def processQueueNow(tag: Option[UUID] = None): Future[Any] = {
+    verbose(l"SSPQ2<TAG:$tag> processQueueNow (queue: $this) step 1")
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
-    verbose(l"processQueueNow (queue: $this), events: $events")
+    verbose(l"SSPQ2<TAG:$tag> processQueueNow (queue: $this), events: $events step 2")
     if (events.nonEmpty) {
-      verbose(l"SSM5 queue is not empty, fromTry")
+      verbose(l"SSPQ2<TAG:$tag> queue is not empty, step 3. Processor is ${processor}")
       fromTry(processor(events)).recoverWithLog()
     }
     else {
-      verbose(l"SSM5 queue is empty")
+      verbose(l"SSPQ2<TAG:$tag> queue is empty")
       Future.successful(())
     }
   }
@@ -149,8 +165,8 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L
 
-  override protected def processQueue(): Future[Any] = {
-    val tag = UUID.randomUUID()
+  override protected def processQueue(_tag: Option[UUID] = None): Future[Any] = {
+    val tag = _tag.getOrElse(UUID.randomUUID())
     verbose(l"SSM2<TAG:$tag> processQueue (throttled), preparing to wait...")
     if (waiting.compareAndSet(false, true)) {
       verbose(l"SSM2<TAG:$tag> wait successful")
@@ -176,7 +192,7 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
   }
 
 
-  override protected def processQueueNow(): Future[Any] = {
+  override protected def processQueueNow(tag: Option[UUID] = None): Future[Any] = {
     waiting.set(false)
     lastDispatched = System.currentTimeMillis()
     super.processQueueNow()

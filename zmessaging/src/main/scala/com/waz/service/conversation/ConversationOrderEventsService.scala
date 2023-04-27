@@ -95,7 +95,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] =
     Future.sequence(Seq(
       event match {
-        case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime())) // local time is required for the hot knock mechanism
+        case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime()), None) // local time is required for the hot knock mechanism
         case _ => Future.successful(())
       },
 
