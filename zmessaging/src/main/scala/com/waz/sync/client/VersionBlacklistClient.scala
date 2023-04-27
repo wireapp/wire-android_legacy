@@ -42,7 +42,7 @@ class VersionBlacklistClientImpl(backendConfig: BackendConfig)
       case Some(url) =>
       verbose(l"Loading blacklist from: $url")
       Request.create(method = Method.Get, url)
-        .withResultType[VersionBlacklist]
+        .withResultType[VersionBlacklist]()
         .withErrorType[ErrorResponse]
         .executeSafe
       case _ =>

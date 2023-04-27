@@ -44,7 +44,7 @@ class InvitationClientImpl(implicit
 
   override def postTeamInvitation(invitation: TeamInvitation): ErrorOrResponse[ConfirmedTeamInvitation] = {
     Request.Post(relativePath = teamInvitationPath(invitation.teamId), body = invitation)
-      .withResultType[ConfirmedTeamInvitation]
+      .withResultType[ConfirmedTeamInvitation]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

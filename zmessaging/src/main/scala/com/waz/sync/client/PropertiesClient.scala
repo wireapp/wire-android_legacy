@@ -17,6 +17,7 @@
  */
 package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.SyncId
 import com.waz.sync.client.PropertiesClient._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -47,7 +48,7 @@ class PropertiesClientImpl(implicit
   override def putProperty[T](key: String, value: T)(implicit bs: BodySerializer[T]): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = PropertyPath(key), body = value)
       .withResultHttpCodes(ResponseCode.SuccessCodes)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -55,7 +56,7 @@ class PropertiesClientImpl(implicit
   override def getProperty[T](key: String)(implicit bd: BodyDeserializer[T]) : ErrorOrResponse[Option[T]] = {
     Request.Get(relativePath = PropertyPath(key))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[T]
+      .withResultType[T]()
       .withErrorType[ErrorResponse]
       .executeSafe.map {
         case Left(ErrorResponse(ResponseCode.NotFound, _, _)) => Right(None)

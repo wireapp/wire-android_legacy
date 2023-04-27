@@ -18,7 +18,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.PushToken
+import com.waz.model.{PushToken, SyncId}
 import com.waz.model.otr.ClientId
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -44,21 +44,21 @@ class PushTokenClientImpl(implicit
 
   override def postPushToken(token: PushTokenRegistration) = {
     Request.Post(relativePath = PushesPath, body = token)
-      .withResultType[PushTokenRegistration]
+      .withResultType[PushTokenRegistration]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def deletePushToken(token: String) = {
     Request.Delete(relativePath = s"$PushesPath/$token")
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getPushTokens() = {
     Request.Get(relativePath = s"$PushesPath")
-      .withResultType[Seq[PushTokenRegistration]]
+      .withResultType[Seq[PushTokenRegistration]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

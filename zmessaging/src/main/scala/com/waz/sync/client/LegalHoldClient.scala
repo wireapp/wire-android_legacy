@@ -18,7 +18,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{LegalHoldRequest, TeamId, UserId}
+import com.waz.model.{LegalHoldRequest, SyncId, TeamId, UserId}
 import com.waz.utils.JsonEncoder
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -54,7 +54,7 @@ class LegalHoldClientImpl(implicit
   override def fetchLegalHoldRequest(teamId: TeamId,
                                      userId: UserId): ErrorOrResponse[Option[LegalHoldRequest]] =
     Request.Get(relativePath = path(teamId, userId))
-      .withResultType[Option[LegalHoldRequest]](responseDeserializerFrom(bodyDeserializerFrom(Deserializer)))
+      .withResultType[Option[LegalHoldRequest]]()(responseDeserializerFrom(bodyDeserializerFrom(Deserializer)))
       .withErrorType[ErrorResponse]
       .executeSafe
 
@@ -65,7 +65,7 @@ class LegalHoldClientImpl(implicit
       relativePath = approvePath(teamId, userId),
       body = JsonEncoder { _.put("password", password.getOrElse("")) }
     )
-    .withResultType[Unit]
+    .withResultType[Unit]()
     .withErrorType[ErrorResponse]
     .executeSafe
 }

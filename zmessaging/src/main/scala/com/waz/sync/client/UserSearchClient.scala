@@ -20,7 +20,7 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.QualifiedId
+import com.waz.model.{QualifiedId, SyncId}
 import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
 import com.waz.utils.CirceJSONSupport
@@ -51,7 +51,7 @@ class UserSearchClientImpl(implicit
         List("q" -> query.query, "size" -> limit.toString)
     Request
       .Get(relativePath = SearchPath, queryParameters = params)
-      .withResultType[UserSearchResponse]
+      .withResultType[UserSearchResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

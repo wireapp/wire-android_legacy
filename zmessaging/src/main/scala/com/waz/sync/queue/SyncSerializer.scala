@@ -47,31 +47,31 @@ class SyncSerializer extends DerivedLogTag {
   }
 
   private def processQueue(): Unit = {
-    val id = UUID.randomUUID()
-    debug(l"SSM1<$id> Processing SyncQueue: size ${queue.size}")
+    val tag = UUID.randomUUID()
+    debug(l"SSM1<TAG:$tag> Processing SyncQueue: size ${queue.size}")
     while (queue.nonEmpty) {
-      debug(l"SSM1<$id> Queue is not empty: ${queue.size}")
+      debug(l"SSM1<TAG:$tag> Queue is not empty: ${queue.size}")
       val handle = queue.dequeue()
-      debug(l"SSM1<$id> Found handle $handle")
+      debug(l"SSM1<TAG:$tag> Found handle $handle")
       if (!handle.isCompleted) {
-        debug(l"SSM1<$id> Handle $handle is not complete, priority ${handle.priority} vs. next job priority ${nextJobMinPriority}")
+        debug(l"SSM1<TAG:$tag> Handle $handle is not complete, priority ${handle.priority} vs. next job priority ${nextJobMinPriority}")
         if (handle.priority > nextJobMinPriority) { // IF this is not high enough priority, put it back, stop
-          debug(l"SSM1<$id> Enqueuing handle due to priority: $handle")
+          debug(l"SSM1<TAG:$tag> Enqueuing handle due to priority: $handle")
           queue.enqueue(handle)
           return //TODO remove return
         }
 
         if (handle.promise.trySuccess(())) {
-          debug(l"SSM1<$id> Running jobs+1 for $handle")
+          debug(l"SSM1<TAG:$tag> Running jobs+1 for $handle")
           runningJobs += 1
         }
         else {
-          debug(l"SSM1<$id> Enqueuing handle as promise is not success $handle")
+          debug(l"SSM1<TAG:$tag> Enqueuing handle as promise is not success $handle")
           queue.enqueue(handle)
         }
       }
     }
-    debug(l"SSM1 Done processing SyncQueue <$id>")
+    debug(l"SSM1<TAG:$tag> Done processing SyncQueue")
   }
 
   def acquire(priority: Int, id: SyncId): Future[Unit] = {

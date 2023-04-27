@@ -60,7 +60,7 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
         queryParameters = queryParameters("since" -> since, "client" -> client, "size" -> pageSize)
       )
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[Response[LoadNotificationsResponse]]
+      .withResultType[Response[LoadNotificationsResponse]]()
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
         LoadNotificationsResult(response.body, historyLost = response.code == ResponseCode.NotFound)
@@ -70,7 +70,7 @@ class PushNotificationsClientImpl(pageSize: Int = PushNotificationsClient.PageSi
   override def loadLastNotification(clientId: ClientId): ErrorOrResponse[LoadNotificationsResult] = {
     Request
       .Get(relativePath = NotificationsLastPath, queryParameters = queryParameters("client" -> clientId))
-      .withResultType[PushNotificationEncoded]
+      .withResultType[PushNotificationEncoded]()
       .withErrorType[ErrorResponse]
       .executeSafe { notif =>
         LoadNotificationsResult(

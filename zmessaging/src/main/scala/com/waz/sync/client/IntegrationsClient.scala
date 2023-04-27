@@ -61,21 +61,21 @@ class IntegrationsClientImpl(implicit
 
   override def searchTeamIntegrations(startsWith: Option[String], teamId: TeamId) = {
     Request.Get(relativePath = teamIntegrationsSearchPath(teamId), queryParameters = queryParameters("prefix" -> startsWith))
-      .withResultType[Map[IntegrationData, Option[AssetData]]]
+      .withResultType[Map[IntegrationData, Option[AssetData]]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getIntegration(pId: ProviderId, iId: IntegrationId) = {
     Request.Get(relativePath = integrationPath(pId, iId))
-      .withResultType[(IntegrationData, Option[AssetData])]
+      .withResultType[(IntegrationData, Option[AssetData])]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getProvider(pId: ProviderId) = {
     Request.Get(relativePath = providerPath(pId))
-      .withResultType[ProviderData]
+      .withResultType[ProviderData]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -87,7 +87,7 @@ class IntegrationsClientImpl(implicit
         relativePath = s"$ConversationsPath/${rConvId.str}/bots",
         body = Json("provider" -> pId.str, "service" -> iId.str)
       )
-      .withResultType[ConversationEvent]
+      .withResultType[ConversationEvent]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -95,7 +95,7 @@ class IntegrationsClientImpl(implicit
   override def removeBot(rConvId: RConvId, botId: UserId) = {
     debug(l"removeBot: convId: $rConvId, botId: $botId")
     Request.Delete(relativePath = s"$ConversationsPath/${rConvId.str}/bots/$botId")
-      .withResultType[ConversationEvent]
+      .withResultType[ConversationEvent]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

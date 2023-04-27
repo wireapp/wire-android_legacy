@@ -3,6 +3,7 @@ package com.waz.sync.client
 import java.net.URL
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.SyncId
 import com.waz.utils.JsonDecoder.intArray
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.utils.wrappers.URI
@@ -29,7 +30,7 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
     //      val appended = baseUrl.buildUpon.appendPath("api-version").build
     // causes a `NoSuchMethodException` when run in tests
     Request.create(Method.Get, new URL(appended))
-      .withResultType[SupportedApiConfig]
+      .withResultType[SupportedApiConfig]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .map {

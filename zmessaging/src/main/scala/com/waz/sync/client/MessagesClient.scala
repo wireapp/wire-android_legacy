@@ -19,6 +19,7 @@ package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -26,8 +27,8 @@ import com.waz.znet2.http._
 import com.waz.model.otr.{ClientMismatch, MessageResponse, OtrMessage, QClientMismatch, QMessageResponse, QualifiedOtrMessage}
 
 trait MessagesClient {
-  def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
-  def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage): ErrorOrResponse[QMessageResponse]
+  def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean, jobId: Option[SyncId]): ErrorOrResponse[MessageResponse]
+  def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage, jobId: Option[SyncId]): ErrorOrResponse[QMessageResponse]
 }
 
 class MessagesClientImpl(implicit
@@ -40,25 +41,33 @@ class MessagesClientImpl(implicit
   import MessagesClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] =
+  override def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean, jobId: Option[SyncId]): ErrorOrResponse[MessageResponse] = {
+    jobId.foreach({ j =>
+      verbose(l"SSM15<JOB:$j> postMessage 1")
+    })
     Request.Post(relativePath = convMessagesPath(conv, ignoreMissing), body = content)
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
-      .withResultType[Response[ClientMismatch]]
+      .withResultType[Response[ClientMismatch]](jobId)
       .withErrorType[ErrorResponse]
       .executeSafe {
         case Response(code, _, body) if code == ResponseCode.PreconditionFailed => MessageResponse.Failure(body)
         case Response(_, _, body) => MessageResponse.Success(body)
       }
+  }
 
-  override def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage): ErrorOrResponse[QMessageResponse] =
+  override def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage, jobId: Option[SyncId] = None): ErrorOrResponse[QMessageResponse] = {
+    jobId.foreach({ j =>
+      verbose(l"SSM15<JOB:$j> postMessage 2")
+    })
     Request.Post(relativePath = qualifiedConvMessagesPath(conv), body = content)
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
-      .withResultType[Response[QClientMismatch]]
+      .withResultType[Response[QClientMismatch]](jobId)
       .withErrorType[ErrorResponse]
       .executeSafe {
         case Response(code, _, body) if code == ResponseCode.PreconditionFailed => QMessageResponse.Failure(body)
         case Response(_, _, body) => QMessageResponse.Success(body)
       }
+  }
 }
 
 object MessagesClient extends DerivedLogTag {

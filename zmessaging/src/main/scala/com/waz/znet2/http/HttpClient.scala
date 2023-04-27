@@ -18,9 +18,9 @@
 package com.waz.znet2.http
 
 import java.net.UnknownServiceException
-
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.model.SyncId
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.Request.QueryParameter
 import com.wire.signals.CancellableFuture
@@ -110,8 +110,8 @@ object HttpClient {
       def withResultHttpCodes(codes: Set[Int]): PreparingRequest[T] =
         new PreparingRequest[T](request, None, None, codes)
 
-      def withResultType[R: ResponseDeserializer]: PreparedRequest[T, R] =
-        new PreparedRequest[T, R](request, None, None)
+      def withResultType[R: ResponseDeserializer](jobId: Option[SyncId] = None): PreparedRequest[T, R] =
+        new PreparedRequest[T, R](request, None, None, jobId = jobId)
     }
 
     class PreparingRequest[T](
@@ -137,8 +137,8 @@ object HttpClient {
       def withResultHttpCodes(codes: Set[Int]): PreparingRequest[T] =
         new PreparingRequest[T](request, uploadCallback, downloadCallback, codes)
 
-      def withResultType[R: ResponseDeserializer]: PreparedRequest[T, R] =
-        new PreparedRequest[T, R](request, uploadCallback, downloadCallback, resultResponseCodes)
+      def withResultType[R: ResponseDeserializer](jobId: Option[SyncId] = None): PreparedRequest[T, R] =
+        new PreparedRequest[T, R](request, uploadCallback, downloadCallback, resultResponseCodes, jobId)
 
     }
 
@@ -146,16 +146,20 @@ object HttpClient {
         private[http] val request: Request[T],
         private[http] val uploadCallback: Option[ProgressCallback] = None,
         private[http] val downloadCallback: Option[ProgressCallback] = None,
-        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-    )(implicit
+        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes,
+        jobId: Option[SyncId] = None)(implicit
       rs: RequestSerializer[T],
-      rd: ResponseDeserializer[R]) {
+      rd: ResponseDeserializer[R]) extends DerivedLogTag {
 
-      def execute(implicit client: HttpClient): CancellableFuture[R] =
+      def execute(implicit client: HttpClient): CancellableFuture[R] = {
+        verbose(l"SSM15<JOB:$jobId> executeSafe (variant noErr1)")
         client.result(request, uploadCallback, downloadCallback)
+      }
 
-      def withErrorType[E: ResponseDeserializer]: PreparedRequestWithErrorType[T, R, E] =
-        new PreparedRequestWithErrorType[T, R, E](request, uploadCallback, downloadCallback, resultResponseCodes)
+      def withErrorType[E: ResponseDeserializer]: PreparedRequestWithErrorType[T, R, E] = {
+        verbose(l"SSM15<JOB:$jobId> executeSafe (variant noErr2)")
+        new PreparedRequestWithErrorType[T, R, E](request, uploadCallback, downloadCallback, resultResponseCodes, jobId)
+      }
 
     }
 
@@ -163,27 +167,39 @@ object HttpClient {
         private[http] val request: Request[T],
         private[http] val uploadCallback: Option[ProgressCallback] = None,
         private[http] val downloadCallback: Option[ProgressCallback] = None,
-        private[http] val resultResponseCodes: Set[Int]
-    )(implicit
+        private[http] val resultResponseCodes: Set[Int],
+        jobId: Option[SyncId])(implicit
       rs: RequestSerializer[T],
       rd: ResponseDeserializer[R],
-      erd: ResponseDeserializer[E]) {
+      erd: ResponseDeserializer[E]) extends DerivedLogTag {
 
-      def executeSafe(implicit client: HttpClient, c: CustomErrorConstructor[E]): CancellableFuture[Either[E, R]] =
+      def executeSafe(implicit client: HttpClient, c: CustomErrorConstructor[E]): CancellableFuture[Either[E, R]] = {
+        jobId.foreach({ j =>
+          verbose(l"SSM15<JOB:$j> executeSafe (variant wErr1)")
+        })
         client.resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
+      }
 
       def executeSafe[TR](resultTransformer: R => TR)(
           implicit
           client: HttpClient,
           c: CustomErrorConstructor[E],
           ex: ExecutionContext
-      ): CancellableFuture[Either[E, TR]] =
+      ): CancellableFuture[Either[E, TR]] = {
+        jobId.foreach({ j =>
+          verbose(l"SSM15<JOB:$j> executeSafe (variant wErr1)")
+        })
         client
           .resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
           .map(_.right.map(resultTransformer))
+      }
 
-      def execute(implicit client: HttpClient, ev: E <:< Throwable): CancellableFuture[R] =
+      def execute(implicit client: HttpClient, ev: E <:< Throwable): CancellableFuture[R] = {
+        jobId.foreach({ j =>
+          verbose(l"SSM15<JOB:$j> executeSafe (variant wErr1)")
+        })
         client.resultWithDecodedError[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
+      }
 
     }
 

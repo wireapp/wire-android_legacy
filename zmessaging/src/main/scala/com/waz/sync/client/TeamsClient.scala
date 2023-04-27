@@ -49,21 +49,21 @@ class TeamsClientImpl(implicit
 
   override def getTeamMembers(id: TeamId): ErrorOrResponse[TeamMembers] = {
     Request.Get(relativePath = teamMembersPath(id))
-      .withResultType[TeamMembers]
+      .withResultType[TeamMembers]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
     Request.Get(relativePath = teamPath(id))
-      .withResultType[TeamData]
+      .withResultType[TeamData]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]] = {
     Request.Get(relativePath = memberPath(teamId, userId))
-      .withResultType[TeamMember]
+      .withResultType[TeamMember]()
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
         response.permissions.map(createPermissionsMasks)
@@ -72,7 +72,7 @@ class TeamsClientImpl(implicit
 
   override def getTeamMember(teamId: TeamId, userId: UserId): ErrorOrResponse[TeamMember] = {
     Request.Get(relativePath = memberPath(teamId, userId))
-      .withResultType[TeamMember]
+      .withResultType[TeamMember]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -82,21 +82,21 @@ class TeamsClientImpl(implicit
     Request.Post(
       relativePath = membersPostPath(teamId),
       body         = Json("user_ids" -> JsonEncoder.arrString(userIds.map(_.str)))
-    ).withResultType[TeamMembers]
+    ).withResultType[TeamMembers]()
      .withErrorType[ErrorResponse]
      .executeSafe(_.members)
   }
 
   override def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit] = {
     Request.Delete(relativePath = teamConversationPath(teamId, convId))
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def getTeamRoles(id: TeamId): ErrorOrResponse[Set[ConversationRole]] =
     Request.Get(relativePath = teamRolesPath(id))
-      .withResultType[TeamRoles]
+      .withResultType[TeamRoles]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.toConversationRoles)
 

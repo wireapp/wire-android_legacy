@@ -61,7 +61,7 @@ class RegistrationClientImpl(implicit
     }
 
     Request.Post(relativePath = RegisterPath, body = params)
-      .withResultType[Response[UserInfo]]
+      .withResultType[Response[UserInfo]]()
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
         response.body -> LoginClient.getCookieFromHeaders(response.headers).map(c => (c, label))
@@ -84,7 +84,7 @@ class RegistrationClientImpl(implicit
     }
 
     Request.Post(relativePath = if (login) LoginSendPath else ActivateSendPath, body = params)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -95,7 +95,7 @@ class RegistrationClientImpl(implicit
       o.put("email", email.str)
     }
     Request.Post(relativePath = ActivateSendPath, body = params)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -111,7 +111,7 @@ class RegistrationClientImpl(implicit
     }
 
     Request.Post(relativePath = ActivatePath, body = params)
-      .withResultType[Response[Unit]]
+      .withResultType[Response[Unit]]()
       .withErrorType[ErrorResponse]
       .executeSafe { response =>
         LoginClient.getCookieFromHeaders(response.headers).map(c => (c, label))

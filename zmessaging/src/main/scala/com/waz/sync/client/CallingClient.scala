@@ -18,8 +18,8 @@
 package com.waz.sync.client
 
 import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.SyncId
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{Headers, HttpClient, Request}
@@ -42,13 +42,13 @@ class CallingClientImpl(implicit
 
   override def getConfig: ErrorOrResponse[String] =
     Request.Get(relativePath = CallConfigPath)
-      .withResultType[String]
+      .withResultType[String]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def connectToSft(url: String, data: String): ErrorOrResponse[Array[Byte]] =
     Request.Post(url, headers = sftHeaders, body = data)(absoluteUrlCreator)
-      .withResultType[Array[Byte]]
+      .withResultType[Array[Byte]]()
       .withErrorType[ErrorResponse]
       .executeSafe
 }

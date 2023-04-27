@@ -19,7 +19,7 @@ package com.waz.sync.client
 
 import com.waz.api.UsernameValidationError
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.Handle
+import com.waz.model.{Handle, SyncId}
 import com.waz.sync.client.HandlesClient.UsernameValidation
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
@@ -55,7 +55,7 @@ class HandlesClientImpl(implicit
     }
 
     Request.Post(relativePath = CheckMultipleAvailabilityPath, body = data)
-      .withResultType[Seq[String]]
+      .withResultType[Seq[String]]()
       .withErrorType[ErrorResponse]
       .executeSafe { availableHandles =>
         handles
@@ -68,7 +68,7 @@ class HandlesClientImpl(implicit
   override def isUserHandleAvailable(handle: Handle): ErrorOrResponse[Boolean] = {
     Request.Head(relativePath = checkSingleAvailabilityPath(handle))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[Response[Unit]]
+      .withResultType[Response[Unit]]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.code == ResponseCode.NotFound)
   }

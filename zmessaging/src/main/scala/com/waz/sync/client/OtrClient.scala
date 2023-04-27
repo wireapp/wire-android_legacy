@@ -19,7 +19,6 @@ package com.waz.sync.client
 
 import java.nio.ByteBuffer
 import java.util.UUID
-
 import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.Verification
@@ -27,7 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.otr._
-import com.waz.model.{QualifiedId, UserId}
+import com.waz.model.{QualifiedId, SyncId, UserId}
 import com.waz.sync.client.OtrClient.ClientKey
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
@@ -40,7 +39,6 @@ import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
 import scala.util.{Failure, Success, Try}
-
 import scala.collection.JavaConverters._
 
 trait OtrClient {
@@ -96,7 +94,7 @@ class OtrClientImpl(implicit
     }
 
     Request.Post(relativePath = PrekeysPath, body = data)
-      .withResultType[PreKeysResponse]
+      .withResultType[PreKeysResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.toMap)
   }
@@ -115,34 +113,34 @@ class OtrClientImpl(implicit
     }
 
     Request.Post(relativePath = ListPrekeysPath, body = data)
-      .withResultType[ListPreKeysResponse]
+      .withResultType[ListPreKeysResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.values)
   }
 
   override def loadClients(): ErrorOrResponse[Seq[Client]] = {
     Request.Get(relativePath = ClientsPath)
-      .withResultType[Seq[Client]]
+      .withResultType[Seq[Client]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def loadClients(user: UserId): ErrorOrResponse[Seq[Client]] = {
     Request.Get(relativePath = userClientsPath(user))
-      .withResultType[Seq[Client]]
+      .withResultType[Seq[Client]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def loadClients(users: Set[QualifiedId]): ErrorOrResponse[Map[QualifiedId, Seq[Client]]] =
     Request.Post(relativePath = ListClientsPath, body = ListClientsRequest(users.toSeq).encode)
-      .withResultType[ListClientsResponse]
+      .withResultType[ListClientsResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.values)
 
   override def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]] = {
     Request.Get(relativePath = clientKeyIdsPath(id))
-      .withResultType[Seq[Int]]
+      .withResultType[Seq[Int]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -151,7 +149,7 @@ class OtrClientImpl(implicit
     Request.Delete(
       relativePath = clientPath(id),
       body = JsonEncoder { o => password.foreach(pwd => o.put("password", pwd.str)) }
-    ).withResultType[Unit].withErrorType[ErrorResponse].executeSafe
+    ).withResultType[Unit]().withErrorType[ErrorResponse].executeSafe
 
   override def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client] = {
     val data = JsonEncoder { o =>
@@ -167,7 +165,7 @@ class OtrClientImpl(implicit
     }
 
     Request.Post(relativePath = ClientsPath, body = data)
-      .withResultType[Client]
+      .withResultType[Client]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.copy(verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
   }
@@ -178,7 +176,7 @@ class OtrClientImpl(implicit
       o.put("label", label)
     }
     Request.Put(relativePath = clientPath(id), body = data)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -189,7 +187,7 @@ class OtrClientImpl(implicit
     }
 
     Request.Put(relativePath = clientPath(id), body = data)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -200,7 +198,7 @@ class OtrClientImpl(implicit
       prekeys.foreach(ks => o.put("prekeys", JsonEncoder.arr(ks)))
     }
     Request.Put(relativePath = clientPath(id), body = data)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -213,7 +211,7 @@ class OtrClientImpl(implicit
         body = content
       )
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
-      .withResultType[Response[ClientMismatch]]
+      .withResultType[Response[ClientMismatch]]()
       .withErrorType[ErrorResponse]
       .executeSafe { case Response(code, _, body) =>
         if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)

@@ -66,7 +66,7 @@ class ConnectionsClientImpl(implicit
         relativePath = ConnectionsPath,
         queryParameters = ("size" -> pageSize.toString) :: start.fold2(List.empty, s => List("start" -> s.str))
       )
-      .withResultType[(Seq[UserConnectionEvent], Boolean)]
+      .withResultType[(Seq[UserConnectionEvent], Boolean)]()
       .withErrorType[ErrorResponse]
       .execute
       .flatMap { case (events, hasMore) =>
@@ -81,7 +81,7 @@ class ConnectionsClientImpl(implicit
 
   override def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent] = {
     Request.Get(relativePath = s"$ConnectionsPath/$id")
-      .withResultType[UserConnectionEvent]
+      .withResultType[UserConnectionEvent]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -89,21 +89,21 @@ class ConnectionsClientImpl(implicit
   override def createConnection(user: UserId, name: Name, message: String): ErrorOrResponse[UserConnectionEvent] = {
     val jsonData = Json("user" -> user.toString, "name" -> name, "message" -> message)
     Request.Post(relativePath = ConnectionsPath, body = jsonData)
-      .withResultType[UserConnectionEvent]
+      .withResultType[UserConnectionEvent]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def createConnection(qId: QualifiedId): ErrorOrResponse[UserConnectionEvent] =
     Request.Post(relativePath = qualifiedConnectionsPath(qId), body = "")
-      .withResultType[UserConnectionEvent]
+      .withResultType[UserConnectionEvent]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
     val jsonData = Json("status" -> status.code)
     Request.Put(relativePath = s"$ConnectionsPath/${user.str}", body = jsonData)
-      .withResultType[Option[UserConnectionEvent]]
+      .withResultType[Option[UserConnectionEvent]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

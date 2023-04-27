@@ -1,7 +1,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, GuestLinksConfig, SelfDeletingMessagesFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, GuestLinksConfig, SelfDeletingMessagesFeatureConfig, SyncId, TeamId}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -30,37 +30,37 @@ final class FeatureConfigsClientImpl(implicit
 
   override def getAppLock(teamId: TeamId): ErrorOrResponse[AppLockFeatureConfig] =
     Request.Get(relativePath = appLockPath(teamId))
-      .withResultType[AppLockFeatureConfig]
+      .withResultType[AppLockFeatureConfig]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def getFileSharing: ErrorOrResponse[FileSharingFeatureConfig] =
     Request.Get(relativePath =  fileSharingPath)
-    .withResultType[FileSharingFeatureConfig]
+    .withResultType[FileSharingFeatureConfig]()
     .withErrorType[ErrorResponse]
     .executeSafe
 
   override def getSelfDeletingMessages: ErrorOrResponse[SelfDeletingMessagesFeatureConfig] =
     Request.Get(relativePath =  selfDeletingMessages)
-    .withResultType[SelfDeletingMessagesFeatureConfig]
+    .withResultType[SelfDeletingMessagesFeatureConfig]()
     .withErrorType[ErrorResponse]
     .executeSafe
 
   override def getConferenceCalling: ErrorOrResponse[ConferenceCallingFeatureConfig] =
     Request.Get(relativePath =  conferenceCallingPath)
-      .withResultType[ConferenceCallingFeatureConfig]
+      .withResultType[ConferenceCallingFeatureConfig]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def getClassifiedDomains(teamId: TeamId): ErrorOrResponse[ClassifiedDomainsConfig] =
     Request.Get(relativePath = classifiedDomainsPath(teamId))
-      .withResultType[ClassifiedDomainsConfig]
+      .withResultType[ClassifiedDomainsConfig]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def getGuestLinks: ErrorOrResponse[GuestLinksConfig] =
     Request.Get(relativePath = guestLinksPath)
-      .withResultType[GuestLinksConfig]
+      .withResultType[GuestLinksConfig]()
       .withErrorType[ErrorResponse]
       .executeSafe
 }

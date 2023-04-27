@@ -18,13 +18,12 @@
 package com.waz.sync.client
 
 import java.util.UUID
-
 import com.waz.log.LogSE._
 import com.waz.api.Credentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Label
-import com.waz.model.{TeamId, UserInfo}
+import com.waz.model.{SyncId, TeamId, UserInfo}
 import com.waz.model2.transport.Team
 import com.waz.model2.transport.responses.{DomainVerificationResponse, FetchSsoResponse, TeamsResponse}
 import com.waz.service.ZMessaging.clock
@@ -125,7 +124,7 @@ class LoginClientImpl()
     }
     Request
       .Post(relativePath = LoginPath, queryParameters = queryParameters("persist" -> true), body = params)
-      .withResultType[http.Response[AccessToken]]
+      .withResultType[http.Response[AccessToken]]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .map { _.right.map(resp => LoginResult(resp.body, resp.headers, Some(label))) }
@@ -138,7 +137,7 @@ class LoginClientImpl()
         headers = Headers(token.map(_.headers).getOrElse(Map.empty) ++ cookie.headers),
         body = ""
       )
-      .withResultType[Response[AccessToken]]
+      .withResultType[Response[AccessToken]]()
       .withErrorType[ErrorResponse].executeSafe
       .map { _.right.map(resp => LoginResult(resp.body, resp.headers, None)) }
       .future
@@ -146,7 +145,7 @@ class LoginClientImpl()
 
   override def getSelfUserInfo(token: AccessToken): ErrorOr[UserInfo] = {
     Request.Get(relativePath = UsersClient.SelfPath, headers = http.Headers(token.headers))
-      .withResultType[UserInfo]
+      .withResultType[UserInfo]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -170,7 +169,7 @@ class LoginClientImpl()
         headers = http.Headers(token.headers),
         queryParameters = queryParameters("size" -> TeamsPageSize, "start" -> start)
       )
-      .withResultType[TeamsResponse]
+      .withResultType[TeamsResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -179,7 +178,7 @@ class LoginClientImpl()
   override def verifySSOToken(token: UUID): ErrorOr[Boolean] = {
     Request.Head(relativePath = InitiateSSOLoginPath(token.toString))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[Response[Unit]]
+      .withResultType[Response[Unit]]()
       .withErrorType[ErrorResponse]
       .executeSafe(r => ResponseCode.SuccessCodes.contains(r.code))
       .future
@@ -188,7 +187,7 @@ class LoginClientImpl()
   override def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse] =
     Request.Get(relativePath = verifyDomainPath(domain))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[DomainVerificationResponse]
+      .withResultType[DomainVerificationResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -197,7 +196,7 @@ class LoginClientImpl()
   override def fetchSSO(): ErrorOr[FetchSsoResponse]  =
     Request.Get(relativePath = fetchSsoPath())
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[FetchSsoResponse]
+      .withResultType[FetchSsoResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future

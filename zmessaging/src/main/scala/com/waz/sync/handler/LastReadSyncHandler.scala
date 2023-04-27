@@ -19,6 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.GenericContent.LastRead
 import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
@@ -44,21 +45,36 @@ final class LastReadSyncHandler(selfUserId:    UserId,
 
   private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
-  def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] =
+  def postLastRead(convId: ConvId, time: RemoteInstant, jobId: SyncId): Future[SyncResult] = {
+    verbose(l"SSM13<JOB:$jobId> postLastRead step 1")
     convs.get(convId).flatMap {
       case Some(conv) if conv.lastRead.isAfter(time) => // no need to send this msg as lastRead was already advanced
+        verbose(l"SSM13<JOB:$jobId> postLastRead step 2A")
         Future.successful(Success)
       case Some(conv) =>
+        verbose(l"SSM13<JOB:$jobId> postLastRead step 2Ba")
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
+        verbose(l"SSM13<JOB:$jobId> postLastRead step 2Bb")
         val postMsg =
           if (federationSupported) {
             val qId = currentDomain.mapOpt(QualifiedId(selfUserId, _)).getOrElse(QualifiedId(selfUserId))
-            otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, QTargetRecipients.SpecificUsers(Set(qId)))
+            verbose(l"SSM13<JOB:$jobId> postLastRead step 2Bc1")
+            val f = otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, QTargetRecipients.SpecificUsers(Set(qId)), jobId = Option(jobId))
+            verbose(l"SSM13<JOB:$jobId> postLastRead step 2Bc1.2")
+            f
           } else {
-            otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, TargetRecipients.SpecificUsers(Set(selfUserId)))
+            verbose(l"SSM13<JOB:$jobId> postLastRead step 2Bc2")
+            val f = otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, TargetRecipients.SpecificUsers(Set(selfUserId)), jobId = Option(jobId))
+            verbose(l"SSM13<JOB:$jobId> postLastRead step 2Bc2.2")
+            f
           }
-        postMsg.map(SyncResult(_))
+        postMsg.map({ r =>
+          verbose(l"SSM13<JOB:$jobId> postLastRead completed: ${r}")
+          SyncResult(r)
+        })
       case None =>
+        verbose(l"SSM13<JOB:$jobId> postLastRead step 3:None")
         Future.successful(Failure(s"No conversation found for id: $convId"))
     }
+  }
 }

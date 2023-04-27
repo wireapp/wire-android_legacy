@@ -153,38 +153,38 @@ class SyncSchedulerImpl(accountId:   UserId,
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]): Future[A] = {
     val tag = UUID.randomUUID()
-    verbose(l"SSM7<${job.id}> awaitPreconditions: step M71 ($tag)")
+    verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M71 ($tag)")
     debug(l"awaitPreconditions($job)")
 
     val entry = new WaitEntry(job)
-    verbose(l"SSM7<${job.id}> awaitPreconditions: step M72 ($tag)")
+    verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M72 ($tag)")
     waitEntries.put(job.id, entry)
-    verbose(l"SSM7<${job.id}> awaitPreconditions: step M73 ($tag)")
+    verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M73 ($tag)")
 
-    verbose(l"SSM3 <${job.id}> awaitPrecondition step 1")
+    verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step 1")
     val jobReady = for {
       _ <- accounts.accountState(accountId).filter(_ != LoggedOut).head
-      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M74 ($tag)")
-      _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 2")
+      _ = verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M74 ($tag)")
+      _ = verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step 2")
       _ <- network.isOnline.onTrue
-      _ = verbose(l"SSM3 <${job.id}> awaitPrecondition step 3")
-      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M75 ($tag)")
+      _ = verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step 3")
+      _ = verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M75 ($tag)")
       _ <- entry.future
-      _ = verbose(l"SSM7<${job.id}> awaitPreconditions: step M75FF ($tag)")
+      _ = verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M75FF ($tag)")
     } yield {}
 
-    verbose(l"SSM7<${job.id}> awaitPreconditions: step M76 ($tag)")
-    verbose(l"SSM3 <${job.id}> awaitPrecondition step 4")
+    verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M76 ($tag)")
+    verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step 4")
     jobReady.onComplete(_ => {
-      verbose(l"SSM7<${job.id}> awaitPreconditions: step M77 ($tag)")
-      verbose(l"SSM3 <${job.id}> awaitPrecondition step CC1")
+      verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M77 ($tag)")
+      verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step CC1")
         waitEntries -= job.id
       }
     )
 
    countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
-     verbose(l"SSM7<${job.id}> awaitPreconditions: step M78 ($tag)")
-     verbose(l"SSM3 <${job.id}> awaitPrecondition step CC2")
+     verbose(l"SSM7<JOB:${job.id}> awaitPreconditions: step M78 ($tag)")
+     verbose(l"SSM3<JOB:${job.id}> awaitPrecondition step CC2")
       returning(f)(_.onComplete(_ => queue.release(job.id)))
     }
   }
@@ -212,21 +212,21 @@ class SyncSchedulerImpl(accountId:   UserId,
       val startJob = getStartTime(job)
       val d = math.max(0, startJob - t).millis
       val delay = CancellableFuture.delay(d)
-      verbose(l"SSM4<${job.id}> setup delay ${d}ms (future: $delay)")
+      verbose(l"SSM4<JOB:${job.id}> setup delay ${d}ms (future: $delay)")
       for {
         _ <- delay.recover { case CancelException => () } .future
-        _ = verbose(l"SSM4<${job.id}> delay done")
+        _ = verbose(l"SSM4<JOB:${job.id}> delay done")
         _ <- Future.traverse(job.dependsOn)(await)
-        _ = verbose(l"SSM4<${job.id}> dependency done")
+        _ = verbose(l"SSM4<JOB:${job.id}> dependency done")
         _ <- queue.acquire(job.priority, job.id)
-        _ = verbose(l"SSM4<${job.id}> priority acquired")
+        _ = verbose(l"SSM4<JOB:${job.id}> priority acquired")
       } yield {
         if (job == self.job) {
-          verbose(l"SSM4<${job.id}> self job confirmed")
+          verbose(l"SSM4<JOB:${job.id}> self job confirmed")
           promise.trySuccess(())
         }
         else {
-          verbose(l"SSM4<${job.id}> self job NOT confirmed")
+          verbose(l"SSM4<JOB:${job.id}> self job NOT confirmed")
           queue.release(job.id)
           verbose(l"Entry already updated, releasing acquired lock for job: $job")
         } // this wait entry was already updated, releasing acquired lock
@@ -236,19 +236,19 @@ class SyncSchedulerImpl(accountId:   UserId,
 
     def isCompleted = promise.isCompleted
     def onRestart() = {
-      verbose(l"SSM8<${job.id}> onRestart. cancel delayFuture")
+      verbose(l"SSM8<JOB:${job.id}> onRestart. cancel delayFuture")
 
       delayFuture.cancel()
     }
     def onOnline() = {
-      verbose(l"SSM8<${job.id}> onOnline. Job is offline: ${job.offline}")
+      verbose(l"SSM8<JOB:${job.id}> onOnline. Job is offline: ${job.offline}")
       if (job.offline) {
-        verbose(l"SSM8<${job.id}> cancel delayFuture because offline")
+        verbose(l"SSM8<JOB:${job.id}> cancel delayFuture because offline")
         delayFuture.cancel()
       }
     }
     def onUpdated(updated: SyncJob): Unit = {
-      verbose(l"SSM8<${job.id}> Updated job with ${updated.id}. Calling setup.")
+      verbose(l"SSM8<JOB:${job.id}> Updated job with ${updated.id}. Calling setup.")
       job = updated
       delayFuture = setup(updated)
     }

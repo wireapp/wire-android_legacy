@@ -19,8 +19,8 @@ package com.waz.sync.client
 
 import java.io.{BufferedOutputStream, File, FileOutputStream}
 import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.SyncId
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -49,7 +49,7 @@ class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClie
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
     val url = new URL(uri.toString)
     Request.create(method = Method.Get, url = url, headers = Headers("User-Agent" -> DesktopUserAgent))
-      .withResultType[OpenGraphDataResponse]
+      .withResultType[OpenGraphDataResponse]()
       .withErrorType[ErrorResponse]
       .execute
       .map(response => Right(response.data))
@@ -75,7 +75,7 @@ class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClie
 
   override def downloadImage(image: OpenGraphImage): CancellableFuture[File] = {
     Request.create(method = Method.Get, url = image.url)
-      .withResultType[File]
+      .withResultType[File]()
       .execute
   }
 

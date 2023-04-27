@@ -187,7 +187,7 @@ object WorkManagerSyncRequestService {
   val MaxSyncAttempts = 20
   val SyncJobTimeout  = 10.minutes
 
-  class SyncJobWorker(context: Context, params: WorkerParameters) extends Worker(context, params) with Injectable {
+  class SyncJobWorker(context: Context, params: WorkerParameters, jobId: SyncId) extends Worker(context, params) with Injectable {
 
     implicit val wireContext = WireContext(context)
     implicit val injector    = wireContext.injector
@@ -224,7 +224,7 @@ object WorkManagerSyncRequestService {
         val syncHandler = inject[SyncHandler]
         val requestInfo = RequestInfo(getRunAttemptCount, Instant.ofEpochMilli(scheduledTime), network.currentValue)
         try {
-          Await.result(syncHandler(account, request)(requestInfo), SyncJobTimeout) match {
+          Await.result(syncHandler(account, request, jobId)(requestInfo), SyncJobTimeout) match {
             case SyncResult.Success =>
               verbose(l"${showString(commandTag)} completed successfully")
               Result.success()

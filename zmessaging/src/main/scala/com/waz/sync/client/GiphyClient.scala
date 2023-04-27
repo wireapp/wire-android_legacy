@@ -17,8 +17,9 @@
  */
 package com.waz.sync.client
 
-import java.net.{URL, URLEncoder}
+import com.waz.model.SyncId
 
+import java.net.{URL, URLEncoder}
 import com.waz.sync.client.GiphyClient.GiphyResponse
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
@@ -49,7 +50,7 @@ class GiphyClientImpl(implicit
         relativePath = s"$BasePath/trending",
         queryParameters("offset" -> offset, "limit" -> limit)
       )
-      .withResultType[GiphyResponse]
+      .withResultType[GiphyResponse]()
       .execute
   }
 
@@ -59,7 +60,7 @@ class GiphyClientImpl(implicit
         relativePath = s"$BasePath/search",
         queryParameters("q" -> URLEncoder.encode(keyword, "utf8"), "offset" -> offset, "limit" -> limit)
       )
-      .withResultType[GiphyResponse]
+      .withResultType[GiphyResponse]()
       .execute
   }
 

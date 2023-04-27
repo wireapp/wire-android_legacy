@@ -82,7 +82,7 @@ final class AssetClientImpl(implicit
         headers = asset.token.fold(Headers.empty)(token => Headers("Asset-Token" -> token.str))
       )
       .withDownloadCallback(callback)
-      .withResultType[FileWithSha]
+      .withResultType[FileWithSha]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -93,13 +93,13 @@ final class AssetClientImpl(implicit
     Request
       .Get(relativePath = assetPath(assetId, domain), headers = AssetClient.PublicAssetHeaders)
       .withDownloadCallback(callback)
-      .withResultType[InputStream]
+      .withResultType[InputStream]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def loadUnsplashProfilePicture(): ErrorOrResponse[InputStream] =
     Request.create(method = Method.Get, url = AssetClient.UnsplashUrl)
-      .withResultType[InputStream]
+      .withResultType[InputStream]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
@@ -116,14 +116,14 @@ final class AssetClientImpl(implicit
         body = MultipartBodyMixed(Part(metadata), Part(content, Headers("Content-MD5" -> SafeBase64.encode(content.md5.bytes))))
       )
       .withUploadCallback(callback)
-      .withResultType[UploadResponse2]
+      .withResultType[UploadResponse2]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
   override def deleteAsset(assetId: AssetId, domain: Domain = Domain.Empty): ErrorOrResponse[Boolean] =
     Request.Delete(relativePath = assetPath(assetId, domain))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
-      .withResultType[Response[Unit]]
+      .withResultType[Response[Unit]]()
       .withErrorType[ErrorResponse]
       .executeSafe(_.code != ResponseCode.NotFound)
 }

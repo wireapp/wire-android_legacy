@@ -61,7 +61,7 @@ class UsersClientImpl(implicit
 
   override def loadUser(id: UserId): ErrorOrResponse[Option[UserInfo]] =
     Request.Get(relativePath = usersPath(id))
-      .withResultType[UserInfo]
+      .withResultType[UserInfo]()
       .withErrorType[ErrorResponse]
       .execute
       .map {
@@ -75,7 +75,7 @@ class UsersClientImpl(implicit
 
   override def loadQualifiedUser(qId: QualifiedId): ErrorOrResponse[Option[UserInfo]] =
     Request.Get(relativePath = qualifiedPath(qId))
-      .withResultType[UserInfo]
+      .withResultType[UserInfo]()
       .withErrorType[ErrorResponse]
       .execute
       .map {
@@ -92,7 +92,7 @@ class UsersClientImpl(implicit
     else {
       val result = Future.traverse(ids.grouped(IdsCountThreshold).toSeq) { ids => // split up every IdsCountThreshold user ids so that the request uri remains short enough
         Request.Get(relativePath = UsersPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
-          .withResultType[Seq[UserInfo]]
+          .withResultType[Seq[UserInfo]]()
           .withErrorType[ErrorResponse]
           .execute
       }.map(_.flatten).map(Right(_)).recover { case e: ErrorResponse => Left(e) }
@@ -106,20 +106,20 @@ class UsersClientImpl(implicit
       CancellableFuture.successful(Right(Vector()))
     else
       Request.Post(relativePath = ListUsersPath, body = ListUsersRequest(qIds).encode)
-        .withResultType[Seq[UserInfo]]
+        .withResultType[Seq[UserInfo]]()
         .withErrorType[ErrorResponse]
         .executeSafe
 
   override def loadSelf(): ErrorOrResponse[UserInfo] = {
     Request.Get(relativePath = SelfPath)
-      .withResultType[UserInfo]
+      .withResultType[UserInfo]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]] = {
     Request.Get(relativePath = RichInfoPath(user))
-      .withResultType[Seq[UserField]]
+      .withResultType[Seq[UserField]]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -127,14 +127,14 @@ class UsersClientImpl(implicit
   override def updateSelf(info: UserInfo): ErrorOrResponse[Unit] = {
     debug(l"updateSelf: $info, picture: ${info.picture}")
     Request.Put(relativePath = SelfPath, body = info)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def deleteAccount(password: Option[String] = None): ErrorOr[Unit] = {
     Request.Delete(relativePath = SelfPath, body = DeleteAccount(password))
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -142,7 +142,7 @@ class UsersClientImpl(implicit
 
   override def setSearchable(searchable: Boolean): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = SearchablePath, body = JsonEncoder(_.put("searchable", searchable)))
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

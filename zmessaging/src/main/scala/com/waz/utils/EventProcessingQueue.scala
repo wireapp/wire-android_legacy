@@ -151,26 +151,26 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
 
   override protected def processQueue(): Future[Any] = {
     val tag = UUID.randomUUID()
-    verbose(l"SSM2 <$tag> processQueue (throttled), preparing to wait...")
+    verbose(l"SSM2<TAG:$tag> processQueue (throttled), preparing to wait...")
     if (waiting.compareAndSet(false, true)) {
-      verbose(l"SSM2 <$tag> wait successful")
+      verbose(l"SSM2<TAG:$tag> wait successful")
       post {
         val d = math.max(0, lastDispatched - System.currentTimeMillis() + delay.toMillis)
-        verbose(l"SSM2 <$tag> setting delay ${d.millis}ms")
+        verbose(l"SSM2<TAG:$tag> setting delay ${d.millis}ms")
         waitFuture = CancellableFuture.delay(d.millis)
         if (!waiting.get()) waitFuture.cancel() // to avoid race conditions with `flush`
         waitFuture.future.flatMap { _ =>
-          verbose(l"SSM2 <$tag> timeout successful, processQueueNow")
+          verbose(l"SSM2<TAG:$tag> timeout successful, processQueueNow")
           CancellableFuture.lift(processQueueNow())
         } .recover {
           case e: Throwable => {
-            verbose(l"SSM2 <$tag> timeout fail, recover from $e")
+            verbose(l"SSM2<TAG:$tag> timeout fail, recover from $e")
             waiting.set(false)
           }
         }
       }
     } else {
-      verbose(l"SSM2 <$tag> wait NOT successful")
+      verbose(l"SSM2<TAG:$tag> wait NOT successful")
       waitFuture.future
     }
   }

@@ -89,14 +89,15 @@ final class MessagesSyncHandler(selfUserId: UserId,
                              isHidden: Boolean,
                              specificUsers: Set[UserId],
                              nativePush: Boolean,
-                             enforceIgnoreMissing: Boolean
+                             enforceIgnoreMissing: Boolean,
+                             jobId:                 Option[SyncId] = None
                             ) =
     if (federationSupported) {
       users.qualifiedIds(specificUsers).flatMap { qIds =>
-        otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing)
+        otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing, jobId)
       }
     } else {
-      otrSync.postOtrMessage(convId, gm, isHidden, TargetRecipients.SpecificUsers(specificUsers), nativePush, enforceIgnoreMissing)
+      otrSync.postOtrMessage(convId, gm, isHidden, TargetRecipients.SpecificUsers(specificUsers), nativePush, enforceIgnoreMissing, jobId)
     }
 
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
@@ -123,7 +124,7 @@ final class MessagesSyncHandler(selfUserId: UserId,
         successful(Failure("conversation not found"))
     }
 
-  def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType): Future[SyncResult] =
+  def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType, jobId: SyncId): Future[SyncResult] =
     convs.convById(convId).flatMap {
       case Some(conv) =>
         val (msg, recipients) = tpe match {

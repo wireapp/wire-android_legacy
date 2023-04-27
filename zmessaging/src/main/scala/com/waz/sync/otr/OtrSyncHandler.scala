@@ -48,7 +48,8 @@ trait OtrSyncHandler {
                      isHidden:              Boolean,
                      targetRecipients:      TargetRecipients = TargetRecipients.ConversationParticipants,
                      nativePush:            Boolean = true,
-                     enforceIgnoreMissing:  Boolean = false
+                     enforceIgnoreMissing:  Boolean = false,
+                     jobId:                 Option[SyncId] = None
                     ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
@@ -65,7 +66,8 @@ trait OtrSyncHandler {
                               isHidden:              Boolean,
                               targetRecipients:      QTargetRecipients = QTargetRecipients.ConversationParticipants,
                               nativePush:            Boolean = true,
-                              enforceIgnoreMissing:  Boolean = false
+                              enforceIgnoreMissing:  Boolean = false,
+                              jobId:                 Option[SyncId] = None
                              ): ErrorOr[RemoteInstant]
   def postSessionReset(convId: ConvId, qualifiedId: QualifiedId, client: ClientId): Future[SyncResult]
   def postClientDiscoveryMessage(convId: RConvQualifiedId): ErrorOr[QOtrClientIdMap]
@@ -106,18 +108,26 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                               isHidden:              Boolean,
                               targetRecipients:      TargetRecipients = TargetRecipients.ConversationParticipants,
                               nativePush:            Boolean = true,
-                              enforceIgnoreMissing:  Boolean = false
+                              enforceIgnoreMissing:  Boolean = false,
+                              jobId:                 Option[SyncId] = None
                              ): ErrorOr[RemoteInstant] = {
-    encryptAndSend(message)(convId, targetRecipients, EncryptAndSendFlags(isHidden, nativePush, enforceIgnoreMissing)).recover {
+    verbose(l"SSM14<JOB:$jobId> postMessage step 1")
+    encryptAndSend(message, jobId = jobId)(convId, targetRecipients, EncryptAndSendFlags(isHidden, nativePush, enforceIgnoreMissing)).recover {
       case UnverifiedException =>
+        verbose(l"SSM14<JOB:$jobId> postMessage step 2A")
         if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
       case LegalHoldDiscoveredException =>
+        verbose(l"SSM14<JOB:$jobId> postMessage step 2B")
         errors.addUnapprovedLegalHoldStatusError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.UnapprovedLegalHold)
       case NonFatal(e) =>
+        verbose(l"SSM14<JOB:$jobId> postMessage step 2C")
         Left(ErrorResponse.internalError(e.getMessage))
-    }.mapRight(_.mismatch.time)
+    }.mapRight({
+      verbose(l"SSM14<JOB:$jobId> postMessage step 3")
+      _.mismatch.time
+    })
   }
 
   /**
@@ -137,29 +147,39 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                                        isHidden:              Boolean,
                                        targetRecipients:      QTargetRecipients = QTargetRecipients.ConversationParticipants,
                                        nativePush:            Boolean = true,
-                                       enforceIgnoreMissing:  Boolean = false
+                                       enforceIgnoreMissing:  Boolean = false,
+                                       jobId:                 Option[SyncId] = None
                                       ): ErrorOr[RemoteInstant] = {
-    encryptAndSendQualified(message)(convId, targetRecipients, EncryptAndSendFlags(isHidden, nativePush, enforceIgnoreMissing)).recover {
+    verbose(l"SSM14<JOB:$jobId> postQualifiedMessage step 1")
+    encryptAndSendQualified(message, jobId = jobId)(convId, targetRecipients, EncryptAndSendFlags(isHidden, nativePush, enforceIgnoreMissing)).recover {
       case UnverifiedException =>
+        verbose(l"SSM14<JOB:$jobId> postQualifiedMessage step 2A")
         if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
       case LegalHoldDiscoveredException =>
+        verbose(l"SSM14<JOB:$jobId> postQualifiedMessage step 2B")
         errors.addUnapprovedLegalHoldStatusError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.UnapprovedLegalHold)
       case NonFatal(e) =>
+        verbose(l"SSM14<JOB:$jobId> postQualifiedMessage step 2C")
         Left(ErrorResponse.internalError(e.getMessage))
-    }.mapRight(_.mismatch.time)
+    }.mapRight({ r =>
+      verbose(l"SSM14<JOB:$jobId> postQualifiedMessage step 3: ${r}")
+      r.mismatch.time
+    })
   }
 
   private def encryptAndSend(msg:      GenericMessage,
                              external: Option[Array[Byte]] = None,
                              retries:  Int = 0,
-                             previous: EncryptedContent = EncryptedContent.Empty)
+                             previous: EncryptedContent = EncryptedContent.Empty,
+                             jobId:    Option[SyncId] = None
+                            )
                             (implicit convId:           ConvId,
                                       targetRecipients: TargetRecipients,
                                       flags:            EncryptAndSendFlags): ErrorOr[MessageResponse] =
     for {
-      _          <- push.waitProcessing
+      _          <- push.waitProcessing(jobId)
       Some(conv) <- convStorage.get(convId)
       _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
       recipients <- clientsMap(targetRecipients, convId)
@@ -174,14 +194,15 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                       msgClient.postMessage(
                         conv.remoteId,
                         OtrMessage(selfClientId, content, external, flags.nativePush, report_missing = targetUsers),
-                        ignoreMissing = shouldIgnoreMissingClients || flags.enforceIgnoreMissing || retries > 1
+                        ignoreMissing = shouldIgnoreMissingClients || flags.enforceIgnoreMissing || retries > 1,
+                        jobId
                       ).future
                     } else {
                       warn(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
                       val key = AESKey()
                       val (sha, data) = AESUtils.encrypt(key, msg.proto.toByteArray)
                       val newMessage  = GenericMessage(Uid(msg.proto.getMessageId), External(key, sha))
-                      encryptAndSend(newMessage, external = Some(data)) //abandon retries and previous EncryptedContent
+                      encryptAndSend(newMessage, external = Some(data), jobId = jobId) //abandon retries and previous EncryptedContent
                     }
       _          <- resp.map(_.deleted).mapFuture(service.deleteClients)
       _          <- resp.map(_.missing.userIds).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
@@ -194,7 +215,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                           _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err") }
                           needsConfirmation <- needsLegalHoldConfirmation(conv, flags.isHidden, missing.userIds)
                           _                  = if (needsConfirmation) throw LegalHoldDiscoveredException
-                          result            <- encryptAndSend(msg, external = external, retries = retries + 1, previous = content)
+                          result            <- encryptAndSend(msg, external = external, retries = retries + 1, previous = content, jobId = jobId)
                         } yield result
                       case _: MessageResponse.Failure =>
                         successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))
@@ -205,52 +226,71 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   private def encryptAndSendQualified(msg:      GenericMessage,
                                       external: Option[Array[Byte]] = None,
                                       retries:  Int = 0,
-                                      previous: QEncryptedContent = QEncryptedContent.Empty)
+                                      previous: QEncryptedContent = QEncryptedContent.Empty,
+                                      jobId:    Option[SyncId] = None
+                                     )
                                      (implicit convId:  ConvId,
                                       targetRecipients: QTargetRecipients,
-                                      flags:            EncryptAndSendFlags): ErrorOr[QMessageResponse] =
+                                      flags:            EncryptAndSendFlags
+                                     ): ErrorOr[QMessageResponse] = {
+    verbose(l"SSM17<JOB:$jobId> encryptAndSendQualified: beginning")
     for {
-      _          <- push.waitProcessing
+      _          <- push.waitProcessing(jobId)
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 1")})
       Some(conv) <- convStorage.get(convId)
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 2")})
       _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 3")})
       recipients <- clientsMap(targetRecipients, convId)
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 4")})
       content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 5")})
       resp       <- if (external.isDefined || content.estimatedSize < MaxContentSize) {
+        jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 6")})
         val (reportAll, targetUsers) = targetRecipients.missingClientsStrategy match {
           case QMissingClientsStrategy.DoNotIgnoreMissingClients                 => (!flags.enforceIgnoreMissing && retries == 0, None)
           case QMissingClientsStrategy.IgnoreMissingClientsExceptFromUsers(qIds) => (false, if (retries == 0) Some(qIds) else None)
           case QMissingClientsStrategy.IgnoreMissingClients                      => (false, None)
         }
 
+        jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 7")})
         msgClient.postMessage(
           convsService.rConvQualifiedId(conv),
-          QualifiedOtrMessage(selfClientId, content, external, flags.nativePush, reportMissing = targetUsers, reportAll = reportAll)
+          QualifiedOtrMessage(selfClientId, content, external, flags.nativePush, reportMissing = targetUsers, reportAll = reportAll),
+          jobId
         ).future
       } else {
-        warn(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
+        warn(l"Message content too big, will post as External. Job: $jobId. Estimated size: ${content.estimatedSize}")
         val key = AESKey()
         val (sha, data) = AESUtils.encrypt(key, msg.proto.toByteArray)
         val newMessage  = GenericMessage(Uid(msg.proto.getMessageId), External(key, sha))
-        encryptAndSendQualified(newMessage, external = Some(data)) //abandon retries and previous QEncryptedContent
+        encryptAndSendQualified(newMessage, external = Some(data), jobId = jobId) //abandon retries and previous QEncryptedContent
       }
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 8")})
       _          <- resp.map(_.deleted).mapFuture(service.deleteClients)
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 9")})
       _          <- resp.map(_.missing.qualifiedIds.map(_.id)).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
+      _          = jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 10")})
       retry      <- resp.flatMapFuture {
         case QMessageResponse.Failure(QClientMismatch(_, missing, _, _)) if retries < 3 =>
-          warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
+          warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId, job: $jobId")
           for {
             syncResult        <- clientsSyncHandler.syncClients(missing.qualifiedIds)
             err                = SyncResult.unapply(syncResult)
-            _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err") }
+            _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err for job: $jobId") }
             needsConfirmation <- needsLegalHoldConfirmation(conv, flags.isHidden, missing.qualifiedIds.map(_.id))
             _                  = if (needsConfirmation) throw LegalHoldDiscoveredException
-            result            <- encryptAndSendQualified(msg, external = external, retries = retries + 1, previous = content)
+            result            <- encryptAndSendQualified(msg, external = external, retries = retries + 1, previous = content, jobId = jobId)
           } yield result
         case _: QMessageResponse.Failure =>
-          successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))
-        case resp => Future.successful(Right(resp))
+          successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries, job: $jobId")))
+        case resp => {
+          jobId.foreach({ j => verbose(l"SSM17<JOB:$j> encryptAndSendQualified: step 11")})
+          Future.successful(Right(resp))
+        }
       }
     } yield retry
+  }
 
 
   private def needsLegalHoldConfirmation(conv: ConversationData, isMessageHidden: Boolean, usersWithMissingClients: Set[UserId]): Future[Boolean] =
@@ -307,7 +347,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                                 retry:      Int = 0,
                                 previous:   EncryptedContent = EncryptedContent.Empty,
                                 recipients: Option[Set[UserId]] = None
-                               ): Future[Either[ErrorResponse, RemoteInstant]] = push.waitProcessing.flatMap { _ =>
+                               ): Future[Either[ErrorResponse, RemoteInstant]] = push.waitProcessing(None).flatMap { _ =>
     val broadcastRecipients = recipients match {
       case Some(recp) => Future.successful(recp)
       case None       => getBroadcastRecipients
@@ -426,7 +466,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
           case None => successful(Failure(s"session not found for $userId, $clientId"))
           case Some(content) =>
             msgClient
-              .postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true).future
+              .postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true, None).future
               .map(SyncResult(_))
         }
     }
@@ -442,7 +482,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             msgClient
               .postMessage(
                 convsService.rConvQualifiedId(conv),
-                QualifiedOtrMessage(selfClientId, content)
+                QualifiedOtrMessage(selfClientId, content),
+                None
               )
               .future
               .map(SyncResult(_))
@@ -453,7 +494,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     for {
       Some(conv) <- convStorage.getByRemoteId(convId)
       message    =  OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
-      response   <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
+      response   <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false, None).future
     } yield response match {
       case Left(error) => Left(error)
       case Right(resp) => Right(resp.missing)
@@ -461,7 +502,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
   override def postClientDiscoveryMessage(convId: RConvQualifiedId): ErrorOr[QOtrClientIdMap] = {
     val message = QualifiedOtrMessage(selfClientId, QEncryptedContent.Empty, nativePush = false)
-    msgClient.postMessage(convId, message).future.map {
+    msgClient.postMessage(convId, message, None).future.map {
       case Left(error) => Left(error)
       case Right(resp) => Right(resp.missing)
     }

@@ -60,7 +60,7 @@ class YouTubeClientImpl(implicit
 
   override def loadVideo(id: String): ErrorOr[MediaWithImages[TrackData]] = {
     Request.Get(relativePath = resourcePath("videos"), queryParameters = List("part" -> "snippet", "id" -> id))
-      .withResultType[MediaWithImages[TrackData]]
+      .withResultType[MediaWithImages[TrackData]]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -68,7 +68,7 @@ class YouTubeClientImpl(implicit
 
   override def loadPreview(uri: URI): ErrorOr[Array[Byte]] = {
     Request.create(method = Method.Get, url = new URL(uri.toString))
-      .withResultType[Array[Byte]]
+      .withResultType[Array[Byte]]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -86,7 +86,7 @@ class YouTubeClientImpl(implicit
         relativePath = resourcePath("playlists"),
         queryParameters = List("part" -> "snippet", "id" -> id)
       )
-      .withResultType[MediaWithImages[PlaylistData]]
+      .withResultType[MediaWithImages[PlaylistData]]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
@@ -96,7 +96,7 @@ class YouTubeClientImpl(implicit
         relativePath = resourcePath("playlistItems"),
         queryParameters = queryParameters("part" -> "snippet", "playlistId" -> id, "maxResults" -> 50)
       )
-      .withResultType[(Vector[TrackData], Set[AssetData])]
+      .withResultType[(Vector[TrackData], Set[AssetData])]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .future

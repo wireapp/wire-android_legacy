@@ -45,24 +45,24 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
 
   private val saveQueue = new SerialProcessingQueue[SyncId]({ ids =>
     val tag = UUID.randomUUID()
-    verbose(l"SSM5<$tag> SyncStorage serial processing queue processor called for ids: $ids")
+    verbose(l"SSM5<TAG:$tag> SyncStorage serial processing queue processor called for ids: $ids")
     val toAdd = new mutable.HashMap[SyncId, SyncJob]
     val toDelete = new mutable.HashSet[SyncId]
     ids.foreach { id =>
-      verbose(l"SSM5<$tag> processing for id $id")
+      verbose(l"SSM5<TAG:$tag> processing for id $id")
       jobsMap.get(id) match {
         case Some(job) =>
-          verbose(l"SSM5<$tag> found job $id")
+          verbose(l"SSM5<TAG:$tag> found job $id")
           toAdd += (id -> job)
           toDelete -= job.id
         case None =>
-          verbose(l"SSM5<$tag> job not found! $id")
+          verbose(l"SSM5<TAG:$tag> job not found! $id")
           toDelete += id
           toAdd -= id
       }
     }
     db.withTransaction { implicit db =>
-      verbose(l"SSM5<$tag> saving to db... (deleting: $toDelete, adding: ${toAdd.keySet})")
+      verbose(l"SSM5<TAG:$tag> saving to db... (deleting: $toDelete, adding: ${toAdd.keySet})")
       SyncJobDao.deleteEvery(toDelete)
       SyncJobDao.insertOrReplace(toAdd.values)
     }

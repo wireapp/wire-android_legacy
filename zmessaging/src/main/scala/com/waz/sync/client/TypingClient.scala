@@ -18,7 +18,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.RConvId
+import com.waz.model.{RConvId, SyncId}
 import com.waz.utils.JsonEncoder
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -40,7 +40,7 @@ class TypingClientImpl(implicit
   def updateTypingState(id: RConvId, isTyping: Boolean): ErrorOrResponse[Unit] = {
     val payload = JsonEncoder { _.put("status", if (isTyping) "started" else "stopped") }
     Request.Post(relativePath = typingPath(id), body = payload)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

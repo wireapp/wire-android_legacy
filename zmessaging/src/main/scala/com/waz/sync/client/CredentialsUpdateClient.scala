@@ -20,7 +20,7 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.model.{EmailAddress, Handle, PhoneNumber}
+import com.waz.model.{EmailAddress, Handle, PhoneNumber, SyncId}
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -63,17 +63,17 @@ class CredentialsUpdateClientImpl(implicit
     val headers = Headers(token.headers ++ cookie.headers)
     val body = JsonEncoder { _.put("email", email.str) }
     Request.Put(relativePath = UpdateEmailPath, headers = headers, body = body)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .flatMap {
         case Left(ErrorResponse.PageNotFound) =>
           warn(l"Unable to use the $UpdateEmailPath endpoint, falling back to $EmailPath")
           Request.Put(relativePath = EmailPath, body = body)
-            .withResultType[Unit]
+            .withResultType[Unit]()
             .withErrorType[ErrorResponse]
             .executeSafe
-        case Left(errorResponse) => 
+        case Left(errorResponse) =>
           CancellableFuture.successful(Left(errorResponse))
         case Right(_) =>
           CancellableFuture(Right(()))
@@ -82,21 +82,21 @@ class CredentialsUpdateClientImpl(implicit
 
   override def clearEmail(): ErrorOrResponse[Unit] = {
     Request.Delete(relativePath = EmailPath)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def updatePhone(phone: PhoneNumber): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = PhonePath, body = JsonEncoder { _.put("phone", phone.str) })
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def clearPhone(): ErrorOrResponse[Unit] = {
     Request.Delete(relativePath = PhonePath)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -110,21 +110,21 @@ class CredentialsUpdateClientImpl(implicit
           currentPassword.map(_.str).foreach(o.put("old_password", _))
         }
       )
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def updateHandle(handle: Handle): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = HandlePath, body = JsonEncoder { _.put("handle", handle.toString) })
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   override def hasPassword(): ErrorOrResponse[Boolean] = {
     Request.Head(relativePath = PasswordPath)
-      .withResultType[Response[Unit]]
+      .withResultType[Response[Unit]]()
       .withErrorType[ErrorResponse]
       .executeSafe
       .map {
@@ -136,7 +136,7 @@ class CredentialsUpdateClientImpl(implicit
 
   override def hasMarketingConsent: ErrorOrResponse[Boolean] = {
     Request.Get(relativePath = ConsentPath)
-      .withResultType[JSONObject]
+      .withResultType[JSONObject]()
       .withErrorType[ErrorResponse]
       .executeSafe { json =>
         val results = JsonDecoder.array(json.getJSONArray("results"), {
@@ -153,7 +153,7 @@ class CredentialsUpdateClientImpl(implicit
       o.put("source", s"Android $majorVersion.$minorVersion")
     }
     Request.Put(relativePath = ConsentPath, body = body)
-      .withResultType[Unit]
+      .withResultType[Unit]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

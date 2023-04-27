@@ -18,8 +18,8 @@
 package com.waz.sync.client
 
 import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.SyncId
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.http.{HttpClient, Method, RawBodyDeserializer, Request}
@@ -40,7 +40,7 @@ class CustomBackendClientImpl(implicit httpClient: HttpClient)
 
   def loadBackendConfig(url: URL): ErrorOrResponse[BackendConfigResponse] = {
     Request.create(Method.Get, url)
-      .withResultType[BackendConfigResponse]
+      .withResultType[BackendConfigResponse]()
       .withErrorType[ErrorResponse]
       .executeSafe
   }

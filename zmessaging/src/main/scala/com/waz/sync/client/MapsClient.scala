@@ -19,9 +19,8 @@ package com.waz.sync.client
 
 import java.io.InputStream
 import java.net.URLEncoder
-
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.Dim2
+import com.waz.model.{Dim2, SyncId}
 import com.waz.service.media.RichMediaContentParser.MapsLocation
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
@@ -46,7 +45,7 @@ class MapsClientImpl(implicit
   def loadMapPreview(location: MapsLocation, dimensions: Dim2): ErrorOrResponse[InputStream] =
     Request
       .Get(relativePath = getStaticMapPath(location, dimensions.width, dimensions.height))
-      .withResultType[InputStream]
+      .withResultType[InputStream]()
       .withErrorType[ErrorResponse]
       .executeSafe
 
