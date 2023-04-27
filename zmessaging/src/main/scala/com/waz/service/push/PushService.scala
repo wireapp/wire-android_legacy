@@ -24,7 +24,7 @@ import com.waz.content.Preferences.Preference
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{verbose, _}
 import com.waz.log.LogShow
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -40,6 +40,7 @@ import com.waz.znet2.http.ResponseCode
 import com.wire.signals._
 import org.threeten.bp.{Duration, Instant}
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 
@@ -60,7 +61,7 @@ trait PushService {
 
   def onHistoryLost: SourceSignal[Instant]
   def processing: Signal[Boolean]
-  def waitProcessing: Future[Unit]
+  def waitProcessing(jobId: Option[SyncId]): Future[Unit]
 
   /**
     * Drift to the BE time at the moment we fetch notifications
@@ -100,7 +101,10 @@ final class PushServiceImpl(selfUserId:        UserId,
     }).flatMap(_ => process())
   }
 
-  override def waitProcessing: Future[Unit] = processing.filter(_ == false).head.map(_ => {})
+  override def waitProcessing(job: Option[SyncId]): Future[Unit] = {
+      job.foreach({j => verbose(l"SSM20<JOB:$j> wait processing: ${processing.head.value}")})
+      processing.filter(_ == false).head.map(_ => {})
+    }
 
   private val beDriftPref: Preference[Duration] = prefs.preference(BackendDrift)
   override val beDrift: Signal[Duration] = beDriftPref.signal.disableAutowiring()
@@ -109,26 +113,44 @@ final class PushServiceImpl(selfUserId:        UserId,
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
 
-  private def process(): Future[Unit] =
+  private def process(): Future[Unit] = {
+    val tag = UUID.randomUUID()
+    verbose(l"SSPS1<TAG:$tag> step -1")
     Serialized.future(PipelineKey) {
-      verbose(l"processing new added events")
+      verbose(l"SSPS1<TAG:$tag> step 0")
       val offset = System.currentTimeMillis()
       for {
         _         <- Future.successful(processing ! true)
+        _         = verbose(l"SSPS1<TAG:$tag> processing set to true, step 1")
         encrypted <- eventsStorage.encryptedEvents
+        _         = verbose(l"SSPS1<TAG:$tag> step 2")
         _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
+        _         = verbose(l"SSPS1<TAG:$tag> step 3")
         decrypted <- eventsStorage.getDecryptedRows
+        _         = verbose(l"SSPS1<TAG:$tag> step 4")
         decoded   =  decrypted.flatMap(otrEventDecoder.decode)
-        _         <- if (decoded.nonEmpty) pipeline(decoded) else Future.successful(())
+        _         = verbose(l"SSPS1<TAG:$tag> step 5")
+        _         <- if (decoded.nonEmpty) {
+          verbose(l"SSPS1<TAG:$tag> step 6a")
+          pipeline(decoded)
+        } else {
+          verbose(l"SSPS1<TAG:$tag> step 6b")
+          Future.successful(())
+        }
+        _         = verbose(l"SSPS1<TAG:$tag> step 7")
         _         <- eventsStorage.removeDecryptedEvents(decrypted.map(_.id))
+        _         = verbose(l"SSPS1<TAG:$tag> step 8")
         _         <- Future.successful(processing ! false)
+        _         = verbose(l"SSPS1<TAG:$tag> step 9")
         _         = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
       } yield ()
     }.recover {
       case ex =>
+        verbose(l"SSPS1<TAG:$tag> step ERR")
         processing ! false
         error(l"Unable to process events: $ex")
     }
+  }
 
   private val timeOffset = System.currentTimeMillis()
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
