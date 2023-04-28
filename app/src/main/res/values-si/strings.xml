@@ -40,7 +40,7 @@
     <string name="phone_password_exists_header">මුරපදය පවතී</string>
     <string name="phone_password_exists_message">This account already has a password and email associated. Please log in by email.</string>
     <string name="invalid_code_header">වලංගු නොවන කේතයකි</string>
-    <string name="incorrect_code_header">සාවද්‍ය කේතය කි</string>
+    <string name="incorrect_code_header">වැරදි කේතයකි</string>
     <string name="wrong_code_message">වලංගු කේතයක් යොදන්න</string>
     <string name="phone_pending_login_header">කේතය දැනටමත් යවා ඇත</string>
     <string name="phone_pending_login_message">කෙටි පණිඩිඩයක් හරහා කේතයක් යවා ඇත. නව එකක් ගැනීමට විනාඩි 10 කට පසු නැවත යැවීම මත තට්ටු කරන්න.</string>
@@ -95,7 +95,7 @@
     <string name="request_password_cancel">අවලංගු කරන්න</string>
     <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
     <string name="request_password_biometric_cancel">අවලංගු කරන්න</string>
-    <string name="request_password_error">සාවද්‍ය මුර කේතයකි</string>
+    <string name="request_password_error">වැරදි මුරකේතයකි</string>
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">සේවා</string>
     <string name="integrations_errors_add_service">සේවාව එකතු කිරීමට නොහැකිය</string>
@@ -258,7 +258,7 @@
     <string name="incoming__controls__ongoing__speaker">විකාශකය</string>
     <string name="incoming__controls__ongoing__mute">නිහඬකරන්න</string>
     <string name="incoming__controls__ongoing__video">දෘශ්‍යකය</string>
-    <string name="incoming__controls__ongoing__flip">FLIP</string>
+    <string name="incoming__controls__ongoing__flip">පෙරළන්න</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
     <string name="incoming__controls__ongoing__microphone">ශබ්දවාහිනිය</string>
@@ -365,7 +365,7 @@
     <!-- Delete conversation -->
     <string name="confirmation_menu__delete_popup_title">Delete group conversation?</string>
     <string name="confirmation_menu__delete_popup_text">This will delete the group and all content for all participants on all devices. There is no option to restore the content. All participants will be notified.</string>
-    <string name="confirmation_menu__delete_popup_positive_button">DELETE GROUP</string>
+    <string name="confirmation_menu__delete_popup_positive_button">සමූහය මකන්න</string>
     <!-- Rich media -->
     <string name="content__youtube__error__text">video not found</string>
     <!-- Invite banner -->
@@ -438,7 +438,7 @@
     <string name="pref_options_screen_title">විකල්ප</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
     <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
-    <string name="pref_options_alerts_category_title">Alerts</string>
+    <string name="pref_options_alerts_category_title">ඇඟවීම්</string>
     <string name="pref_options_calls_category_title">ඇමතුම්</string>
     <string name="pref_options_sounds_title">ශබ්ද</string>
     <string name="pref_options_sounds_all">සියල්ල</string>
@@ -724,7 +724,7 @@
     <string name="new_reg__password_length">AT LEAST %1$s CHARACTERS</string>
     <string name="username__set__toast_error">පරිශීලකනාමය යාවත්කාල වීමේ දෝෂයකි</string>
     <!-- Giphy -->
-    <string name="giphy_preview__search_hint">Search Giphy</string>
+    <string name="giphy_preview__search_hint">Giphy සොයන්න</string>
     <string name="giphy_preview__error">NO GIFS FOUND.</string>
     <string name="giphy_preview__message_via_random_trending">giphy.com මගින්</string>
     <string name="giphy_preview__message_via_search">%s · giphy.com මගින්</string>
@@ -732,9 +732,9 @@
     <!--Sketch-->
     <string name="drawing__tip__picture__message">TAP COLOR TO CHANGE THE BRUSH SIZE.\n\nSHAKE TO REMOVE PHOTOS.</string>
     <string name="drawing__tip__message">TAP COLOR TO CHANGE THE BRUSH SIZE.\n\nPRESS AND HOLD TO FILL AN AREA.</string>
-    <string name="sketch__emoji_keyboard__size_label__small">SMALL</string>
-    <string name="sketch__emoji_keyboard__size_label__medium">MEDIUM</string>
-    <string name="sketch__emoji_keyboard__size_label__large">LARGE</string>
+    <string name="sketch__emoji_keyboard__size_label__small">කුඩා</string>
+    <string name="sketch__emoji_keyboard__size_label__medium">මධ්‍යම</string>
+    <string name="sketch__emoji_keyboard__size_label__large">විශාල</string>
     <string name="toolbar__sketch__action_close">වසන්න</string>
     <string name="drawing__text_hint">පණිවිඩයක් ලියන්න</string>
     <!-- Location sharing -->
@@ -759,7 +759,7 @@
     <string name="otr__remove_device__default">උපාංගය</string>
     <string name="otr__remove_device__button_delete">හරි</string>
     <string name="otr__remove_device__button_cancel">අවලංගු කරන්න</string>
-    <string name="otr__remove_device__error">සාවද්‍ය මුරපදයකි</string>
+    <string name="otr__remove_device__error">වැරදි මුරපදයකි</string>
     <string name="otr__error_dialog__cannot_register__message">Remove one of your other devices to start using Wire on this one.</string>
     <string name="otr__error_dialog__cannot_register__manage_devices_button">උපාංග කළමනාකරණය</string>
     <string name="otr__error_dialog__cannot_register__log_out_button">නික්මෙන්න</string>
@@ -1036,7 +1036,7 @@
     <string name="teams_set_team_name_subtitle">සැමවිටම ඔබට එය පසුව වෙනස් කළ හැකිය.</string>
     <string name="teams_set_team_name_hint">කණ්ඩායමේ නම</string>
     <string name="teams_set_team_name_about">කණ්ඩායම් සඳහා වයර් යනු කුමක්ද?</string>
-    <string name="teams_verify_email_title">You\'ve got mail</string>
+    <string name="teams_verify_email_title">ඔබට තැපෑලක් ලැබී ඇත</string>
     <string name="teams_verify_email_subtitle">Enter the verification code we sent to %1$s.</string>
     <string name="teams_verify_email_resend">කේතය නැවත යවන්න</string>
     <string name="teams_verify_email_change">වි-තැපෑල වෙනස් කරන්න</string>
@@ -1045,7 +1045,7 @@
     <string name="app_entry_create_account">පුද්ගලික</string>
     <string name="app_entry_create_account_sub">පවුලේ අය හා යහළුවන් සමඟ පෞද්ගලික කතාබහට</string>
     <string name="app_entry_create_team">ආධික්‍යය</string>
-    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
+    <string name="app_entry_create_team_sub">ව්‍යාපාර, ආයතන හා වෘත්තීමය සංවිධාන සඳහා ආරක්‍ෂිත සහයෝගිත්‍වයට</string>
     <string name="app_entry_login_sub">දැනටමත් ගිණුමක් තිබේද?</string>
     <string name="app_entry_login">පිවිසෙන්න</string>
     <string name="app_entry_tc_dialog_title">සේවාවේ කොන්දේසි</string>
@@ -1171,7 +1171,7 @@
     <string name="backup_password_dialog_no_password">අවලංගු කරන්න</string>
     <string name="restore_password_dialog_title">This backup is password protected.</string>
     <string name="add_email_address">වි-තැපැල් ලිපිනය එකතු කරන්න</string>
-    <string name="set_a_password">Set a password</string>
+    <string name="set_a_password">මුරපදයක් සකසන්න</string>
     <string name="email_and_password_explanation">You need an email address and a password to use Wire on multiple devices.</string>
     <string name="new_device_password"> නව උපාංගය</string>
     <string name="new_device_password_explanation">ඔබගේ වයර් ගිණුම සඳහා මුරපදය ඇතුල් කරන්න.\n%1$s</string>
@@ -1187,21 +1187,21 @@
     <string name="pref_account_backup_warning_title">Set an email and password.</string>
     <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
     <string name="pref_account_backup_warning_ok">හරි</string>
-    <string name="export_generic_error_title">The file could not be saved</string>
+    <string name="export_generic_error_title">ගොනුව සුරැකීමට නොහැකි විය</string>
     <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
     <string name="backup_button">උපස්ථ කරන්න</string>
     <string name="backup_import_error_unknown_title">යම්කිසි වරදක් සිදුවී ඇත</string>
     <string name="backup_import_error_unknown">ඔබගේ ඉතිහාසය ප්‍රත්‍යර්පණය කළ නොහැකි විය.</string>
     <string name="backup_import_error_unsupported_version_title">නොගැළපෙන උපස්ථය කි</string>
     <string name="backup_import_error_unsupported_version">This backup was created by a newer or outdated version of Wire and cannot be restored here.</string>
-    <string name="backup_import_error_wrong_account_title">සාවද්‍ය උපස්ථය කි</string>
+    <string name="backup_import_error_wrong_account_title">සාවද්‍ය උපස්ථයකි</string>
     <string name="backup_import_error_wrong_account">ඔබට වෙනත් ගිණුමකින් ඉතිහාසය ප්‍රත්‍යර්පණය කළ නොහැකිය.</string>
     <string name="video_paused">දෘශ්‍ය විරාම කර ඇත</string>
     <string name="call_degraded_title">ඇමතුම අවසන් විය</string>
     <string name="calling_degraded_title"> නව උපාංගය</string>
     <string name="call_info">Up to %1$s people can join a group conversation.</string>
-    <string name="markdown_link_dialog_title">Visit Link</string>
-    <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>
+    <string name="markdown_link_dialog_title">සබැඳියට යන්න</string>
+    <string name="markdown_link_dialog_message">මෙය ඔබව {{link}} වෙත රැගෙන යයි</string>
     <string name="markdown_link_dialog_confirmation">හරි</string>
     <string name="markdown_link_dialog_cancel">අවලංගු</string>
     <string name="max_participants_alert_title">සමූහය පිරී ඇත</string>
@@ -1242,7 +1242,7 @@
     <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
     <string name="deep_link_user_error_title">මෙම පුද්ගලයා හමු නොවිණි</string>
     <string name="deep_link_user_error_message">ඔබට මෙම ගිණුම සමඟ අවසර නැත හෝ එය තවදුරටත් නොපවතියි.</string>
-    <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
+    <string name="password_policy_hint">කුඩා අකුරක්, ලොකු අකුරක්, අංකයක් සහ විශේෂ අකුරක් සමඟ, අවම වශයෙන් අකුරු %1$s ක් භාවිතා කරන්න.</string>
     <!-- Custom Backend -->
     <string name="custom_backend_info_title">\"%1$s\" ට සම්බන්ධිතයි</string>
     <string name="custom_backend_info_show_more">තව පෙන්වන්න</string>
@@ -1273,7 +1273,7 @@
     <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
     <string name="security_policy_setup_dialog_button">සැකසුම් විවෘතකරන්න</string>
     <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
-    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
+    <string name="security_policy_invalid_password_dialog_message">අංකයක්, ලොකු අකුරක්, කුඩා අකුරක් සහ විශේෂ සංකේතයක් අඩංගු වන අවම වශයෙන් අකුරු %1$s ක් සහිත මුරපදයක් ඔබගේ උපාංගයට තිබිය යුතුය.</string>
     <string name="invalid_cookie_dialog_title">වාරය ඉකුත් වී ඇත</string>
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
     <string name="conversation_folder_name_favorites">ප්‍රියතම</string>
@@ -1285,7 +1285,7 @@
     <string name="folders_create_new_folder_action">සාදන්න</string>
     <string name="folders_create_new_folder_info">\"%1$s\" සංවාදය නව බහාලුමකට ගෙනයන්න.</string>
     <string name="folders_folder_name_hint">බහාලුමේ නම</string>
-    <string name="folders_folder_name_error_text">Maximum %s characters</string>
+    <string name="folders_folder_name_error_text">අවමය අකුරු %s කි</string>
     <string name="folders_move_to_folder_close">වසන්න</string>
     <string name="delete_group_conversation_error_title">Group not deleted</string>
     <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
@@ -1295,20 +1295,20 @@
     <string name="no_internet_connection_message">කරුණාකර ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <!-- Shortcuts -->
     <string name="shortcut_create_group_label">සමූහයක් සාදන්න</string>
-    <string name="shortcut_share_a_photo_label">Share Photo</string>
+    <string name="shortcut_share_a_photo_label">ඡායාරූපය බෙදාගන්න</string>
     <string name="shortcut_new_message_label">නව පණිවිඩය</string>
     <!-- Settings Account - Edit Phone -->
     <string name="edit_phone_dialog_country_code_error"> රටෙහි කේතය වලංගු නොවේ</string>
     <string name="edit_phone_dialog_phone_number_error">වලංගු නොවන දුරකථන අංකයකි</string>
     <!-- SSO Login -->
     <string name="sso_login_dialog_title">ව්‍යවසාය පිවිසුම</string>
-    <string name="sso_login_dialog_message">Please enter your SSO code:</string>
-    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
+    <string name="sso_login_dialog_message">තනි-පිවිසුම් (SSO) කේතය යොදන්න:</string>
+    <string name="email_sso_login_dialog_message">ඔබගේ වි-තැපෑල හෝ SSO කේතය ඇතුල් කරන්න. වයර් හි ව්‍යවසාය ස්ථාපනයකට ඔබගේ වි-තැපෑල ගැළපෙයි නම්, මෙම යෙදුම එම සේවාදායකයට සම්බන්ධ වනු ඇත.</string>
     <!-- Welcome -->
     <string name="welcome_to_wire">පිළිගනිමු</string>
     <string name="welcome_enterprise_log_in">ව්‍යවසාය පිවිසුම</string>
-    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
-    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
+    <string name="welcome_custom_backend_log_in_email">වි-තැපෑලෙන් පිවිසෙන්න</string>
+    <string name="welcome_custom_backend_log_in_sso">SSO මගින් පිවිසෙන්න</string>
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">දැනටමත් ගෙන ඇත</string>
     <string name="edit_account_handle_error_too_short">අවම වශයෙන් අකුරු 2 ක්</string>
@@ -1336,7 +1336,7 @@
     <string name="create_personal_account_with_phone_default_country_name">ජර්මනිය</string>
     <string name="create_personal_account_with_phone_default_country_code">+49</string>
     <!-- Create Personal Account - Email Code screen -->
-    <string name="create_personal_account_email_code_title">You\'ve got mail</string>
+    <string name="create_personal_account_email_code_title">ඔබට තැපෑලක් ලැබී ඇත</string>
     <string name="create_personal_account_email_code_description">Enter the verification code we sent to %s</string>
     <string name="create_personal_account_email_code_change_email">වි-තැපෑල වෙනස් කරන්න</string>
     <string name="create_personal_account_email_code_resend_code">කේතය නැවත යවන්න</string>
@@ -1375,7 +1375,7 @@
     <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
     <string name="legal_hold_request_dialog_positive_button_text">පිළිගනිමි</string>
     <string name="legal_hold_request_dialog_negative_button_text">දැන් නොවේ</string>
-    <string name="legal_hold_request_dialog_wrong_password_error">සාවද්‍ය මුරපදයකි</string>
+    <string name="legal_hold_request_dialog_wrong_password_error">වැරදි මුරපදයකි</string>
     <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
     <string name="legal_hold_device_name">නෛතික රැඳවුම</string>
     <string name="legal_hold_deactivated_dialog_title">නෛතික රැඳවුම අක්‍රිය කෙරිණි</string>
