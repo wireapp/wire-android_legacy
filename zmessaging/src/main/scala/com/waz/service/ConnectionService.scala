@@ -66,7 +66,7 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
 
   import Threading.Implicits.Background
 
-  override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e) => handleUserConnectionEvents(e))
+  override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e, tag) => handleUserConnectionEvents(e))
 
   private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 

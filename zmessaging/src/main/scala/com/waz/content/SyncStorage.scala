@@ -43,8 +43,8 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   val onUpdated = new SourceStream[(SyncJob, SyncJob)] // (prev, updated)
   val onRemoved = new SourceStream[SyncJob]
 
-  private val saveQueue = new SerialProcessingQueue[SyncId]({ ids =>
-    val tag = UUID.randomUUID()
+  private val saveQueue = new SerialProcessingQueue[SyncId]({ (_tag, ids) =>
+    val tag = _tag.getOrElse(UUID.randomUUID())
     verbose(l"SSM5<TAG:$tag> SyncStorage serial processing queue processor called for ids: $ids")
     val toAdd = new mutable.HashMap[SyncId, SyncJob]
     val toDelete = new mutable.HashSet[SyncId]
@@ -84,7 +84,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
 
   def remove(id: SyncId) = {
     jobsMap.remove(id) foreach { onRemoved ! _ }
-    saveQueue ! id
+    saveQueue ! (id, None)
   }
 
   def getJobs: Iterable[SyncJob] = jobsMap.values.toVector
@@ -109,7 +109,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
 
   private def save(job: SyncJob) = {
     jobsMap.put(job.id, job)
-    saveQueue ! job.id
+    saveQueue ! (job.id, None)
   }
 }
 

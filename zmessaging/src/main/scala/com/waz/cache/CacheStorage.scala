@@ -51,7 +51,7 @@ final class CacheStorageImpl(storage: Database, context: Context)
     case _ => // ignore
   } }
 
-  val fileCleanupQueue = new SerialProcessingQueue[(File, Uid)]({ entries =>
+  val fileCleanupQueue = new SerialProcessingQueue[(File, Uid)]({ (_, entries) =>
     Future {
       verbose(l"deleting cache files: $entries")
       entries foreach { case (path, uid) => entryFile(path, uid).delete() }
@@ -91,7 +91,7 @@ final class CacheStorageImpl(storage: Database, context: Context)
     super.remove(entry.key)
   }
 
-  def cleanup(entry: CacheEntryData): Unit = entry.path foreach { path => fileCleanupQueue ! (path, entry.fileId) }
+  def cleanup(entry: CacheEntryData): Unit = entry.path foreach { path => fileCleanupQueue ! ((path, entry.fileId), None) }
 
   def expired(entry: CacheEntryData) = entry.lastUsed + entry.timeout <= System.currentTimeMillis()
 

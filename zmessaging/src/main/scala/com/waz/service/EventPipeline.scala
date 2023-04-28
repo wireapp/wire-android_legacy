@@ -32,7 +32,7 @@ trait EventPipeline extends ((Traversable[Event], Option[UUID]) => Future[Unit])
 }
 
 class EventPipelineImpl(transformersByName: => Vector[Vector[Event] => Future[Vector[Event]]],
-                        schedulerByName: => Traversable[Event] => Future[Unit]) extends EventPipeline with DerivedLogTag {
+                        schedulerByName: => (Traversable[Event], Option[UUID]) => Future[Unit]) extends EventPipeline with DerivedLogTag {
   private lazy val (transformers, scheduler) = (transformersByName, schedulerByName)
 
   override def apply(input: Traversable[Event], tag: Option[UUID]): Future[Unit] = {
@@ -42,7 +42,7 @@ class EventPipelineImpl(transformersByName: => Vector[Vector[Event] => Future[Ve
     for {
       events <- transformers.foldLeft(successful(inputEvents))((l, r) => l.flatMap(r))
       _      = verbose(l"SSPS2<TAG:$tag> EventPipeline step 2")
-      _      <- scheduler(events)
+      _      <- scheduler(events, tag)
     } yield (
       verbose(l"SSPS2<TAG:$tag> EventPipeline step 3")
     )

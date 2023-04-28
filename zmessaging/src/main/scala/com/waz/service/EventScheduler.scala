@@ -33,16 +33,16 @@ import scala.reflect.ClassTag
 class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
   import EventScheduler._
 
-  private val queue = new GroupedEventProcessingQueue[Event, RConvId](RConvEvent, (c, e) => executeSchedule(c, createSchedule(e)), "EventScheduler")
+  private val queue = new GroupedEventProcessingQueue[Event, RConvId](RConvEvent, (c, e, tag) => executeSchedule(c, createSchedule(e), tag), "EventScheduler")
 
-  def enqueue(events: Traversable[Event], tag: UUID): Future[Unit] = {
+  def enqueue(events: Traversable[Event], tag: Option[UUID]): Future[Unit] = {
     verbose(l"SSPS3<TAG:$tag> EventScheduler step 1")
     val f = queue.enqueue(events.to[Vector], tag).recoverWithLog()
     verbose(l"SSPS3<TAG:$tag> EventScheduler step 2")
     f
   }
 
-  def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
+  //def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
 
   def createSchedule(events: Traversable[Event]): Schedule = schedule(layout, events.toStream)
 
@@ -80,7 +80,7 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
   }
 }
 
-object EventScheduler {
+object EventScheduler extends DerivedLogTag {
   sealed trait Strategy
   sealed trait SchedulingStrategy extends Strategy
   sealed trait ExecutionStrategy extends Strategy
@@ -102,12 +102,12 @@ object EventScheduler {
 
       val eventTag: LogTag = LogTag("Event")
 
-      def apply(conv: RConvId, es: Traversable[Event]): Future[Any]
+      def apply(conv: RConvId, es: Traversable[Event], tag: Option[UUID]): Future[Any]
     }
 
     def apply(strategy: SchedulingStrategy)(stages: Stage*): Composite = Composite(strategy, stages.toVector)
 
-    def apply[A <: Event](processor: (RConvId, Vector[A]) => Future[Any], include: A => Boolean = (_: A) => true)(implicit EligibleEvent: ClassTag[A]): Atomic = new Atomic {
+    def apply[A <: Event](processor: (RConvId, Vector[A], Option[UUID]) => Future[Any], include: A => Boolean = (_: A) => true)(implicit EligibleEvent: ClassTag[A]): Atomic = new Atomic {
 
       override val eventTag = LogTag(EligibleEvent.runtimeClass.getSimpleName)
 
@@ -116,10 +116,14 @@ object EventScheduler {
         case _ => false
       }
 
-      def apply(conv: RConvId, es: Traversable[Event]): Future[Any] = {
+      def apply(conv: RConvId, es: Traversable[Event], tag: Option[UUID]): Future[Any] = {
+        verbose(l"SSES5<TAG:$tag> Stage apply() step 1")
         val events: Vector[A] = es.collect { case EligibleEvent(a) if include(a) => a }(breakOut)
+        verbose(l"SSES5<TAG:$tag> Stage apply() step 2")
         verbose(l"processing ${events.size} ${showString(if (events.size == 1) "event" else "events")}: ${events}")(LogTag(s"${LogTag[Stage].value}[${eventTag.value}]"))
-        processor(conv, events)
+        val f = processor(conv, events, tag)
+        verbose(l"SSES5<TAG:$tag> Stage apply() step 3")
+        f
       }
     }
   }
@@ -127,36 +131,46 @@ object EventScheduler {
   sealed trait Schedule
   case class Branch(strategy: ExecutionStrategy, schedules: Stream[Schedule]) extends Schedule
   case class Leaf(stage: Stage.Atomic, events: Vector[Event]) extends Schedule
-  val NOP = Leaf(Stage[Event]((s, e) => successful(()), _ => false), Vector.empty)
+  val NOP = Leaf(Stage[Event]((s, e, None) => successful(()), _ => false), Vector.empty)
 
-  def executeSchedule(conv: RConvId, schedule: Schedule): Future[Unit] = {
+  def executeSchedule(conv: RConvId, schedule: Schedule, tag: Option[UUID]): Future[Unit] = {
     import Threading.Implicits.Background
 
+    verbose(l"SSES<TAG:$tag> executeSchedule step 1")
     def dfs(s: Stream[Schedule]): Future[Unit] = s match {
       case Stream.Empty =>
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 2. DONE")
         successful(())
 
       case NOP #:: remaining =>
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 3, remaining: $remaining")
         dfs(remaining)
 
       case Leaf(stage, events) #:: remaining =>
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4. Stage is $stage, remaining: $remaining, events: $events")
         val p = Promise[Unit]()
-        stage(conv, events).onComplete {
-          case _ => p.completeWith(dfs(remaining))
+        stage(conv, events, tag).onComplete {
+          case _ =>
+            verbose(l"SSES<TAG:$tag> executeSchedule dfs 4:complete")
+            p.completeWith(dfs(remaining))
         }
         p.future
 
       case Branch(Sequential, schedules) #:: remaining =>
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 5, schedules $schedules, remaining: $remaining")
         dfs(schedules #::: remaining)
 
       case Branch(Parallel, schedules) #:: remaining =>
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 6, schedules $schedules, remaining: $remaining")
         val p = Promise[Unit]()
         traverse(schedules)(s => dfs(Stream(s))).onComplete {
-          case _ => p.completeWith(dfs(remaining))
+          case _ =>
+            verbose(l"SSES<TAG:$tag> executeSchedule dfs 6:complete")
+            p.completeWith(dfs(remaining))
         }
         p.future
     }
-
+    verbose(l"SSES<TAG:$tag> executeSchedule step 2")
     dfs(Stream(schedule))
   }
 }
