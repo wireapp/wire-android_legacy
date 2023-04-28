@@ -144,9 +144,9 @@ class SerialProcessingQueue[A](processor: (Option[UUID], Seq[A]) => Future[Any],
   protected def processQueueNow(tag: Option[UUID] = None): Future[Any] = {
     verbose(l"SSPQ2<TAG:$tag> processQueueNow (queue: $this) step 1")
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
-    verbose(l"SSPQ2<TAG:$tag> processQueueNow (queue: $this), events: $events step 2")
+    verbose(l"SSPQ2<TAG:$tag> processQueueNow (queue: $this) step 2")
     if (events.nonEmpty) {
-      verbose(l"SSPQ2<TAG:$tag> queue is not empty, step 3. Processor is ${processor}")
+      verbose(l"SSPQ2<TAG:$tag> queue is not empty, step 3")
       fromTry(tag, processor(tag, events)).recoverWithLog()
     }
     else {

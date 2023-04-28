@@ -72,7 +72,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     case true => sync.syncFolders().flatMap(_ => shouldSyncFolders := false)
   }
 
-  override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events) =>
+  override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> FoldersServiceImpl stage 1")
     verbose(l"Handling events: $events")
     RichFuture.traverseSequential(events)(ev => processFolders(ev.folders))
   }

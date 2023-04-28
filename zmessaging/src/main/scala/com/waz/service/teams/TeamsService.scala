@@ -92,7 +92,8 @@ class TeamsServiceImpl(selfUser:           UserId,
       sync.syncTeam().flatMap(_ => shouldSyncTeam := false) // lastTeamUpdate is refreshed in onTeamSynced
     }
 
-  override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[TeamEvent] { (_, events) =>
+  override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[TeamEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> TeamsServiceImpl stage 1")
     verbose(l"Handling events: $events")
     import TeamEvent._
 

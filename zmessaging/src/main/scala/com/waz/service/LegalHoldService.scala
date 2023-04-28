@@ -3,6 +3,8 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
@@ -48,11 +50,12 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            sync: SyncServiceHandle,
                            messagesService: MessagesService,
                            userService: UserService
-                          ) extends LegalHoldService {
+                          ) extends LegalHoldService with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
+  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> LegalHoldServiceImpl stage 1")
     Future.traverse(events)(processEvent)
   }
 
@@ -231,7 +234,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   private def legalHold(convId: ConvId): Signal[Boolean] =
     clientsInConv(convId).map(_.exists(_.isLegalHoldDevice))
 
-  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> LegalHoldServiceImpl:MessageEventStage stage 1")
     Future.traverse(events) {
       case GenericMessageEvent(convId, _, time, _, _, content) =>
         updateStatusFromMessageHint(convId, content.legalHoldStatus, time)

@@ -143,11 +143,11 @@ object EventScheduler extends DerivedLogTag {
         successful(())
 
       case NOP #:: remaining =>
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 3, remaining: $remaining")
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 3")
         dfs(remaining)
 
       case Leaf(stage, events) #:: remaining =>
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4. Stage is $stage, remaining: $remaining, events: $events")
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4")
         val p = Promise[Unit]()
         stage(conv, events, tag).onComplete {
           case _ =>
@@ -157,11 +157,11 @@ object EventScheduler extends DerivedLogTag {
         p.future
 
       case Branch(Sequential, schedules) #:: remaining =>
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 5, schedules $schedules, remaining: $remaining")
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 5")
         dfs(schedules #::: remaining)
 
       case Branch(Parallel, schedules) #:: remaining =>
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 6, schedules $schedules, remaining: $remaining")
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 6")
         val p = Promise[Unit]()
         traverse(schedules)(s => dfs(Stream(s))).onComplete {
           case _ =>

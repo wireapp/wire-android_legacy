@@ -74,14 +74,17 @@ class OtrClientsServiceImpl(selfId:        UserId,
     case _ =>
   }
 
-  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (_, events) =>
+  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> OtrClientsServiceImpl stage 1")
     RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
+        verbose(l"SSSTAGES<TAG:$tag> OtrClientsServiceImpl stage 2")
         for {
           _  <- updateUserClients(selfId, Seq(client), replace = false)
           id <- sync.syncPreKeys(QualifiedId(selfId, currentDomain.str), Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
+        verbose(l"SSSTAGES<TAG:$tag> OtrClientsServiceImpl stage 3")
         removeClients(selfId, Set(cId))
     }
   }

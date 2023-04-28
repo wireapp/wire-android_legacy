@@ -27,7 +27,9 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
   extends FeatureConfigsService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  override def eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FeatureConfigEvent] { (_, events) =>
+  override def eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FeatureConfigEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> FeatureConfigsServiceImpl stage 1")
+
     Future.traverse(events)(processUpdateEvent)
   }
 

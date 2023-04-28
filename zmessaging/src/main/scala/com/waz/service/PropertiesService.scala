@@ -46,7 +46,8 @@ class PropertiesServiceImpl(prefs: UserPreferences, syncServiceHandle: SyncServi
   extends PropertiesService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  val eventProcessor: Stage.Atomic = EventScheduler.Stage[PropertyEvent]{ (_, events) =>
+  val eventProcessor: Stage.Atomic = EventScheduler.Stage[PropertyEvent]{ (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> PropertiesServiceImpl stage 1")
     RichFuture.traverseSequential(events)(processEvent)
   }
 

@@ -81,8 +81,8 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _ => shouldChangeOrder(event)
     }
 
-  val conversationOrderEventsStage: Stage.Atomic = EventScheduler.Stage[ConversationEvent] { (convId, events) =>
-
+  val conversationOrderEventsStage: Stage.Atomic = EventScheduler.Stage[ConversationEvent] { (convId, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 1")
     val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder))
     val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive))
 

@@ -643,7 +643,8 @@ final class CallingServiceImpl(val accountId:       UserId,
     }("setVideoSendState")
 
   override val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {
-    case (_, events) =>
+    case (_, events, tag) =>
+      verbose(l"SSSTAGES<TAG:$tag> CallingService stage 1")
       Future.successful(events.sortBy(_.time).foreach { e =>
 
         val rConvQualifiedId = RConvQualifiedId.apply(e.convId, e.convDomain, federationSupported)

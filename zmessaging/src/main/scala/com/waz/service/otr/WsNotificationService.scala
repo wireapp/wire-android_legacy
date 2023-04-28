@@ -3,6 +3,7 @@ package com.waz.service.otr
 import com.waz.content.{ConversationStorage, GlobalPreferences}
 import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.{ConvId, Event, RConvEvent, UserId}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.{AccountsService, EventScheduler}
@@ -27,7 +28,9 @@ final class WsNotificationServiceImpl(selfId:              UserId,
   extends WsNotificationService with DerivedLogTag {
 
   override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[Event] {
-    (_, events) => process(events)
+    (_, events, tag) =>
+      verbose(l"SSSTAGES<TAG:$tag> WsNotificationServiceImpl stage 1")
+      process(events)
   }
 
   private def process(events: Seq[Event]): Future[Unit] =

@@ -49,15 +49,20 @@ class MessageEventProcessor(selfUserId:           UserId,
   import MessageEventProcessor._
   import Threading.Implicits.Background
 
-  val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events) =>
+  val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 1")
     convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
+      verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 2")
       verbose(l"processing events for conv: $conv, events: $events")
 
       convsService.isGroupConversation(conv.id).flatMap { isGroup =>
 
-        returning(processEvents(conv, isGroup, events)){ result =>
+        val f = returning(processEvents(conv, isGroup, events)){ result =>
+          verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 3")
           result.onFailure { case e: Exception => error(l"Message event processing failed.", e) }
         }
+        verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 4")
+        f
       }
     }
   }

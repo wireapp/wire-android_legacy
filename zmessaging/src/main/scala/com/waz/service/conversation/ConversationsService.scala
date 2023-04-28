@@ -167,7 +167,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield ()
   }
 
-  override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
+  override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> ConversationsServiceImpl stage 1")
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 

@@ -179,10 +179,12 @@ class UserServiceImpl(selfUserId:        UserId,
       Signal.empty
   }
 
-  override val userUpdateEventsStage: Stage.Atomic = EventScheduler.Stage[UserUpdateEvent] { (_, e) =>
+  override val userUpdateEventsStage: Stage.Atomic = EventScheduler.Stage[UserUpdateEvent] { (_, e, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 1")
     val (removeEvents, updateEvents) = e.partition(_.removeIdentity)
     for {
       _ <- updateSyncedUsers(updateEvents.map(_.user))
+      _ = verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 2")
       _ <- {
         val updaters = removeEvents.map(_.user).map { ui =>
           ui.id -> ((userData: UserData) => userData.copy(
@@ -190,13 +192,15 @@ class UserServiceImpl(selfUserId:        UserId,
             phone = if (ui.phone.nonEmpty) None else userData.phone
           ))
         }.toMap
-
+        verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 3")
         usersStorage.updateAll(updaters)
       }
+      _ = verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 4")
     } yield {}
   }
 
-  override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e) =>
+  override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e, tag) =>
+    verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl:DeleteEventsStage stage 1")
     Future.sequence(e.map(event => accounts.logout(event.user, reason = UserDeleted))).flatMap { _ =>
       deleteUsers(e.map(_.user).toSet)
     }
