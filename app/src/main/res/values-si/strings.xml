@@ -75,7 +75,7 @@
     <string name="pick_user_search_focus">\u0020 සොයන්න</string>
     <string name="pick_user_search_hint">සොයන්න</string>
     <string name="choose_conversation">සොයන්න</string>
-    <string name="people_picker__top_users_header_title">ජනප්‍රිය මිනිසුන්</string>
+    <string name="people_picker__top_users_header_title">ජනප්‍රිය පුද්ගලයින්</string>
     <string name="people_picker__search_result_conversations_header_title">සමූහ</string>
     <string name="people_picker__search_result_team_conversations_header_title">සමූහ %1$s</string>
     <string name="people_picker__search_result_connections_searched_header_title">සබඳතා</string>
@@ -87,7 +87,7 @@
     <string name="receive_news_and_offers_request_title">පුවත් පත්‍රිකාව</string>
     <string name="receive_news_and_offers_request_body">Do you want to receive news and product updates from Wire via email? You can unsubscribe at any time.</string>
     <string name="crashes_and_analytics_request_title">අපට වයර් දියුණු කිරීමට උදව් වන්න</string>
-    <string name="crashes_and_analytics_request_body">I agree that Wire may create and use anonymous usage and error reports to improve the Wire App. I can revoke this consent at any time.</string>
+    <string name="crashes_and_analytics_request_body">වයර් යෙදුම වැඩිදියුණු කිරීම සඳහා එයට නිර්නාමික පරිශ්‍රීලන සහ දෝෂ වාර්තා සාදා භාවිතයට ඉඩ දෙමි. ඕනෑම විටෙක මෙම කැමැත්ත අහෝසි කිරීමට හැකිය.</string>
     <string name="crashes_and_analytics_request_no">නැහැ</string>
     <string name="crashes_and_analytics_request_agree">මම එකඟයි</string>
     <!-- Request Password dialog -->
@@ -103,7 +103,7 @@
     <string name="conversation_errors_full">සංවාදය පිරී ඇත</string>
     <!-- Invite -->
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
-    <string name="people_picker__invite__share_details_dialog">ඔබගේ යහළුවන් සමඟ වයර් බෙදාගන්න.</string>
+    <string name="people_picker__invite__share_details_dialog">යහළුවන් සමඟ වයර් බෙදාගන්න.</string>
     <string name="people_picker__invite__share_text__header">%1$s wants to connect on Wire</string>
     <string name="people_picker__invite__share_text__body">I\'m on Wire, search for %1$s or visit get.wire.com</string>
     <!-- Conversation: Quick menu -->
@@ -196,19 +196,19 @@
     <string name="content__file__status__uploading__minimized">උඩුගත වෙමින්&#8230;</string>
     <string name="content__file__status__cancelled__minimized">අවලංගු කෙරිණි&#8230;</string>
     <string name="content__file__status__downloading__minimized">බාගත වෙමින්&#8230;</string>
-    <string name="content__file__status__download_failed__minimized">බාගතවීම අසාර්ථකයි</string>
+    <string name="content__file__status__download_failed__minimized">බාගැනීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed__minimized">උඩුගතවීම අසාර්ථකයි</string>
     <string name="content__file__status__uploading">%1$s · උඩුගත වෙමින්&#8230;</string>
     <string name="content__file__status__cancelled">%1$s · අවලංගු කෙරිණි&#8230;</string>
-    <string name="content__file__status__downloading">%1$s · බාගත වෙමින්&#8230;</string>
-    <string name="content__file__status__download_failed">%1$s · බාගතවීම අසාර්ථකයි</string>
+    <string name="content__file__status__downloading">%1$s · බාගැනෙමින්&#8230;</string>
+    <string name="content__file__status__download_failed">%1$s · බාගැනීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed">%1$s . උඩුගතවීම අසාර්ථකයි</string>
     <!-- used when there's a non-empty file extension, e.g. "300KB · PDF" -->
     <string name="content__file__status__default__size_and_extension">%1$s · %2$s</string>
     <string name="content__file__status__uploading__size_and_extension">%1$s · %2$s · උඩුගත වෙමින්&#8230;</string>
     <string name="content__file__status__cancelled__size_and_extension">%1$s · %2$s · අවලංගු කෙරිණි&#8230;</string>
-    <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · බාගත වෙමින්&#8230;</string>
-    <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · බාගතවීම අසාර්ථකයි</string>
+    <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · බාගැනෙමින්&#8230;</string>
+    <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · බාගැනීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · උඩුගතවීම අසාර්ථකයි</string>
     <string name="content__file__action__open">විවෘත කරන්න</string>
     <string name="content__file__action__save">සුරකින්න</string>
@@ -389,11 +389,11 @@
     <string name="pref_account_appearance_category_title">පෙනුම</string>
     <string name="pref_account_personal_information_category_title">පුද්ගලික තොරතුරු</string>
     <string name="pref_account_conversations_category_title">ඉතිහාසය</string>
-    <string name="pref_account_username_title">පරිශීලක නාමය</string>
+    <string name="pref_account_username_title">පරිශ්‍රීලක නාමය</string>
     <string name="pref_account_phone_title">දුරකථනය</string>
     <string name="pref_account_team_title">කණ්ඩායම</string>
     <string name="pref_account_domain_title">වසම</string>
-    <string name="pref_account_add_phone_title">දුක. අංකය එකතු කරන්න</string>
+    <string name="pref_account_add_phone_title">දු.ක. අංකය යොදන්න</string>
     <string name="pref_account_email_title">වි-තැපෑල</string>
     <string name="pref_account_add_email_title">වි-තැපෑල එකතු</string>
     <string name="pref_account_delete">මකන්න</string>
@@ -412,10 +412,10 @@
     <string name="pref_account_password_title">මුරපදය නැවත සකසන්න</string>
     <string name="pref_account_edit_name_empty_warning">Name must have 2 or more characters</string>
     <string name="pref_account_edit_name_empty_verify">හරි</string>
-    <string name="pref_account_data_usage_permissions">දත්ත භාවිත අවසරයන්</string>
+    <string name="pref_account_data_usage_permissions">දත්ත භාවිත අවසර</string>
     <string name="pref_backup_screen_title">සංවාද උපස්ථ කරන්න</string>
     <!-- Data Usage Permissions -->
-    <string name="pref_advanced_send_anonymous_crash_reports_title">නිර්නාමික විනාශවීමේ වාර්තා යවන්න</string>
+    <string name="pref_advanced_send_anonymous_crash_reports_title">නිර්නාමික බිඳ වැටීම් වාර්තා යවන්න</string>
     <string name="pref_advanced_send_anonymous_crash_reports_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
     <string name="pref_advanced_send_anonymous_usage_data_title">නිර්නාමික භාවිත දත්ත යවන්න</string>
     <string name="pref_advanced_send_anonymous_usage_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
@@ -464,7 +464,7 @@
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
     <string name="pref_options_message_previews">පණිවිඩ පෙරදසුන්</string>
     <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
-    <string name="pref_options_app_lock_title">මුරකේතයකින් අගුලුලන්න</string>
+    <string name="pref_options_app_lock_title">මුරකේතයකින් අගුළුලන්න</string>
     <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Passcode or Biometrics.</string>
     <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
     <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
@@ -493,7 +493,7 @@
     <string name="pref_advanced_screen_title">වැඩිදුර</string>
     <string name="pref_advanced_enable_logs_title">Collect usage data</string>
     <string name="pref_advanced_enable_logs_subtitle">This stores troubleshooting information locally. Disabling this option will delete all local logs.</string>
-    <string name="pref_advanced_debug_report_title">නිදොස්කරණ වාර්තාව සාදන්න</string>
+    <string name="pref_advanced_debug_report_title">නිදොස්කරණ වාර්තාවක් සාදන්න</string>
     <string name="pref_advanced_debug_report_summary">You can submit this to Wire Support to help diagnose problems.</string>
     <string name="pref_advanced_reset_push_title">Reset push notifications token</string>
     <string name="pref_advanced_reset_push_summary">If you experience problems with push notifications, Wire Support may ask you to reset this token.</string>
@@ -513,7 +513,7 @@
     <!-- About -->
     <string name="pref_about_screen_title">පිළිබඳව</string>
     <string name="pref_about_website_title">වයර් වියමන අඩවිය</string>
-    <string name="pref_about_tos_title">භාවිතා කිරීමේ කොන්දේසි</string>
+    <string name="pref_about_tos_title">භාවිත නියම</string>
     <string name="pref_about_privacy_policy_title">රහස්‍යතා ප්‍රතිපත්තිය</string>
     <string name="pref_about_licenses_title">බලපත්‍රයෙහි තොරතුරු</string>
     <string name="pref_about_version_title">අනුවාදය %s</string>
@@ -526,7 +526,7 @@
     <string name="pref__account_action__phone_verification__code">කේතය</string>
     <string name="pref__account_action__phone_verification__question">කේතයක් නොපෙන්වයිද?</string>
     <string name="pref__account_action__phone_verification__resend"><u>කේතය නැවත යවන්න</u></string>
-    <string name="pref__account_action__phone_verification__change"><u>දුක. අංකය වෙනස් කරන්න</u></string>
+    <string name="pref__account_action__phone_verification__change"><u>දු.ක. අංකය වෙනස් කරන්න</u></string>
     <string name="pref__account_action__email_verification__title">වි-තැපැල් ලිපිනය සත්‍යාපනය කරන්න</string>
     <string name="pref__account_action__email_verification__description">ඔබගේ වි-තැපෑලෙහි ලැබෙන පෙට්ටිය පරීක්ෂා කර උපදෙස් අනුගමනය කරන්න.</string>
     <string name="pref__account_action__email_verification__question">විද්‍යුත් තැපෑලක් නොපෙන්වයිද?</string>
@@ -537,8 +537,8 @@
     <string name="pref__account_action__dialog__add_email_password__title">වි-තැපැල් ලිපිනය එකතු කරන්න</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_email">වලංගු නොවන වි-තැපැල් ලිපිනයකි</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_password">අවම වශයෙන් අකුරු 2 ක්</string>
-    <string name="pref__account_action__dialog__edit_phone__title">දුක. අංකය සංස්කරණය</string>
-    <string name="pref__account_action__dialog__add_phone__title">දුක. අංකය එකතු කරන්න</string>
+    <string name="pref__account_action__dialog__edit_phone__title">දු.ක. අංකය සංස්කරණය</string>
+    <string name="pref__account_action__dialog__add_phone__title">දු.ක. අංකය යොදන්න</string>
     <string name="pref__account_action__dialog__add_phone__error__country"> රටෙහි කේතය වලංගු නොවේ</string>
     <string name="pref__account_action__dialog__add_phone__error__number">වලංගු නොවන දුරකථන අංකයකි</string>
     <string name="pref__account_action__dialog__add_phone__confirm__title">අංකය තහවුරුව</string>
@@ -548,12 +548,12 @@
     <string name="pref__account_action__dialog__delete_phone__error">දු.ක. අංකය මැකීමට නොහැකිය</string>
     <string name="pref__account_action__dialog__change_email__title">වි-තැපැල් ලිපිනය සංස්කරණය</string>
     <string name="pref__account_action__dialog__change_username__rules">අවම වශයෙන් අකුරු 2 ක්. a—z, 0—9 හා _ පමණි.</string>
-    <string name="pref__account_action__dialog__change_username__title">පරිශීලක නාමය</string>
+    <string name="pref__account_action__dialog__change_username__title">පරිශ්‍රීලක නාමය</string>
     <string name="pref__account_action__dialog__change_username__error_already_taken">දැනටමත් ගෙන ඇත</string>
     <string name="pref__account_action__dialog__change_username__error_unknown">Connection error, please try again</string>
     <string name="pref__account_privacy">පෞද්ගලිකත්වය</string>
     <string name="pref__account_send_read_receipts_title">කියවූ බවට ලදුපත යවන්න</string>
-    <string name="pref__account_send_read_receipts_summary">මෙය අක්‍රිය කර ඇති විට, ඔබට වෙනත් පුද්ගලයින්ගෙන් කියවූ බවට ලදුපත් දැකිය නොහැකියි. සමූහ සංවාද සඳහා මෙම සැකසුම අදාළ නොවේ.</string>
+    <string name="pref__account_send_read_receipts_summary">මෙය අක්‍රිය කර ඇති විට, ඔබට වෙනත් පුද්ගලයින්ගෙන් කියවූ බවට ලදුපත් දැකීමට නොහැකියි. සමූහ සංවාද සඳහා මෙම සැකසුම අදාළ නොවේ.</string>
     <!-- No Internet connection -->
     <string name="system_status__no_internet">අන්තර්ජාලය නැත</string>
     <!-- SHARING -->
@@ -704,7 +704,7 @@
     <string name="email_placeholder">වි-තැපෑල</string>
     <string name="name_placeholder">නම</string>
     <!-- Strings -->
-    <string name="edit_phone_number">දුක. අංකය සංස්කරණය</string>
+    <string name="edit_phone_number">දු.ක. අංකය සංස්කරණය</string>
     <string name="i_have_an_account">පිවිසෙන්න</string>
     <plurals name="welcome__resend__timer_label">
         <item quantity="one">ඔබට තත්පර %1$d කින් නව කේතයක් ඉල්ලිය හැකිය</item>
@@ -722,7 +722,7 @@
     <string name="hello">ආයුබෝවන් &lt;b&gt;%s&lt;/b&gt;,</string>
     <string name="sign_in">පිවිසෙන්න</string>
     <string name="new_reg__password_length">AT LEAST %1$s CHARACTERS</string>
-    <string name="username__set__toast_error">පරිශීලකනාමය යාවත්කාල වීමේ දෝෂයකි</string>
+    <string name="username__set__toast_error">පරිශ්‍රීලක නාමය යාවත්කාල වීමේ දෝෂයකි</string>
     <!-- Giphy -->
     <string name="giphy_preview__search_hint">Giphy සොයන්න</string>
     <string name="giphy_preview__error">NO GIFS FOUND.</string>
@@ -791,7 +791,7 @@
     <string name="otr__reset_session__button_ok">හරි</string>
     <string name="otr__reset_session__button_fail">නැවත උත්සාහ කරන්න</string>
     <string name="user_profile_email_field_name">වි-තැපෑල</string>
-    <string name="advanced_image_download_wifi_info">The picture will appear when you are on Wi-Fi again</string>
+    <string name="advanced_image_download_wifi_info">නැවත වයි-ෆයි භාවිතා කරන විට ඡායාරූපය දිස්වනු ඇත</string>
     <string name="change_settings">සැකසුම් වෙනස් කරන්න</string>
     <string name="conversation_list__action_join_call">එක්වන්න</string>
     <!-- Conversation Toolbar -->
@@ -1030,8 +1030,8 @@
     <string name="teams_set_email_about">තව දැනගන්න</string>
     <string name="teams_set_password_title">මුරපදය සකසන්න</string>
     <string name="teams_set_password_hint">මුරපදය</string>
-    <string name="teams_set_username_title">පරිශීලක නාමය සකසන්න</string>
-    <string name="teams_set_username_hint">පරිශීලක නාමය</string>
+    <string name="teams_set_username_title">පරිශ්‍රීලක නාමය සකසන්න</string>
+    <string name="teams_set_username_hint">පරිශ්‍රීලක නාමය</string>
     <string name="teams_set_team_name_title">ඔබගේ කණ්ඩායම නම් කරන්න</string>
     <string name="teams_set_team_name_subtitle">සැමවිටම ඔබට එය පසුව වෙනස් කළ හැකිය.</string>
     <string name="teams_set_team_name_hint">කණ්ඩායමේ නම</string>
@@ -1069,7 +1069,7 @@
     <string name="action_button_state_close">වසන්න</string>
     <string name="action_button_state_redo">පසුසේ</string>
     <string name="action_button_state_none">කිසිවක් නැත</string>
-    <string name="pick_user_teams_invite">කණ්ඩායමට එක්වීමට මිනිසුන්ට ආරාධනා කරන්න</string>
+    <string name="pick_user_teams_invite">කණ්ඩායමට එක්වීමට ආරාධනා කරන්න</string>
     <string name="teams_invitations_skip">මගහරින්න</string>
     <string name="teams_invitations_done">අහවරයි</string>
     <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
@@ -1157,7 +1157,7 @@
     <string name="revoke_link_message">නව අමුත්තන්ට මෙම සබැඳිය සමඟ එක්වීමට නොහැකි වනු ඇත. වත්මන් අමුත්තන්ට තවමත් ප්‍රවේශය ඇත.</string>
     <string name="revoke_link_confirm">Revoke Link</string>
     <string name="invite_button_description">මෙම සංවාදයට ඔබගේ කණ්ඩායමෙන් පිටත පුද්ගලයින්ට එක් වීමට හැකිය</string>
-    <string name="invite_people">මිනිසුන්ට ආරාධනා කරන්න</string>
+    <string name="invite_people">ආරාධනා කරන්න</string>
     <string name="guest_room_name">අමුත්තන්ගේ කාමරය</string>
     <string name="guest_time_left_hours">%1$sh left</string>
     <string name="guest_time_left_hours_minutes">%1$s.%2$sh left</string>
@@ -1235,7 +1235,7 @@
     <string name="reply_message_type_audio">ශ්‍රව්‍ය පණිවිඩය</string>
     <string name="reply_message_type_location">ස්ථානය</string>
     <string name="reply_message_type_asset">ඇමිණුම</string>
-    <string name="reply_message_type_unknown">පණිවිඩයක් ලියන්න</string>
+    <string name="reply_message_type_unknown">ඔබට මෙම පණිවිඩය දැකීමට නොහැකිය.</string>
     <string name="deep_link_generic_error_title">වලංගු නොවන සබැඳියකි.</string>
     <string name="deep_link_generic_error_message">ඔබ විවෘත කළ සබැඳිය වලංගු නැත</string>
     <string name="deep_link_conversation_error_title">මෙම සංවාදය විවෘත කළ නොහැකිය</string>
@@ -1278,7 +1278,7 @@
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
     <string name="conversation_folder_name_favorites">ප්‍රියතම</string>
     <string name="conversation_folder_name_group">සමූහ</string>
-    <string name="conversation_folder_name_one_to_one">මිනිසුන්</string>
+    <string name="conversation_folder_name_one_to_one">පුද්ගලයින්</string>
     <string name="folders_move_to">වෙත ගෙනයන්න</string>
     <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
     <string name="folders_create_new_folder">නව බහාලුමක් සාදන්න</string>
@@ -1384,9 +1384,9 @@
     <string name="legal_hold_participant_missing_consent_alert_title">අමුත්තන් එකතු කිරීමට නොහැකිය</string>
     <string name="legal_hold_participant_missing_consent_alert_message">නෛතික රැඳවුම නිසා මෙම සංවාදයට කණ්ඩායමේ සාමාජිකයින් පමණක් එකතු කිරීමට හැකිය.</string>
     <string name="legal_hold_participant_missing_consent_alert_negative_button">තව දැනගන්න</string>
-    <string name="legal_hold_user_blocked_message">නෛතික රැඳවුම නිසා මෙම පරිශීලකයාව අවහිර කෙරිණි. _තව දැනගන්න_</string>
-    <string name="legal_hold_cannot_connect_alert_title">මෙම පරිශීලකයාට සම්බන්ධ වීමට නොහැකිය</string>
-    <string name="legal_hold_cannot_connect_alert_message">නෛතික රැඳවුම නිසා මෙම පරිශීලකයාට සම්බන්ධ වීමට නොහැකිය.</string>
+    <string name="legal_hold_user_blocked_message">නෛතික රැඳවුම නිසා මෙම පරිශ්‍රීලකයාව අවහිර කෙරිණි. _තව දැනගන්න_</string>
+    <string name="legal_hold_cannot_connect_alert_title">පරිශ්‍රීලකයාට සබැඳීමට නොහැකිය</string>
+    <string name="legal_hold_cannot_connect_alert_message">නෛතික රැඳවුම නිසා මෙම පරිශ්‍රීලකයාට සම්බන්ධ වීමට නොහැකිය.</string>
     <string name="legal_hold_cannot_connect_alert_negative_button">තව දැනගන්න</string>
     <!-- Join Conversation via Deep Link -->
     <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
