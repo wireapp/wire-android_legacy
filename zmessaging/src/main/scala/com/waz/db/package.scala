@@ -17,10 +17,13 @@
  */
 package com.waz
 
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.utils._
 import com.waz.utils.wrappers.{DB, _}
 
+import java.util.UUID
 import scala.language.implicitConversions
 import scala.util.Try
 
@@ -89,12 +92,22 @@ package object db {
 
   private lazy val readTransactions = ReadTransactionSupport.chooseImplementation()
 
-  def inReadTransaction[A](body: => A)(implicit db: DB): A =
-    if (db.inTransaction) body
-    else {
+  def inReadTransaction[A](body: => A, jobId: Option[UUID] = None)(implicit db: DB, logTag: LogTag = LogTag("")): A =
+    if (db.inTransaction) {
+      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - inTransaction")
+      body
+    } else {
+      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 1")
       readTransactions.beginReadTransaction(db)
-      try returning(body) { _ => db.setTransactionSuccessful() }
-      finally db.endTransaction()
+      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 2")
+      try returning(body) { _ =>
+        verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 3")
+        db.setTransactionSuccessful()
+      }
+      finally {
+        verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 4 - finally")
+        db.endTransaction()
+      }
     }
 
 

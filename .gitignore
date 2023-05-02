@@ -33,6 +33,7 @@ local.properties
 /BUILDCONTROL.local
 app/api-keys.properties
 app/*.keystore
+*.keystore
 app/signing.gradle
 *user.gradle
 *local.gradle.kts

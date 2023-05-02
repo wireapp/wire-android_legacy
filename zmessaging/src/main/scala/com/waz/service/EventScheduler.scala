@@ -62,20 +62,6 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
       case Stage.Composite(strat: ExecutionStrategy, stages) =>
         Branch(strat, stages.toStream.map(s => schedule(s, eligible)))
 
-      case Stage.Composite(Interleaved, stages) =>
-        def interleave(es: Stream[Event]): Stream[(Stage, Event)] = es match {
-          case Stream.Empty   => Stream.Empty
-          case event #:: tail => stages.to[Stream].filter(_.isEligible(event)).map(stage => (stage, event)) #::: interleave(tail)
-        }
-
-        def compact(stagedEvents: Stream[(Stage, Event)]): Stream[Schedule] = stagedEvents match {
-          case Stream.Empty => Stream.Empty
-          case (staged @ (stage, event)) #:: tail =>
-            val (groupable, remaining) = tail.span(_._1 == stage)
-            schedule(stage, (staged #:: groupable).map(_._2)(breakOut)) #:: compact(remaining)
-        }
-
-        Branch(Sequential, compact(interleave(eligible)))
     }
   }
 }
@@ -86,8 +72,6 @@ object EventScheduler extends DerivedLogTag {
   sealed trait ExecutionStrategy extends Strategy
 
   case object Sequential extends SchedulingStrategy with ExecutionStrategy
-  case object Parallel extends SchedulingStrategy with ExecutionStrategy
-  case object Interleaved extends SchedulingStrategy
 
   sealed trait Stage {
     def isEligible(e: Event): Boolean
@@ -160,15 +144,6 @@ object EventScheduler extends DerivedLogTag {
         verbose(l"SSES<TAG:$tag> executeSchedule dfs 5")
         dfs(schedules #::: remaining)
 
-      case Branch(Parallel, schedules) #:: remaining =>
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 6")
-        val p = Promise[Unit]()
-        traverse(schedules)(s => dfs(Stream(s))).onComplete {
-          case _ =>
-            verbose(l"SSES<TAG:$tag> executeSchedule dfs 6:complete")
-            p.completeWith(dfs(remaining))
-        }
-        p.future
     }
     verbose(l"SSES<TAG:$tag> executeSchedule step 2")
     dfs(Stream(schedule))

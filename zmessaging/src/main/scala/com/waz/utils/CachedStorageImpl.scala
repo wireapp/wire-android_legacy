@@ -18,16 +18,18 @@
 package com.waz.utils
 
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
-
 import androidx.collection.LruCache
 import com.waz.content.Database
 import com.waz.db.DaoIdOps
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.errors.NotFoundLocal
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.wire.signals._
 import com.waz.utils.wrappers.DB
 
+import java.util.UUID
 import scala.collection.JavaConverters._
 import scala.collection.generic._
 import scala.collection.{GenTraversableOnce, Seq, breakOut, mutable}
@@ -35,19 +37,27 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait StorageDao[K, V <: Identifiable[K]] {
   def getById(key: K)(implicit db: DB): Option[V]
+
   def getAll(keys: Set[K])(implicit db: DB): Seq[V]
+
   def list(implicit db: DB): Seq[V]
+
   def insertOrReplace(items: GenTraversableOnce[V])(implicit db: DB): Unit
+
   def deleteEvery(ids: GenTraversableOnce[K])(implicit db: DB): Unit
 }
 
 object StorageDao {
 
-  implicit class DbDao[K, V <: Identifiable[K]](dao: DaoIdOps[V] { type IdVals = K }) extends StorageDao[K, V] {
+  implicit class DbDao[K, V <: Identifiable[K]](dao: DaoIdOps[V] {type IdVals = K}) extends StorageDao[K, V] {
     override def getById(key: K)(implicit db: DB): Option[V] = dao.getById(key)
+
     override def getAll(keys: Set[K])(implicit db: DB): Seq[V] = dao.getAll(keys)
+
     override def list(implicit db: DB) = dao.list
+
     override def deleteEvery(ids: GenTraversableOnce[K])(implicit db: DB): Unit = dao.deleteEvery(ids)
+
     override def insertOrReplace(items: GenTraversableOnce[V])(implicit db: DB): Unit = dao.insertOrReplace(items)
   }
 }
@@ -57,18 +67,26 @@ trait Storage2[K, V <: Identifiable[K]] {
   implicit def ec: ExecutionContext
 
   def loadAll(keys: Set[K]): Future[Seq[V]]
+
   def saveAll(values: Iterable[V]): Future[Unit]
+
   def deleteAllByKey(keys: Set[K]): Future[Unit]
 
   def find(key: K): Future[Option[V]] = loadAll(Set(key)).map(_.headOption)
+
   def get(key: K): Future[V] = find(key).flatMap {
     case Some(value) => Future.successful(value)
     case None => Future.failed(NotFoundLocal(s"Entity with key = '$key' not found"))
   }
+
   def save(value: V): Future[Unit] = saveAll(List(value))
+
   def deleteByKey(key: K): Future[Unit] = deleteAllByKey(Set(key))
+
   def deleteAll(values: Iterable[V]): Future[Unit] = deleteAllByKey(values.map(_.id).toSet)
+
   def delete(value: V): Future[Unit] = deleteAll(List(value))
+
   def update(key: K, updater: V => V): Future[Option[(V, V)]] =
     find(key).flatMap {
       case None => Future.successful(None)
@@ -80,7 +98,9 @@ trait Storage2[K, V <: Identifiable[K]] {
 
 trait ReactiveStorage2[K, V <: Identifiable[K]] extends Storage2[K, V] {
   def onAdded: EventStream[Seq[V]]
+
   def onUpdated: EventStream[Seq[(V, V)]]
+
   def onDeleted: EventStream[Set[K]]
 
   def onChanged(key: K): EventStream[V] =
@@ -105,28 +125,33 @@ trait ReactiveStorage2[K, V <: Identifiable[K]] extends Storage2[K, V] {
 }
 
 class DbStorage2[K, V <: Identifiable[K]](dao: StorageDao[K, V])
-                     (implicit
-                      override val ec: ExecutionContext,
-                      db: DB) extends Storage2[K,V] {
+                                         (implicit
+                                          override val ec: ExecutionContext,
+                                          db: DB) extends Storage2[K, V] {
 
   def loadAll: Future[Seq[V]] = Future(dao.list) //TODO Should we add this method to the Storage2 contract?
+
   override def loadAll(keys: Set[K]): Future[Seq[V]] = Future(dao.getAll(keys))
+
   override def saveAll(values: Iterable[V]): Future[Unit] = Future(dao.insertOrReplace(values))
+
   override def deleteAllByKey(keys: Set[K]): Future[Unit] = Future(dao.deleteEvery(keys))
 }
 
 class InMemoryStorage2[K, V <: Identifiable[K]](cache: LruCache[K, V])
-                            (implicit
-                             override val ec: ExecutionContext) extends Storage2[K, V] {
+                                               (implicit
+                                                override val ec: ExecutionContext) extends Storage2[K, V] {
 
   override def loadAll(keys: Set[K]): Future[Seq[V]] = Future(keys.toSeq.flatMap(k => Option(cache.get(k))))
+
   override def saveAll(values: Iterable[V]): Future[Unit] = Future(values.foreach(v => cache.put(v.id, v)))
+
   override def deleteAllByKey(keys: Set[K]): Future[Unit] = Future(keys.foreach(cache.remove))
 }
 
 class CachedStorage2[K, V <: Identifiable[K]](main: Storage2[K, V], cache: Storage2[K, V])
-                         (implicit
-                          override val ec: ExecutionContext) extends Storage2[K, V] {
+                                             (implicit
+                                              override val ec: ExecutionContext) extends Storage2[K, V] {
 
   override def loadAll(keys: Set[K]): Future[Seq[V]] =
     for {
@@ -158,7 +183,7 @@ class CachedStorage2[K, V <: Identifiable[K]](main: Storage2[K, V], cache: Stora
 
 }
 
-class ReactiveStorageImpl2[K, V <: Identifiable[K]](storage: Storage2[K,V]) extends ReactiveStorage2[K, V] {
+class ReactiveStorageImpl2[K, V <: Identifiable[K]](storage: Storage2[K, V]) extends ReactiveStorage2[K, V] {
 
   override val onAdded: SourceStream[Seq[V]] = EventStream()
   override val onUpdated: SourceStream[Seq[(V, V)]] = EventStream()
@@ -205,52 +230,74 @@ trait CachedStorage[K, V <: Identifiable[K]] {
 
   //Need to be defs to allow mocking
   def onAdded: EventStream[Seq[V]]
+
   def onUpdated: EventStream[Seq[(V, V)]]
+
   def onDeleted: EventStream[Seq[K]]
+
   def onChanged: EventStream[Seq[V]]
 
   def blockStreams(block: Boolean): Unit
 
   protected def load(key: K)(implicit db: DB): Option[V]
+
   protected def load(keys: Set[K])(implicit db: DB): Seq[V]
+
   protected def save(values: Seq[V])(implicit db: DB): Unit
+
   protected def delete(keys: Iterable[K])(implicit db: DB): Unit
 
-  protected def updateInternal(key: K, updater: V => V)(current: V): Future[Option[(V, V)]]
+  protected def updateInternal(key: K, updater: V => V, tag: Option[UUID] = None)(current: V): Future[Option[(V, V)]]
 
-  def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A)(implicit cb: CanBuild[A, B]): Future[B]
+  def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A,
+                 jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B]
+
   def filterCached(f: V => Boolean): Future[Vector[V]]
+
   def foreachCached(f: V => Unit): Future[Unit]
+
   def deleteCached(predicate: V => Boolean): Future[Unit]
 
   def onChanged(key: K): EventStream[V]
+
   def onRemoved(key: K): EventStream[K]
 
   def optSignal(key: K): Signal[Option[V]]
+
   def signal(key: K): Signal[V]
 
   def insert(v: V): Future[V]
+
   def insertAll(vs: Traversable[V]): Future[Set[V]]
 
   def get(key: K): Future[Option[V]]
+
   def getOrCreate(key: K, creator: => V): Future[V]
+
   def keySet: Future[Set[K]]
+
   def values: Future[Vector[V]]
+
   def getAll(keys: Traversable[K]): Future[Seq[Option[V]]]
 
-  def update(key: K, updater: V => V): Future[Option[(V, V)]]
+  def update(key: K, updater: V => V, tag: Option[UUID] = None): Future[Option[(V, V)]]
+
   def updateAll(updaters: scala.collection.Map[K, V => V]): Future[Seq[(V, V)]]
+
   def updateAll2(keys: Iterable[K], updater: V => V): Future[Seq[(V, V)]]
 
   def updateOrCreate(key: K, updater: V => V, creator: => V): Future[V]
 
   def updateOrCreateAll(updaters: K Map (Option[V] => V)): Future[Set[V]]
+
   def updateOrCreateAll2(keys: Iterable[K], updater: ((K, Option[V]) => V)): Future[Set[V]]
 
   def put(key: K, value: V): Future[V]
+
   def getRawCached(key: K): Option[V]
 
   def remove(key: K): Future[Unit]
+
   def removeAll(keys: Iterable[K]): Future[Unit]
 
   def cacheIfNotPresent(key: K, value: V): Unit
@@ -262,23 +309,24 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
                                                 (implicit
                                                  val dao: StorageDao[K, V],
                                                  tag: LogTag = LogTag("CachedStorage")
-                                                ) extends CachedStorage[K, V] {
+                                                ) extends CachedStorage[K, V] with DerivedLogTag {
+
   import com.waz.threading.Threading.Implicits.Background
 
   val onAdded = EventStream[Seq[V]]()
   val onUpdated = EventStream[Seq[(V, V)]]()
   val onDeleted = EventStream[Seq[K]]()
 
-  private val onAddedQueue:   BlockingQueue[Seq[V]]     = new LinkedBlockingQueue[Seq[V]]
-  private val onUpdatedQueue: BlockingQueue[Seq[(V,V)]] = new LinkedBlockingQueue[Seq[(V,V)]]
-  private val onDeletedQueue: BlockingQueue[Seq[K]]     = new LinkedBlockingQueue[Seq[K]]
+  private val onAddedQueue: BlockingQueue[Seq[V]] = new LinkedBlockingQueue[Seq[V]]
+  private val onUpdatedQueue: BlockingQueue[Seq[(V, V)]] = new LinkedBlockingQueue[Seq[(V, V)]]
+  private val onDeletedQueue: BlockingQueue[Seq[K]] = new LinkedBlockingQueue[Seq[K]]
   private var streamsBlocked = false
 
   override def blockStreams(block: Boolean): Unit = if (block != streamsBlocked) {
     if (!block) {
-      while(!onAddedQueue.isEmpty) onAdded ! onAddedQueue.take()
-      while(!onUpdatedQueue.isEmpty) onUpdated ! onUpdatedQueue.take()
-      while(!onDeletedQueue.isEmpty) onDeleted ! onDeletedQueue.take()
+      while (!onAddedQueue.isEmpty) onAdded ! onAddedQueue.take()
+      while (!onUpdatedQueue.isEmpty) onUpdated ! onUpdatedQueue.take()
+      while (!onDeletedQueue.isEmpty) onDeleted ! onDeletedQueue.take()
     }
     streamsBlocked = block
   }
@@ -286,7 +334,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   private def tellAdded(events: Seq[V]): Unit =
     if (!streamsBlocked) onAdded ! events else onAddedQueue.put(events)
 
-  private def tellUpdated(events: Seq[(V,V)]): Unit =
+  private def tellUpdated(events: Seq[(V, V)]): Unit =
     if (!streamsBlocked) onUpdated ! events else onUpdatedQueue.put(events)
 
   private def tellDeleted(events: Seq[K]): Unit =
@@ -308,28 +356,40 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   private def cachedOrElse(key: K, default: => Future[Option[V]]): Future[Option[V]] =
     Option(cache.get(key)).fold(default)(Future.successful)
 
-  private def loadFromDb(key: K) = db.read { load(key)(_) } map { value =>
+  private def loadFromDb(key: K) = db.read {
+    load(key)(_)
+  } map { value =>
     Option(cache.get(key)).getOrElse {
       cache.put(key, value)
       value
     }
   }
 
-  def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A)(implicit cb: CanBuild[A, B]): Future[B] = Future {
+  def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A,
+                 jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B] = Future {
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 1")
     val matches = cb.apply()
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 2")
     val snapshot = cache.snapshot.asScala
 
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 3")
     snapshot.foreach {
       case (k, Some(v)) if predicate(v) => matches += mapping(v)
       case _ =>
     }
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 4")
     (snapshot.keySet, matches)
   } flatMap { case (wasCached, matches) =>
-    db.read { database =>
+
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 5")
+    db.read({ database =>
+      verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.read")
       val uncached = Map.newBuilder[K, V]
+      verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.6")
       search(database).acquire { rows =>
+        verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.7")
         rows.foreach { v =>
-          if (! wasCached(v.id)) {
+          if (!wasCached(v.id)) {
             matches += mapping(v)
             uncached += v.id -> v
           }
@@ -337,17 +397,21 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
         (matches.result, uncached.result)
       }
-    }
+    }, jobTag)
   } map { case (results, uncached) =>
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.8")
 
     uncached.foreach { case (k, v) =>
       if (cache.get(k) eq null) cache.put(k, Some(v))
     }
+    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.9")
 
     results
   }
 
-  def filterCached(f: V => Boolean) = Future { cache.snapshot.values().asScala.filter(_.exists(f)).map(_.get).toVector }
+  def filterCached(f: V => Boolean) = Future {
+    cache.snapshot.values().asScala.filter(_.exists(f)).map(_.get).toVector
+  }
 
   def foreachCached(f: V => Unit) = Future {
     cache.snapshot.asScala.foreach {
@@ -357,7 +421,9 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   }
 
   def deleteCached(predicate: V => Boolean) = Future {
-    cache.snapshot.asScala.collect { case (k, Some(v)) if predicate(v) => k } foreach { cache.remove }
+    cache.snapshot.asScala.collect { case (k, Some(v)) if predicate(v) => k } foreach {
+      cache.remove
+    }
   }
 
   def onChanged(key: K): EventStream[V] = onChanged.map(_.view.filter(_.id == key).lastOption).collect { case Some(v) => v }
@@ -380,7 +446,9 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   def insertAll(vs: Traversable[V]) =
     updateOrCreateAll(vs.map { v => v.id -> { (_: Option[V]) => v } }(breakOut))
 
-  def get(key: K): Future[Option[V]] = cachedOrElse(key, Future { cachedOrElse(key, loadFromDb(key)) }.flatMap(identity))
+  def get(key: K): Future[Option[V]] = cachedOrElse(key, Future {
+    cachedOrElse(key, loadFromDb(key))
+  }.flatMap(identity))
 
   def getOrCreate(key: K, creator: => V): Future[V] = get(key) flatMap { value =>
     value.orElse(Option(cache.get(key)).flatten).fold(addInternal(key, creator))(Future.successful)
@@ -404,14 +472,20 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
       }(breakOut)
 
       keys.map { key =>
-        returning(Option(cache.get(key)).orElse(loadedMap.get(key).orElse(cachedEntries.get(key))).flatten) { cache.put(key, _) }
-      } (breakOut) : Vector[Option[V]]
+        returning(Option(cache.get(key)).orElse(loadedMap.get(key).orElse(cachedEntries.get(key))).flatten) {
+          cache.put(key, _)
+        }
+      }(breakOut): Vector[Option[V]]
     }
   }
 
-  def update(key: K, updater: V => V): Future[Option[(V, V)]] = get(key) flatMap { loaded =>
+  def update(key: K, updater: V => V, tag: Option[UUID] = None): Future[Option[(V, V)]] = get(key) flatMap { loaded =>
+    verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.update - inside")
     val prev = Option(cache.get(key)).getOrElse(loaded)
-    prev.fold(Future successful Option.empty[(V, V)]) { updateInternal(key, updater)(_) }
+    prev.fold(Future successful Option.empty[(V, V)]) {
+      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.update - inside 2")
+      updateInternal(key, updater, tag)(_)
+    }
   }
 
   def updateAll(updaters: scala.collection.Map[K, V => V]): Future[Seq[(V, V)]] =
@@ -421,7 +495,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     if (keys.isEmpty) Future successful Seq.empty[(V, V)]
     else
       getAll(keys) flatMap { values =>
-        val updated = keys.iterator.zip(values.iterator) .flatMap { case (k, v) =>
+        val updated = keys.iterator.zip(values.iterator).flatMap { case (k, v) =>
           Option(cache.get(k)).flatten.orElse(v).flatMap { value =>
             val updated = updater(value)
             if (updated != value) {
@@ -429,7 +503,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
               Some(value -> updated)
             } else None
           }
-        } .toVector
+        }.toVector
 
         if (updated.isEmpty) Future.successful(Vector.empty)
         else
@@ -441,11 +515,13 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   def updateOrCreate(key: K, updater: V => V, creator: => V): Future[V] = get(key) flatMap { loaded =>
     val prev = Option(cache.get(key)).getOrElse(loaded)
-    prev.fold { addInternal(key, creator) } { v => updateInternal(key, updater)(v).map(_.fold(v)(_._2)) }
+    prev.fold {
+      addInternal(key, creator)
+    } { v => updateInternal(key, updater)(v).map(_.fold(v)(_._2)) }
   }
 
   def updateOrCreateAll(updaters: K Map (Option[V] => V)): Future[Set[V]] =
-    updateOrCreateAll2(updaters.keys.toVector, { (key, v) => updaters(key)(v)})
+    updateOrCreateAll2(updaters.keys.toVector, { (key, v) => updaters(key)(v) })
 
   def updateOrCreateAll2(keys: Iterable[K], updater: ((K, Option[V]) => V)): Future[Set[V]] =
     if (keys.isEmpty) Future successful Set.empty[V]
@@ -456,7 +532,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
         val added = Vector.newBuilder[V]
         val updated = Vector.newBuilder[(V, V)]
 
-        val result = keys .map { key =>
+        val result = keys.map { key =>
           val current = loaded.get(key).flatten
           val next = updater(key, current)
           current match {
@@ -471,7 +547,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
             case Some(_) => // unchanged, ignore
           }
           next
-        } .toSet
+        }.toSet
 
         val addedResult = added.result
         val updatedResult = updated.result
@@ -492,13 +568,18 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     }
   }
 
-  protected def updateInternal(key: K, updater: V => V)(current: V): Future[Option[(V, V)]] = {
+  protected def updateInternal(key: K, updater: V => V, tag: Option[UUID] = None)(current: V): Future[Option[(V, V)]] = {
     val updated = updater(current)
+    verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal: updated = $updated")
     if (updated == current) Future.successful(Some((current, updated)))
     else {
+      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE")
       cache.put(key, Some(updated))
+      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 2")
       db(save(Seq(updated))(_)).future.map { _ =>
+        verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 3")
         tellUpdated(Seq((current, updated)))
+        verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 4")
         Some((current, updated))
       }
     }
@@ -513,7 +594,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     db(delete(Seq(key))(_)).future.map { _ =>
       tellDeleted(Seq(key))
     }
-  } .flatten
+  }.flatten
 
   def removeAll(keys: Iterable[K]): Future[Unit] =
     if (keys.isEmpty) Future.successful(())
@@ -521,10 +602,12 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
       Future {
         keys.foreach { key => cache.put(key, None) }
         db(delete(keys)(_)).future.map { _ => tellDeleted(keys.toVector) }
-      } .flatten
+      }.flatten
 
   def cacheIfNotPresent(key: K, value: V): Unit = cachedOrElse(key, Future {
-    Option(cache.get(key)).getOrElse { returning(Some(value))(cache.put(key, _)) }
+    Option(cache.get(key)).getOrElse {
+      returning(Some(value))(cache.put(key, _))
+    }
   })
 
   // signal with all data

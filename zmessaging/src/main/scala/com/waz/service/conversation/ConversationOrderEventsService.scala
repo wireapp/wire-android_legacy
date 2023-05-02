@@ -17,7 +17,7 @@
  */
 package com.waz.service.conversation
 
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{verbose, _}
 import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent._
@@ -28,6 +28,7 @@ import com.waz.service.{EventPipeline, EventScheduler, UserService}
 import com.waz.sync.SyncServiceHandle
 import com.waz.utils._
 
+import java.util.UUID
 import scala.concurrent.Future
 
 class ConversationOrderEventsService(selfUserId: UserId,
@@ -83,8 +84,10 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   val conversationOrderEventsStage: Stage.Atomic = EventScheduler.Stage[ConversationEvent] { (convId, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 1")
-    val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder))
+    val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder), tag)
+    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 2")
     val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive))
+    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 3")
 
     for {
       _ <- orderChanges
@@ -106,22 +109,31 @@ class ConversationOrderEventsService(selfUserId: UserId,
       }
     )) map { _ => () }
 
-  private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent]) =
-    if (es.isEmpty) Future.successful(())
+  private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent], tag: Option[UUID] = None) = {
+    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationOrderEvents 1")
+
+    if (es.isEmpty) {
+      verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationOrderEvents empty")
+      Future.successful(())
+    }
     else convs.processConvWithRemoteId(None, convId, retryAsync = true) { conv =>
+      verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConvWithRemoteId")
       verbose(l"processConversationOrderEvents($conv, $es)")
       val lastTime = es.maxBy(_.time).time
       val fromSelf = es.filter(_.from == selfUserId)
       val lastRead = if (fromSelf.isEmpty) None else Some(fromSelf.maxBy(_.time).time)
 
+      verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService lastRead = $lastRead")
+
       for {
-        _ <- convs.updateLastEvent(conv.id, lastTime)
+        _ <- convs.updateLastEvent(conv.id, lastTime, tag)
         _ <- lastRead match {
           case None => Future successful None
-          case Some(time) => convs.updateConversationLastRead(conv.id, time)
+          case Some(time) => convs.updateConversationLastRead(conv.id, time, tag)
         }
       } yield ()
     }
+  }
 
   private def processConversationUnarchiveEvents(convId: RConvId, events: Seq[ConversationEvent]) = {
     verbose(l"processConversationUnarchiveEvents($convId, ${events.size} events)")

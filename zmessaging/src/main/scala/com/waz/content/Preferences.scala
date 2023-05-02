@@ -282,7 +282,7 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
   ) with Preferences {
 
   override protected implicit val dispatcher: DispatchQueue = Threading.Background
-  override protected implicit val logTag: LogTag = LogTag[UserPreferences]
+  override implicit val logTag: LogTag = LogTag[UserPreferences]
 
   override protected def getValue[A: PrefCodec](key: PrefKey[A]) = {
     get(key.str).map(_.map(_.value)).map(_.map(implicitly[PrefCodec[A]].decode).getOrElse(key.default))
