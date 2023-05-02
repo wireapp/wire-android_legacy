@@ -86,7 +86,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 1")
     val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder), tag)
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 2")
-    val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive))
+    val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive), tag)
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 3")
 
     for {
@@ -135,16 +135,23 @@ class ConversationOrderEventsService(selfUserId: UserId,
     }
   }
 
-  private def processConversationUnarchiveEvents(convId: RConvId, events: Seq[ConversationEvent]) = {
+  private def processConversationUnarchiveEvents(convId: RConvId, events: Seq[ConversationEvent], tag: Option[UUID] = None) = {
     verbose(l"processConversationUnarchiveEvents($convId, ${events.size} events)")
+    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationUnarchiveEvents 1")
     for {
       convs   <- Future.sequence(events.filter(shouldUnarchive).groupBy(_.convId).map {
                   case (rId, es) if hasMentions(es) =>
                     Future.successful(rId -> (es.maxBy(_.time).time, unarchiveMuted(es), true))
                   case (rId, es) =>
                     hasSelfQuotes(es).map(hasQuotes => rId -> (es.maxBy(_.time).time, unarchiveMuted(es), hasQuotes))
-                 }).map(_.toMap)
-      convIds <- storage.getByRemoteIds(convs.keys)
+                 }).map(_.toMap).map( { f =>
+          verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationUnarchiveEvents 2")
+          f
+      })
+      convIds <- storage.getByRemoteIds(convs.keys).map({ f =>
+        verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationUnarchiveEvents 3")
+        f
+      })
       updates <- storage.updateAll2(convIds, { conv =>
                    convs.get(conv.remoteId) match {
                      case Some((time, unarchiveMuted, hasMentionOrQuote)) if conv.archiveTime.isBefore(time) && (conv.isAllAllowed || unarchiveMuted || (conv.onlyMentionsAllowed && hasMentionOrQuote)) =>
@@ -152,7 +159,10 @@ class ConversationOrderEventsService(selfUserId: UserId,
                      case _ =>
                        conv
                    }
-                 })
+                 }).map({ f =>
+        verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService processConversationUnarchiveEvents 4")
+        f
+      })
     } yield updates
   }
 

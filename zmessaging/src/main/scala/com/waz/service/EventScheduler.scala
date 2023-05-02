@@ -133,6 +133,7 @@ object EventScheduler extends DerivedLogTag {
       case Leaf(stage, events) #:: remaining =>
         verbose(l"SSES<TAG:$tag> executeSchedule dfs 4")
         val p = Promise[Unit]()
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4 - stage: $stage")
         stage(conv, events, tag).onComplete {
           case _ =>
             verbose(l"SSES<TAG:$tag> executeSchedule dfs 4:complete")

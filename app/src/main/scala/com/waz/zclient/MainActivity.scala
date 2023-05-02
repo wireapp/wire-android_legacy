@@ -80,17 +80,17 @@ class MainActivity extends BaseActivity
 
   import Threading.Implicits.Ui
 
-  private lazy val zms                    = inject[Signal[ZMessaging]]
-  private lazy val account                = inject[Signal[Option[AccountManager]]]
-  private lazy val accountsService        = inject[AccountsService]
-  private lazy val sharingController      = inject[SharingController]
-  private lazy val accentColorController  = inject[AccentColorController]
+  private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val account = inject[Signal[Option[AccountManager]]]
+  private lazy val accountsService = inject[AccountsService]
+  private lazy val sharingController = inject[SharingController]
+  private lazy val accentColorController = inject[AccentColorController]
   private lazy val conversationController = inject[ConversationController]
   private lazy val userAccountsController = inject[UserAccountsController]
-  private lazy val spinnerController      = inject[SpinnerController]
-  private lazy val passwordController     = inject[PasswordController]
-  private lazy val deepLinkService        = inject[DeepLinkService]
-  private lazy val usersController        = inject[UsersController]
+  private lazy val spinnerController = inject[SpinnerController]
+  private lazy val passwordController = inject[PasswordController]
+  private lazy val deepLinkService = inject[DeepLinkService]
+  private lazy val usersController = inject[UsersController]
   private lazy val featureConfigsController = inject[FeatureConfigsController]
 
   override def onAttachedToWindow(): Unit = {
@@ -182,11 +182,14 @@ class MainActivity extends BaseActivity
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
-    spinnerController.spinnerShowing.onUi {
-      case Show(animation, forcedIsDarkTheme) =>
-        themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
-      case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
-      case Hide(_) => loadingIndicator.hide()
+    spinnerController.spinnerShowing.onUi { spinnerStatus =>
+      verbose(l"Spinner status SHOW = $spinnerStatus")
+      spinnerStatus match {
+        case Show(animation, forcedIsDarkTheme) =>
+          themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
+        case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
+        case Hide(_) => loadingIndicator.hide()
+      }
     }
 
     deepLinkService.deepLink.onUi {
@@ -253,9 +256,9 @@ class MainActivity extends BaseActivity
     userPreferences.flatMap(_.preference(UserPreferences.ShouldInformSelfDeletingMessagesChanged).signal).onUi { shouldInform =>
       if (!shouldInform) {}
       else for {
-        prefs                     <- userPreferences.head
-        isFeatureEnabled          <- prefs.preference(AreSelfDeletingMessagesEnabled).apply()
-        enforcedTimeoutInSeconds  <- prefs.preference(SelfDeletingMessagesEnforcedTimeout).apply()
+        prefs <- userPreferences.head
+        isFeatureEnabled <- prefs.preference(AreSelfDeletingMessagesEnabled).apply()
+        enforcedTimeoutInSeconds <- prefs.preference(SelfDeletingMessagesEnforcedTimeout).apply()
       } yield {
         showSelfDeletingMessagesConfigsChangeInfoDialog(isFeatureEnabled, enforcedTimeoutInSeconds) { _ =>
           userPreferences.head.foreach { prefs =>
@@ -265,7 +268,7 @@ class MainActivity extends BaseActivity
       }
     }
 
-    if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+    if (BuildConfig.CONFERENCE_CALLING_RESTRICTION)
       observeTeamUpgrade()
 
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
@@ -287,20 +290,20 @@ class MainActivity extends BaseActivity
 
   private def initTracking: Future[Unit] =
     for {
-      prefs            <- userPreferences.head
-      id               <- prefs.preference(CurrentTrackingId).apply()
-      shouldShare      <- prefs.preference(ShouldShareTrackingId).apply()
-      trackingCtrl     =  inject[GlobalTrackingController]
-      _                =  verbose(l"trackingId: $id, shouldShare: $shouldShare")
-      _                <- if (id.isEmpty || shouldShare) trackingCtrl.setAndSendNewTrackingId() else Future.successful(())
-      _                <- if (shouldShare) prefs.preference(ShouldShareTrackingId) := false else Future.successful(())
-      check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
+      prefs <- userPreferences.head
+      id <- prefs.preference(CurrentTrackingId).apply()
+      shouldShare <- prefs.preference(ShouldShareTrackingId).apply()
+      trackingCtrl = inject[GlobalTrackingController]
+      _ = verbose(l"trackingId: $id, shouldShare: $shouldShare")
+      _ <- if (id.isEmpty || shouldShare) trackingCtrl.setAndSendNewTrackingId() else Future.successful(())
+      _ <- if (shouldShare) prefs.preference(ShouldShareTrackingId) := false else Future.successful(())
+      check <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
       analyticsEnabled <- prefs.preference[Boolean](TrackingEnabled).apply()
-      isProUser        <- userAccountsController.isProUser.head
-      _                <- if (!check)
-                            (prefs(TrackingEnabled) := isProUser).flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
-                          else Future.successful(())
-      _                <- if (analyticsEnabled && isProUser) trackingCtrl.init() else Future.successful(())
+      isProUser <- userAccountsController.isProUser.head
+      _ <- if (!check)
+        (prefs(TrackingEnabled) := isProUser).flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
+      else Future.successful(())
+      _ <- if (analyticsEnabled && isProUser) trackingCtrl.init() else Future.successful(())
     } yield ()
 
   override def onStart(): Unit = {
@@ -313,8 +316,8 @@ class MainActivity extends BaseActivity
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
     for {
-      _      <- initTracking
-      _      <- inject[GlobalTrackingController].start(this)
+      _ <- initTracking
+      _ <- inject[GlobalTrackingController].start(this)
     } yield ()
 
     val intent = getIntent
@@ -416,21 +419,21 @@ class MainActivity extends BaseActivity
     import scala.collection.JavaConverters._
     val oldTag = getSupportFragmentManager.getFragments.asScala.toList.flatMap(Option(_)).lastOption.flatMap {
       case _: SetOrRequestPasswordFragment => Some(SetOrRequestPasswordFragment.Tag)
-      case _: VerifyEmailFragment          => Some(VerifyEmailFragment.Tag)
-      case _: AddEmailFragment             => Some(AddEmailFragment.Tag)
+      case _: VerifyEmailFragment => Some(VerifyEmailFragment.Tag)
+      case _: AddEmailFragment => Some(AddEmailFragment.Tag)
       case _ => None
     }
     verbose(l"replaceMainFragment: ${oldTag.map(redactedString)} -> ${redactedString(newTag)}")
 
     val (in, out) = (MainActivity.isSlideAnimation(oldTag, newTag), reverse) match {
-      case (true, true)  => (R.anim.fragment_animation_second_page_slide_in_from_left_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_right_no_alpha)
+      case (true, true) => (R.anim.fragment_animation_second_page_slide_in_from_left_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_right_no_alpha)
       case (true, false) => (R.anim.fragment_animation_second_page_slide_in_from_right_no_alpha, R.anim.fragment_animation_second_page_slide_out_to_left_no_alpha)
-      case _             => (R.anim.fade_in, R.anim.fade_out)
+      case _ => (R.anim.fade_in, R.anim.fade_out)
     }
 
     val frag = Option(getSupportFragmentManager.findFragmentByTag(newTag)) match {
       case Some(f) => returning(f)(_.setArguments(fragment.getArguments))
-      case _       => fragment
+      case _ => fragment
     }
 
     val transaction = getSupportFragmentManager
@@ -503,7 +506,7 @@ class MainActivity extends BaseActivity
   private def onPasswordWasReset() =
     for {
       Some(am) <- accountsService.activeAccountManager.head
-      _        <- am.auth.onPasswordReset(emailCredentials = None)
+      _ <- am.auth.onPasswordReset(emailCredentials = None)
     } yield {}
 
   private def handleIntent(intent: Intent): Future[Boolean] = {
@@ -530,7 +533,7 @@ class MainActivity extends BaseActivity
         val res = switchAccount.flatMap { _ =>
           (intent.convId match {
             case Some(id) => conversationController.switchConversation(id, startCall)
-            case _ =>        Future.successful({})
+            case _ => Future.successful({})
           }).map(_ => clearIntent())(Threading.Ui)
         }
 
@@ -546,8 +549,8 @@ class MainActivity extends BaseActivity
       case SharingIntent() =>
         for {
           convs <- sharingController.sendContent(intent, this)
-          _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
-          _     =  clearIntent()
+          _ <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
+          _ = clearIntent()
         } yield true
 
       case OpenPageIntent(page) => page match {
@@ -576,9 +579,9 @@ class MainActivity extends BaseActivity
   }
 
   override def logout(): Unit = {
-    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({})){ id => accountsService.logout(id, reason = UserInitiated) }).map { _ =>
+    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({})) { id => accountsService.logout(id, reason = UserInitiated) }).map { _ =>
       startFirstFragment()
-    } (Threading.Ui)
+    }(Threading.Ui)
   }
 
   def manageDevices(): Unit = startActivity(ShowDeviceRemovalIntent(this))
@@ -595,7 +598,7 @@ class MainActivity extends BaseActivity
       val check = new TextDrawing
 
       val missing = Emojis.getAllEmojisSortedByCategory.asScala.flatten.filter { emoji =>
-          !paint.hasGlyph(emoji)
+        !paint.hasGlyph(emoji)
       }
 
       if (missing.nonEmpty) prefs.setUnsupportedEmoji(missing.asJava, Emojis.VERSION)
@@ -619,7 +622,7 @@ object MainActivity {
 
   private val slideAnimations = Set(
     (SetOrRequestPasswordFragment.Tag, VerifyEmailFragment.Tag),
-    (SetOrRequestPasswordFragment.Tag,  AddEmailFragment.Tag),
+    (SetOrRequestPasswordFragment.Tag, AddEmailFragment.Tag),
     (VerifyEmailFragment.Tag, AddEmailFragment.Tag)
   )
 

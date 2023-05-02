@@ -156,8 +156,12 @@ class ConversationListManagerFragment extends Fragment
       }
     } yield (syncSate, animType)).onUi { case (state, animType) =>
       state match {
-        case SYNCING | WAITING => listLoadingIndicator.show(animType)
-        case _                 => listLoadingIndicator.hide()
+        case SYNCING | WAITING => {
+          listLoadingIndicator.show(animType)
+        }
+        case _                 => {
+          listLoadingIndicator.hide()
+        }
       }
     }
 
