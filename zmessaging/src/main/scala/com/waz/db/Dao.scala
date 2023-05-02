@@ -22,6 +22,7 @@ import com.waz.log.LogSE._
 import com.waz.utils.wrappers.{DB, DBContentValues, DBCursor}
 import com.waz.utils.{Managed, returning}
 
+import java.util.UUID
 import scala.collection.{GenTraversableOnce, breakOut}
 import scala.language.implicitConversions
 
@@ -114,7 +115,7 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
 
   def list(implicit db: DB): Vector[T] = list(listCursor)
 
-  def iterating(c: => DBCursor): Managed[Iterator[T]] = iteratingWithReader(this)(c)
+  def iterating(c: => DBCursor, tag: Option[UUID] = None): Managed[Iterator[T]] = iteratingWithReader(this)(c)
 
   def iteratingMultiple(cursors: => Seq[DBCursor]): Managed[Iterator[T]] = iteratingMultipleWithReader(this)(cursors)
 
@@ -147,7 +148,10 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
     finally { c.close() }
   }
 
-  def find[A](col: Column[A], value: A)(implicit db: DB): DBCursor = db.query(table.name, null, s"${col.name} = ?", Array(col(value)), null, null, null)
+  def find[A](col: Column[A], value: A, jobTag: Option[UUID] = None)(implicit db: DB): DBCursor = {
+    verbose(l"SSXX<JOB:$jobTag> Dao.find")
+    db.query(table.name, null, s"${col.name} = ?", Array(col(value)), null, null, null)
+  }
 
   def findInSet[A](col: Column[A], values: Set[A])(implicit db: DB): Seq[DBCursor] = {
     // Android throws an SQLiteException if the number of variables in a query exceeds ~999.

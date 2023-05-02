@@ -384,7 +384,7 @@ object ConversationData {
 
     def findByRemoteId(remoteId: RConvId, jobTag: Option[UUID])(implicit db: DB) = {
       verbose(l"SSSTAGES<JOB:$jobTag> ConversationData.findByRemoteId: $remoteId")
-      iterating(find(RemoteId, remoteId))
+      iterating(find(RemoteId, remoteId, jobTag), jobTag)
     }
     def findByRemoteIds(remoteIds: Set[RConvId])(implicit db: DB) = iteratingMultiple(findInSet(RemoteId, remoteIds))
   }

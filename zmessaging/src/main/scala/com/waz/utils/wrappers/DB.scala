@@ -18,12 +18,12 @@
 package com.waz.utils.wrappers
 
 import java.io.Closeable
-
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import androidx.sqlite.db.{SupportSQLiteDatabase, SupportSQLiteQueryBuilder}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
+import java.util.UUID
 import scala.language.implicitConversions
 
 trait DB extends Closeable {
@@ -55,7 +55,9 @@ trait DB extends Closeable {
             groupBy: String,
             having: String,
             orderBy: String,
-            limit: String = null): DBCursor
+            limit: String = null,
+            tag: Option[UUID] = None
+           ): DBCursor
 
   def rawQuery(sql: String): DBCursor
 
@@ -139,7 +141,9 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
                      groupBy: String,
                      having: String,
                      orderBy: String,
-                     limit: String = null): DBCursor = {
+                     limit: String = null,
+                     tag: Option[UUID] = None
+                    ): DBCursor = {
     val supportQuery = SupportSQLiteQueryBuilder.builder(table)
       .columns(columns)
       .selection(selection, selectionArgs.asInstanceOf[Array[AnyRef]])
@@ -148,8 +152,14 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
       .orderBy(orderBy)
       .limit(limit)
       .create()
-    try { db.query(supportQuery) }
+    try {
+      verbose(l"<JOB:$tag> DB.query step 1")
+      val cursor = db.query(supportQuery)
+      verbose(l"<JOB:$tag> DB.query step 2")
+      cursor
+    }
     catch { case ex: Throwable =>
+      verbose(l"<JOB:$tag> DB.query step 3")
       error(l"Error in supportQuery $supportQuery ", ex)
       throw ex
     }

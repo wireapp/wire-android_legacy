@@ -357,15 +357,25 @@ class MessageEventProcessor(selfUserId:           UserId,
     } yield standard ++ updatedQuotes
   }
 
-  private def assetForEvent(event: MessageEvent) = {
+  private def assetForEvent(event: MessageEvent, tag: Option[UUID] = None) = {
+    verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 0")
     for {
       message <- event match {
-        case GenericMessageEvent(_, _, _, _, _, c) => storage.get(MessageId(c.proto.getMessageId))
-        case _                                     => Future.successful(None)
+        case GenericMessageEvent(_, _, _, _, _, c) =>
+          verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 1")
+          storage.get(MessageId(c.proto.getMessageId))
+        case _                                     =>
+          verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 2")
+          Future.successful(None)
       }
+      _   =           verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 3")
       asset <- message.flatMap(_.assetId) match {
-        case Some(dId: DownloadAssetId) => downloadAssetStorage.find(dId)
-        case _                          => Future.successful(None)
+        case Some(dId: DownloadAssetId) =>
+          verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 4")
+          downloadAssetStorage.find(dId)
+        case _                          =>
+          verbose(l"<JOB:$tag> MessageEventProcessor.assetForEvent 1")
+          Future.successful(None)
       }
     } yield asset
   }
