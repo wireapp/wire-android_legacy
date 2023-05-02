@@ -1,0 +1,37 @@
+{
+  "flavors": {
+    "prod": {},
+    "staging": {},
+    "dev": {},
+    "beta": {},
+    "internal": {}
+  },
+  "application_id": "com.wire.android.bund",
+  "application_user_id": "com.wire.android.bund.userid",
+  "application_name": "Wire (Bund)",
+
+  "max_accounts": 2,
+  "allow_account_creation": false,
+  "allow_sso_authentication_option": false,
+  "enable_blacklist": true,
+  "allow_email_change": false,
+  "file_restriction_enabled": true,
+  "file_restriction_list": "3gpp, aac, amr, avi, bmp, css, csv, dib, doc, docx, eml, flac, gif, html, ico, jfif, jpeg, jpg, jpg-large, key, m4a, m4v, md, midi, mkv, mov, mp3, mp4, mpeg, mpeg3, mpg, msg, ods, odt, ogg, pdf, pjp, pjpeg, png, pps, ppt, pptx, psd, pst, rtf, sql, svg, tex, tiff, txt, vcf, vid, wav, webm, webp, wmv, xls, xlsx, xml",
+  "force_constant_bitrate_calls": true,
+
+  "developer_features_enabled": false,
+  "logging_enabled": false,
+
+  "encrypt_proteus_storage": true,
+  "wipe_on_device_removal": true,
+  "wipe_on_rooted_device": true,
+  "wipe_on_cookie_invalid": false,
+
+  "default_backend_url_base_api": "https://wire-https.messaging.ivbb.bund.de",
+  "default_backend_url_accounts": "https://account.messaging.ivbb.bund.de",
+  "default_backend_url_base_websocket": "https://wire-ssl.messaging.ivbb.bund.de/",
+  "default_backend_url_teams": "https://teams.messaging.ivbb.bund.de",
+  "default_backend_url_blacklist": "https://wire-s3.messaging.ivbb.bund.de/config/blacklist.json",
+  "default_backend_url_website": "https://social.intranet.bund.de/inhalte/Navknoten_2596",
+  "default_backend_title": "BUND"
+}
