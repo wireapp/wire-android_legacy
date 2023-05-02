@@ -92,7 +92,10 @@ class ConversationOrderEventsService(selfUserId: UserId,
     for {
       _ <- orderChanges
       _ <- unarchiveConvs
-    } yield {}
+    } yield {
+      verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 4")
+      Unit
+    }
   }
 
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] =
