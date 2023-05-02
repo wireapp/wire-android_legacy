@@ -23,6 +23,7 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
+import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model
 import com.waz.model.ConversationData.{ConversationType, LegalHoldStatus, Link, UnreadCount}
@@ -31,6 +32,7 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import org.json.JSONArray
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -380,7 +382,10 @@ object ConversationData {
 
     def findByTeams(teams: Set[TeamId])(implicit db: DB) = iteratingMultiple(findInSet(Team, teams.map(Option(_))))
 
-    def findByRemoteId(remoteId: RConvId)(implicit db: DB) = iterating(find(RemoteId, remoteId))
+    def findByRemoteId(remoteId: RConvId, jobTag: Option[UUID])(implicit db: DB) = {
+      verbose(l"SSSTAGES<JOB:$jobTag> ConversationData.findByRemoteId: $remoteId")
+      iterating(find(RemoteId, remoteId))
+    }
     def findByRemoteIds(remoteIds: Set[RConvId])(implicit db: DB) = iteratingMultiple(findInSet(RemoteId, remoteIds))
   }
 }

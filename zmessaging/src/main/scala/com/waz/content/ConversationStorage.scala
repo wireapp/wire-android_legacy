@@ -124,7 +124,7 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
     storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.name.fold("")(_.str))(currentLocaleOrdering).take(limit))
 
   private def findByRemoteId(remoteId: RConvId, tag: Option[UUID] = None) =
-    find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
+    find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId, tag)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
 
   override def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus] = get(convId).map {
