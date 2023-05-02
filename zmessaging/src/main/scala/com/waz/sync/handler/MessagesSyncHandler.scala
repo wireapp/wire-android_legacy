@@ -93,10 +93,13 @@ final class MessagesSyncHandler(selfUserId: UserId,
                              jobId:                 Option[SyncId] = None
                             ) =
     if (federationSupported) {
+      verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postOtrMessage step 1A")
       users.qualifiedIds(specificUsers).flatMap { qIds =>
+        verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postOtrMessage step 2")
         otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing, jobId)
       }
     } else {
+      verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postOtrMessage step 1B")
       otrSync.postOtrMessage(convId, gm, isHidden, TargetRecipients.SpecificUsers(specificUsers), nativePush, enforceIgnoreMissing, jobId)
     }
 
@@ -124,15 +127,18 @@ final class MessagesSyncHandler(selfUserId: UserId,
         successful(Failure("conversation not found"))
     }
 
-  def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType, jobId: SyncId): Future[SyncResult] =
+  def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType, jobId: SyncId): Future[SyncResult] = {
+    verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postReceipt step 1")
     convs.convById(convId).flatMap {
       case Some(conv) =>
+        verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postReceipt step 2A")
         val (msg, recipients) = tpe match {
           case ReceiptType.Delivery         => (GenericMessage(msgs.head.uid, DeliveryReceipt(msgs)), Set(userId))
           case ReceiptType.Read             => (GenericMessage(msgs.head.uid, GReadReceipt(msgs)), Set(userId))
           case ReceiptType.EphemeralExpired => (GenericMessage(msgs.head.uid, MsgRecall(msgs.head)), Set(selfUserId, userId))
         }
 
+        verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postReceipt step 3")
         postOtrMessage(
           conv.id,
           msg,
@@ -143,8 +149,10 @@ final class MessagesSyncHandler(selfUserId: UserId,
         )
         .map(SyncResult(_))
       case None =>
+        verbose(l"SSMXX<JOB:$jobId> MessageSyncHandler.postReceipt step 2B")
         successful(Failure("conversation not found"))
     }
+  }
 
   def postButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId): Future[SyncResult] =
     storage.get(messageId).flatMap {

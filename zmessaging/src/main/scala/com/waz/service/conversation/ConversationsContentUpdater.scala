@@ -31,18 +31,19 @@ import com.waz.utils._
 import com.waz.zms.BuildConfig
 import com.wire.signals.{CancellableFuture, Signal}
 
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
 
 trait ConversationsContentUpdater {
   def convById(id: ConvId): Future[Option[ConversationData]]
-  def convByRemoteId(id: RConvId): Future[Option[ConversationData]]
+  def convByRemoteId(id: RConvId, tag: Option[UUID] = None): Future[Option[ConversationData]]
   def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]]
   def storage: ConversationStorage
   def updateConversation(id: ConvId, convType: Option[ConversationType] = None, hidden: Option[Boolean] = None): Future[Option[(ConversationData, ConversationData)]]
   def hideIncomingConversation(user: UserId): Future[Option[(ConversationData, ConversationData)]]
   def setConversationHidden(id: ConvId, hidden: Boolean): Future[Option[(ConversationData, ConversationData)]]
-  def processConvWithRemoteId[A](remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A]
+  def processConvWithRemoteId[A](jobTag: Option[UUID], remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A]
   def updateConversationLastRead(id: ConvId, time: RemoteInstant): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationMuted(conv: ConvId, muted: MuteSet): Future[Option[(ConversationData, ConversationData)]]
   def updateConversationName(id: ConvId, name: Name): Future[Option[(ConversationData, ConversationData)]]
@@ -117,7 +118,10 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def convById(id: ConvId): Future[Option[ConversationData]] = storage.get(id)
 
-  override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
+  override def convByRemoteId(id: RConvId, tag: Option[UUID] = None): Future[Option[ConversationData]] = {
+    verbose(l"SSSTAGES<TAG:$tag> convByRemoveId for conv id: $id")
+    storage.getByRemoteId(id, tag)
+  }
 
   override def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]] =
     storage.getMapByRemoteIds(ids)
@@ -269,24 +273,32 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
    *
    * @param retryAsync - true if retry should be executed asynchronously, this should be used when executing from some ProcessingQueue, using delays in processing queue will block it
    */
-  override def processConvWithRemoteId[A](remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A] = {
+  override def processConvWithRemoteId[A](jobTag: Option[UUID], remoteId: RConvId, retryAsync: Boolean, retryCount: Int = 0)(processor: ConversationData => Future[A])(implicit tag: LogTag, ec: ExecutionContext): Future[A] = {
 
     def retry() = CancellableFuture.delay(ConversationsService.RetryBackoff.delay(retryCount)).future .flatMap { _ =>
-      processConvWithRemoteId(remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec)
+      processConvWithRemoteId(jobTag, remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec)
     } (ec)
 
-    convByRemoteId(remoteId).flatMap {
-      case Some(conv) => processor(conv)
+    verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId stage 1 (id: $remoteId)")(tag)
+    convByRemoteId(remoteId, jobTag).flatMap {
+      case Some(conv) =>
+        verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId case A")(tag)
+        processor(conv)
       case None if retryCount > 3 =>
+        verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId case B")(tag)
         val ex = new NoSuchElementException("No conversation data found") with NoStackTrace
         Future.failed(ex)
       case None =>
+        verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId case C")(tag)
         warn(l"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
         if (retryAsync) {
+          verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId stage C1")(tag)
           retry()
           Future.failed(new NoSuchElementException(s"No conversation data found for: $remoteId"))
-        } else
+        } else {
+          verbose(l"SSSTAGES<TAG:$jobTag> processConvWithRemoteId case C2")(tag)
           retry()
+        }
     } (ec)
   }
 

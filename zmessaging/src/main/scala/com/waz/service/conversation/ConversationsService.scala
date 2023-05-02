@@ -259,7 +259,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
               } yield {}
             case _ =>
               warn(l"No conversation data found for event: $ev on try: $retryCount")
-              content.processConvWithRemoteId(rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
+              content.processConvWithRemoteId(None, rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
           }
       }
   }

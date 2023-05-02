@@ -22,7 +22,7 @@ import com.waz.api.Message.Type._
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, ReadReceipt => GReadReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text, ReadReceipt => GReadReceipt}
 import com.waz.model.{GenericContent, _}
 import com.waz.service.{EventScheduler, GlobalModule}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
@@ -31,8 +31,8 @@ import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.{RichFuture, _}
 
+import java.util.UUID
 import scala.concurrent.Future
-
 import scala.language.existentials
 
 class MessageEventProcessor(selfUserId:           UserId,
@@ -51,14 +51,14 @@ class MessageEventProcessor(selfUserId:           UserId,
 
   val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 1")
-    convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
+    convs.processConvWithRemoteId(tag, convId, retryAsync = true) { conv =>
       verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 2")
       verbose(l"processing events for conv: $conv, events: $events")
 
       convsService.isGroupConversation(conv.id).flatMap { isGroup =>
-
-        val f = returning(processEvents(conv, isGroup, events)){ result =>
-          verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 3")
+        verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 3a")
+        val f = returning(processEvents(conv, isGroup, events, tag)){ result =>
+          verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 3b")
           result.onFailure { case e: Exception => error(l"Message event processing failed.", e) }
         }
         verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 4")
@@ -67,25 +67,36 @@ class MessageEventProcessor(selfUserId:           UserId,
     }
   }
 
-  private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
+  private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent], tag: Option[UUID]): Future[Set[MessageData]] = {
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
-
+    verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 1")
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, _, _, msg) if msg.isBroadcastMessage => false
       case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
+    verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 2")
+
     for {
       eventsWithAssets <- Future.traverse(toProcess)(ev => assetForEvent(ev).map(ev -> _))
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 3")
       richMessages     =  createRichMessages(eventsWithAssets, conv, isGroup)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 4")
       msgs             <- checkReplyHashes(richMessages.collect { case m if !m.empty => m.message })
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 5")
       _                <- addButtons(richMessages)
       _                <- addUnexpectedMembers(conv.id, events)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 6")
       res              <- contentUpdater.addMessages(conv.id, msgs)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 7")
       _                <- Future.traverse(richMessages.filterNot(_.message.msgType == RESTRICTED_FILE).flatMap(_.assets))(assets.save)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 8")
       _                <- updateLastReadFromOwnMessages(conv.id, msgs)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 9")
       _                <- deleteCancelled(richMessages)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 10")
       _                <- applyRecalls(conv.id, toProcess)
+      _                =     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor:processEvents stage 11")
       _                <- applyEdits(conv.id, toProcess)
     } yield res
   }

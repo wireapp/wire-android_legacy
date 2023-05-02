@@ -108,7 +108,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent]) =
     if (es.isEmpty) Future.successful(())
-    else convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>
+    else convs.processConvWithRemoteId(None, convId, retryAsync = true) { conv =>
       verbose(l"processConversationOrderEvents($conv, $es)")
       val lastTime = es.maxBy(_.time).time
       val fromSelf = es.filter(_.from == selfUserId)

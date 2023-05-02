@@ -29,6 +29,7 @@ import com.waz.service.SearchKey
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils._
 
+import java.util.UUID
 import scala.collection.GenMap
 import scala.concurrent.Future
 
@@ -36,7 +37,7 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
-  def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
+  def getByRemoteId(remoteId: RConvId, tag: Option[UUID] = None): Future[Option[ConversationData]]
   def getMapByRemoteIds(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
   def getMapByQRemoteIds(remoteIds: Set[RConvQualifiedId]): Future[Map[RConvQualifiedId, ConversationData]]
 
@@ -85,8 +86,9 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
 
   def apply[A](f: GenMap[ConvId, ConversationData] => A): Future[A] = init.flatMap(_ => contents.head).map(f)
 
-  def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]] = init.flatMap { _ =>
-    findByRemoteId(remoteId).map(_.headOption)
+  def getByRemoteId(remoteId: RConvId, tag: Option[UUID] = None): Future[Option[ConversationData]] = init.flatMap { _ =>
+    verbose(l"SSSTAGES<TAG:$tag> ConversationStorage.getByRemoteId: $remoteId")
+    findByRemoteId(remoteId, tag).map(_.headOption)
   }
 
   override def getByRemoteIds(remoteIds: Traversable[RConvId]): Future[Seq[ConvId]] =
@@ -121,7 +123,8 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
   override def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
     storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.name.fold("")(_.str))(currentLocaleOrdering).take(limit))
 
-  private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
+  private def findByRemoteId(remoteId: RConvId, tag: Option[UUID] = None) =
+    find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
 
   override def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus] = get(convId).map {

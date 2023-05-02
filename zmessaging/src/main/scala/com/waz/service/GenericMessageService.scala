@@ -103,11 +103,11 @@ class GenericMessageService(selfUserId: UserId,
       _ <- Future.successful { updateCaches(events) }
       _ <- messages.deleteOnUserRequest(deleted)
       _ <- traverse(lastRead) { case (remoteId, timestamp) =>
-        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
+        convs.processConvWithRemoteId(None, remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
       }
       _ <- reactions.processReactions(incomingReactions)
       _ <- traverse(cleared) { case (remoteId, timestamp) =>
-        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
+        convs.processConvWithRemoteId(None, remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
       }
       _ <- receipts.processDeliveryReceipts(confirmed)
       _ <- receipts.processReadReceipts(read)
