@@ -333,12 +333,12 @@
     <string name="conversation_degraded_confirmation__header__you">Sina</string>
     <string name="conversation__legal_hold_confirmation__header">The conversation is now subject to legal hold.</string>
     <plurals name="conversation__legal_hold_confirmation__message">
-        <item quantity="one">Kas tahad ikka seda sõnumit saata?</item>
-        <item quantity="other">Kas sa siiski soovid oma sõnumeid saata?</item>
+        <item quantity="one">Kas soovid siiski oma sõnumit saata?</item>
+        <item quantity="other">Kas soovid siiski oma sõnumeid saata?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
     <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
-    <string name="conversation__legal_hold_confirmation__positive_action">Saada</string>
+    <string name="conversation__legal_hold_confirmation__positive_action">Saada siiski</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
     <string name="confirmation_menu__cancel">LOOBU</string>
@@ -429,11 +429,11 @@
     <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passcode in your device settings.</string>
     <string name="new_password_dialog_title">Loo pääsukood</string>
     <string name="new_password_dialog_button">Loo pääsukood</string>
-    <string name="new_password_dialog_title_change">Change Passcode</string>
-    <string name="new_password_dialog_button_change">Change Passcode</string>
+    <string name="new_password_dialog_title_change">Pääsukoodi muutmine</string>
+    <string name="new_password_dialog_button_change">Muuda pääsukood</string>
     <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
     <string name="new_password_dialog_showhide_cd">Show/hide the passcode</string>
-    <string name="new_password_dialog_title_change_in_wire">There was a change in Wire</string>
+    <string name="new_password_dialog_title_change_in_wire">Wire\'is oli muudatus</string>
     <!-- Options -->
     <string name="pref_options_screen_title">Valikud</string>
     <string name="pref_options_vbr_title">Muutuv bitisageduse kodeering</string>
@@ -1225,7 +1225,7 @@
     <string name="generic_service_warning">Teenustel on ligipääs selle vestluse sisule</string>
     <string name="add_services_button_text">Halda teenuseid</string>
     <string name="empty_search_button_text">Loe lähemalt</string>
-    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_same_domain_text">Leia inimesi Wire\'is nime või @kasutajanime järgi</string>
     <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
     <string name="wire_notification_name">Wire\'i teade</string>
     <string name="wire_ping_name">Wire\'i ping</string>
