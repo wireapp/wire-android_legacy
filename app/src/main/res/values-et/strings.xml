@@ -47,7 +47,7 @@
     <string name="phone_budget_exhausted_header">Liiga palju päringuid</string>
     <string name="phone_budget_exhausted_message">Palun proovi hiljem uuesti.</string>
     <string name="conversation_input_bar_message_too_long_title">Liiga pikk sõnum</string>
-    <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
+    <string name="conversation_input_bar_message_too_long_message">Sa saad saata sõnumeid, mis on kuni %1$s tähemärki pikad.</string>
     <string name="conversation_input_bar_dialog_ok">OK</string>
     <!--*********************************************** ERRORS ***********************************************-->
     <string name="permissions_denied_dialog_settings">Seaded</string>
@@ -79,8 +79,8 @@
     <string name="people_picker__search_result_conversations_header_title">Grupid</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s gruppi</string>
     <string name="people_picker__search_result_connections_searched_header_title">Kontaktid</string>
-    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
-    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
+    <string name="people_picker__search_result_others_header_title">Ühendu Wire\'iga</string>
+    <string name="people_picker__search_result_others_header_federated">Ühendu %1$sga</string>
     <string name="people_picker__search_result__expander_title">Näita kõiki %1$s ↓</string>
     <string name="people_picker__search_people">INIMESED</string>
     <string name="people_picker__search_services">TEENUSED</string>
@@ -95,7 +95,7 @@
     <string name="request_password_cancel">Tühista</string>
     <string name="request_password_biometric_description">Ava lukk biomeetrilise autentimisega.</string>
     <string name="request_password_biometric_cancel">Tühista</string>
-    <string name="request_password_error">Wrong passcode</string>
+    <string name="request_password_error">Vale pääsukood</string>
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Teenused</string>
     <string name="integrations_errors_add_service">Teenuse lisamine pole võimalik</string>
@@ -138,12 +138,12 @@
     </plurals>
     <!-- Remove people -->
     <string name="content__system__other_removed_other">[[%1$s]] eemaldas %2$s</string>
-    <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
-    <string name="content__system__someone_removed_other">Someone removed %2$s</string>
+    <string name="content__system__other_removed_someone">[[%1$s]] eemaldas kellegi</string>
+    <string name="content__system__someone_removed_other">Keegi eemaldas %2$s</string>
     <string name="content__system__other_removed_you">[[%1$s]] eemaldas sind</string>
-    <string name="content__system__someone_removed_you">Someone removed you</string>
+    <string name="content__system__someone_removed_you">Keegi eemaldas sind</string>
     <string name="content__system__you_removed_other">Sina eemaldasid %1$s</string>
-    <string name="content__system__you_removed_someone">You removed someone</string>
+    <string name="content__system__you_removed_someone">Sa eemaldasid kellegi</string>
     <string name="content__system__you_left">[[Sina]] lahkusid vestlusest</string>
     <string name="content__system__other_left">[[%1$s]] lahkus</string>
     <string name="content__system__someone_left">Keegi lahkus</string>
@@ -261,9 +261,9 @@
     <string name="incoming__controls__ongoing__flip">PÖÖRA</string>
     <string name="ongoing__poor_connection_message">VIDEO KEHVA ÜHENDUSE TÕTTU PEATATUD</string>
     <string name="calling__self_preview_unavailable_long">KAAMERALE JUURDEPÄÄS PUUDUB</string>
-    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__microphone">MIKROFON</string>
     <string name="incoming__controls__ongoing__camera">KAAMERA</string>
-    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">PÖÖRA KAAMERA</string>
     <string name="calling__header__joining">Ühendan&#8230;</string>
     <string name="calling__header__outgoing_subtitle">Heliseb&#8230;</string>
     <string name="calling__header__outgoing_video_subtitle">Heliseb&#8230;</string>
@@ -294,8 +294,8 @@
     <string name="calling_self">%s (sina)</string>
     <string name="calling_no_active_video_speakers">No active video speakers...</string>
     <string name="calling_no_active_speakers">No active speakers...</string>
-    <string name="calling_toggle_all">ALL</string>
-    <string name="calling_toggle_speakers">SPEAKERS</string>
+    <string name="calling_toggle_all">KÕIK</string>
+    <string name="calling_toggle_speakers">KÕLARID</string>
     <string name="calling_double_tap_enter_fullscreen_message">Double tap on a tile for fullscreen</string>
     <string name="calling_double_tap_exit_fullscreen_message">Double tap to go back, pinch to zoom</string>
     <string name="calling_pinch_to_zoom_message">Pinch to zoom</string>
@@ -392,7 +392,7 @@
     <string name="pref_account_username_title">Kasutajanimi</string>
     <string name="pref_account_phone_title">Telefon</string>
     <string name="pref_account_team_title">Meeskond</string>
-    <string name="pref_account_domain_title">Domain</string>
+    <string name="pref_account_domain_title">Domeen</string>
     <string name="pref_account_add_phone_title">Lisa mobiilinumber</string>
     <string name="pref_account_email_title">E-post</string>
     <string name="pref_account_add_email_title">Lisa meiliaadress</string>
@@ -415,7 +415,7 @@
     <string name="pref_account_data_usage_permissions">Andmekasutuse õigused</string>
     <string name="pref_backup_screen_title">Varunda vestlused</string>
     <!-- Data Usage Permissions -->
-    <string name="pref_advanced_send_anonymous_crash_reports_title">Send anonymous crash reports</string>
+    <string name="pref_advanced_send_anonymous_crash_reports_title">Saada anonüümseid krahhiaruandeid</string>
     <string name="pref_advanced_send_anonymous_crash_reports_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
     <string name="pref_advanced_send_anonymous_usage_data_title">Send anonymous usage data</string>
     <string name="pref_advanced_send_anonymous_usage_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
@@ -423,12 +423,12 @@
     <string name="pref_advanced_receive_news_and_offers_summary">Soovin Wire\'ilt uudiseid ja tooteuuendusi e-posti teel.</string>
     <!-- App Lock -->
     <string name="pref_options_app_lock">Pääsukood</string>
-    <string name="pref_options_app_lock_change">Change passcode</string>
+    <string name="pref_options_app_lock_change">Muuda pääsukoodi</string>
     <string name="app_lock_locked_title">Wire on ebaaktiivsuse tõttu lukus</string>
     <string name="app_lock_locked_message">Please enter your account passcode.</string>
     <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passcode in your device settings.</string>
-    <string name="new_password_dialog_title">Create a Passcode</string>
-    <string name="new_password_dialog_button">Create Passcode</string>
+    <string name="new_password_dialog_title">Loo pääsukood</string>
+    <string name="new_password_dialog_button">Loo pääsukood</string>
     <string name="new_password_dialog_title_change">Change Passcode</string>
     <string name="new_password_dialog_button_change">Change Passcode</string>
     <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
