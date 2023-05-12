@@ -246,7 +246,7 @@
     <string name="conversation__action__notifications_everything">සියල්ල</string>
     <string name="conversation__action__notifications_mentions_and_replies">සැඳහුම් සහ පිළිතුරු</string>
     <string name="conversation__action__notifications_nothing">කිසිවක් නැත</string>
-    <string name="conversation__action__notifications_title">Notify me about:</string>
+    <string name="conversation__action__notifications_title">මේ ගැන දන්වන්න:</string>
     <!-- Conversation: Profile Popover -->
     <!-- Calling/voice -->
     <string name="calling__cannot_start__title">ශබ්දවාහිනිය අවශ්‍යයි</string>
