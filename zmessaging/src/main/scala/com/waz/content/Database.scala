@@ -44,7 +44,8 @@ trait Database extends DerivedLogTag {
   def withTransaction[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = apply(f)
 
   def read[A](f: DB => A, jobTag: Option[UUID] = None): Future[A] = Future {
-    implicit val db:DB = dbHelper.getWritableDatabase
+    verbose(l"SSSTAGES<JOB:$jobTag> Database.read - getWritableDatabase")
+    implicit val db:DB = dbHelper.getReadableDatabase
     verbose(l"SSSTAGES<JOB:$jobTag> Database.read - preInReadTransaction")
     inReadTransaction(f(db), jobTag)
   } (readExecutionContext)

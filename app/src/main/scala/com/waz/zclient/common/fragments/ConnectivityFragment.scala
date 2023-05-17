@@ -22,6 +22,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.waz.api.NetworkMode
+import com.waz.log.LogSE._
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.wire.signals.Signal
@@ -77,10 +78,13 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
     (for {
       mode       <- network
       processing <- longProcess
-    } yield (mode, processing)).onUi {
-      case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) => loadingIndicatorView.hide()
-      case (_, true)                                      => loadingIndicatorView.show(InfiniteLoadingBar)
-      case _                                              => loadingIndicatorView.hide()
+    } yield (mode, processing)).onUi { (thing) =>
+      verbose(l"loadingIndicatorView: $thing")
+      thing match {
+        case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) => loadingIndicatorView.hide()
+        case (_, true) => loadingIndicatorView.show(InfiniteLoadingBar)
+        case _ => loadingIndicatorView.hide()
+      }
     }
     root
   }

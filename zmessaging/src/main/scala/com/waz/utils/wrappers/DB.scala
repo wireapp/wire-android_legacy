@@ -128,7 +128,12 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
     }
 
   def compileStatement(sql: String): DBStatement =
-    try { DBStatement(db.compileStatement(sql)) }
+    try {
+      verbose(l"DB.QUERY.LOG CompileStatement $sql")
+      val statement = DBStatement(db.compileStatement(sql))
+      verbose(l"DB.QUERY.LOG CompileStatement.END $sql")
+      statement
+    }
     catch { case ex: Throwable =>
       error(l"Error on compileStatement. sql: $sql ", ex)
       throw ex
@@ -153,9 +158,9 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
       .limit(limit)
       .create()
     try {
-      verbose(l"<JOB:$tag> DB.query step 1")
+      verbose(l"DB.QUERY.LOG Query $table. Selection=${Option(selection)}; SelectionArgs=${Option(selectionArgs)}; OrderBy=${Option(orderBy)}")
       val cursor = db.query(supportQuery)
-      verbose(l"<JOB:$tag> DB.query step 2")
+      verbose(l"DB.QUERY.LOG Query.End $table. Selection=${Option(selection)}; SelectionArgs=${Option(selectionArgs)}; OrderBy=${Option(orderBy)}")
       cursor
     }
     catch { case ex: Throwable =>
@@ -166,35 +171,60 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
   }
 
   override def rawQuery(sql: String): DBCursor =
-    try{ db.query(sql) }
+    try{
+      verbose(l"DB.QUERY.LOG RawQuery $sql")
+      val cursor = db.query(sql)
+      verbose(l"DB.QUERY.LOG RawQuery.END $sql")
+      cursor
+    }
     catch { case ex: Throwable =>
       error(l"Error in query $sql ", ex)
       throw ex
     }
 
   override def delete(table: String, whereClause: String, whereArgs: Array[String]): Int =
-    try { db.delete(table, whereClause, whereArgs.asInstanceOf[Array[AnyRef]]) }
+    try {
+      verbose(l"DB.QUERY.LOG Query.Delete $table. WhereClause=${Option(whereClause)}")
+      val result: Int = db.delete(table, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
+      verbose(l"DB.QUERY.LOG Query.Delete.End $table. WhereClause=${Option(whereClause)}")
+      result
+    }
     catch { case ex: Throwable =>
       error(l"Error in delete table $table ", ex)
       throw ex
     }
 
   override def update(table: String, values: DBContentValues, whereClause: String, whereArgs: Array[String]): Int =
-    try { db.update(table, SQLiteDatabase.CONFLICT_REPLACE, values, whereClause, whereArgs.asInstanceOf[Array[AnyRef]]) }
+    try {
+      verbose(l"DB.QUERY.LOG Update $table. WhereClause=${Option(whereClause)}")
+      val result = db.update(table, SQLiteDatabase.CONFLICT_REPLACE, values, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
+      verbose(l"DB.QUERY.LOG Update.END $table. WhereClause=${Option(whereClause)}")
+      result
+    }
     catch { case ex: Throwable =>
       error(l"Error in update table $table ", ex)
       throw ex
     }
 
   override def execSQL(sql: String): Unit =
-    try { db.execSQL(sql) }
+    try {
+      verbose(l"DB.QUERY.LOG execSQL $sql")
+      db.execSQL(sql)
+      verbose(l"DB.QUERY.LOG execSQL.END $sql")
+      Unit
+    }
     catch { case ex: Throwable =>
       error(l"Error in execSQL: $sql", ex)
       throw ex
     }
 
   override def execSQL(sql: String, bindArgs: Array[AnyRef]): Unit =
-    try { db.execSQL(sql, bindArgs) }
+    try {
+      verbose(l"DB.QUERY.LOG execSQL.args $sql")
+      db.execSQL(sql, bindArgs)
+      verbose(l"DB.QUERY.LOG execSQL.args.END $sql")
+      Unit
+    }
     catch { case ex: Throwable =>
       error(l"Error in execSQL: $sql", ex)
       throw ex
@@ -216,28 +246,42 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB with DerivedLogT
   override def getPath: String = db.getPath
 
   override def enableWriteAheadLogging(): Boolean =
-    try { db.enableWriteAheadLogging() }
+    try {
+//      db.enableWriteAheadLogging()
+      true
+    }
     catch { case ex: Throwable =>
       error(l"Error in enableWriteAheadLogging ", ex)
       throw ex
     }
 
   override def disableWriteAheadLogging(): Unit =
-    try { db.disableWriteAheadLogging() }
+    try {
+      db.disableWriteAheadLogging() }
     catch { case ex: Throwable =>
       error(l"Error in disableWriteAheadLogging ", ex)
       throw ex
     }
 
   override def insertOrIgnore(tableName: String, values: DBContentValues): Unit =
-    try { db.insert(tableName, SQLiteDatabase.CONFLICT_IGNORE, values) }
+    try {
+      verbose(l"DB.QUERY.LOG Insert $tableName")
+      val result = db.insert(tableName, SQLiteDatabase.CONFLICT_IGNORE, values)
+      verbose(l"DB.QUERY.LOG Insert.End $tableName")
+      result
+    }
     catch { case ex: Throwable =>
       error(l"Error in insertOrIgnore table: $tableName", ex)
       throw ex
     }
 
   override def insertOrReplace(tableName: String, values: DBContentValues): Unit =
-    try { db.insert(tableName, SQLiteDatabase.CONFLICT_REPLACE, values) }
+    try {
+      verbose(l"DB.QUERY.LOG InsertOrReplace $tableName")
+      val result = db.insert(tableName, SQLiteDatabase.CONFLICT_REPLACE, values)
+      verbose(l"DB.QUERY.LOG InsertOrReplace.End $tableName")
+      result
+    }
     catch { case ex: Throwable =>
       error(l"Error in insertOrReplace table: $tableName", ex)
       throw ex

@@ -103,7 +103,10 @@ final class PushServiceImpl(selfUserId:        UserId,
 
   override def waitProcessing(job: Option[SyncId]): Future[Unit] = {
       job.foreach({j => verbose(l"SSM20<JOB:$j> wait processing: ${processing.head.value}")})
-      processing.filter(_ == false).head.map(_ => {})
+      processing.filter(_ == false).head.map(_ => {
+        job.foreach({j => verbose(l"SSM20<JOB:$j> wait processing FINISHED: ${processing.head.value}")})
+        Unit
+      })
     }
 
   private val beDriftPref: Preference[Duration] = prefs.preference(BackendDrift)
