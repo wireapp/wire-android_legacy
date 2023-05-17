@@ -28,7 +28,6 @@ import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.fragment.app.{FragmentActivity, FragmentManager}
-import androidx.multidex.MultiDexApplication
 import com.wire.android.job.{Job, JobCreator, JobManager}
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
@@ -365,7 +364,7 @@ object WireApplication extends DerivedLogTag {
   }
 }
 
-class WireApplication extends MultiDexApplication with WireContext with Injectable {
+class WireApplication extends Application with WireContext with Injectable {
   type NetworkSignal = Signal[NetworkMode]
   import WireApplication._
 

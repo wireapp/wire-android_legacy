@@ -31,7 +31,6 @@ object Versions {
     const val COROUTINES = "1.3.7"
     const val WORK_MANAGER = "2.0.1"
     const val ANDROIDX_MATERIAL = "1.3.0"
-    const val ANDROIDX_MULTIDEX = "2.0.0"
     const val ANDROIDX_APP_COMPAT = "1.0.0"
     const val ANDROIDX_RECYCLER_VIEW = "1.0.0"
     const val ANDROIDX_PREFERENCE = "1.1.0"
@@ -94,7 +93,6 @@ object BuildDependencies {
     ))
     val androidX = AndroidXDependencyMap(mapOf(
         "material" to "com.google.android.material:material:${Versions.ANDROIDX_MATERIAL}",
-        "multidex" to "androidx.multidex:multidex:${Versions.ANDROIDX_MULTIDEX}",
         "appCompat" to "androidx.appcompat:appcompat:${Versions.ANDROIDX_APP_COMPAT}",
         "recyclerView" to "androidx.recyclerview:recyclerview:${Versions.ANDROIDX_RECYCLER_VIEW}",
         "preference" to "androidx.preference:preference:${Versions.ANDROIDX_PREFERENCE}",
