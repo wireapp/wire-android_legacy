@@ -19,7 +19,7 @@ package com.waz.zclient
 
 import java.io.File
 import java.util.Calendar
-import android.app.{Activity, ActivityManager, NotificationManager}
+import android.app.{Activity, ActivityManager, Application, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
