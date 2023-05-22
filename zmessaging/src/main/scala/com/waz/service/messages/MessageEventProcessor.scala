@@ -49,7 +49,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   import MessageEventProcessor._
   import Threading.Implicits.Background
 
-  val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events, tag) =>
+  val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] ({ (convId, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 1")
     convs.processConvWithRemoteId(tag, convId, retryAsync = true) { conv =>
       verbose(l"SSSTAGES<TAG:$tag> MessageEventProcessor stage 2")
@@ -65,7 +65,9 @@ class MessageEventProcessor(selfUserId:           UserId,
         f
       }
     }
-  }
+  },
+    name = "MessageEventProcessor - MessageEvent"
+  )
 
   private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent], tag: Option[UUID]): Future[Set[MessageData]] = {
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")

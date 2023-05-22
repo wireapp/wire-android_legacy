@@ -179,7 +179,7 @@ class UserServiceImpl(selfUserId:        UserId,
       Signal.empty
   }
 
-  override val userUpdateEventsStage: Stage.Atomic = EventScheduler.Stage[UserUpdateEvent] { (_, e, tag) =>
+  override val userUpdateEventsStage: Stage.Atomic = EventScheduler.Stage[UserUpdateEvent] ({ (_, e, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 1")
     val (removeEvents, updateEvents) = e.partition(_.removeIdentity)
     for {
@@ -197,14 +197,18 @@ class UserServiceImpl(selfUserId:        UserId,
       }
       _ = verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl stage 4")
     } yield {}
-  }
+  },
+    name = "UserService - UserUpdateEvent"
+  )
 
-  override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e, tag) =>
+  override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] ({ (c, e, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> UserServiceImpl:DeleteEventsStage stage 1")
     Future.sequence(e.map(event => accounts.logout(event.user, reason = UserDeleted))).flatMap { _ =>
       deleteUsers(e.map(_.user).toSet)
     }
-  }
+  },
+    name = "UserService - UserDeleteEvent"
+  )
 
   override def deleteUsers(ids: Set[UserId], sendLeaveMessage: Boolean = true): Future[Unit] =
     for {

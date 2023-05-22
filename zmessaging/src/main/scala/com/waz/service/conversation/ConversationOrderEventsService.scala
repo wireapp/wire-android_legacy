@@ -82,7 +82,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _ => shouldChangeOrder(event)
     }
 
-  val conversationOrderEventsStage: Stage.Atomic = EventScheduler.Stage[ConversationEvent] { (convId, events, tag) =>
+  val conversationOrderEventsStage: Stage.Atomic = EventScheduler.Stage[ConversationEvent] ({ (convId, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 1")
     val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder), tag)
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 2")
@@ -96,7 +96,9 @@ class ConversationOrderEventsService(selfUserId: UserId,
       verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 4")
       Unit
     }
-  }
+  },
+    name = "ConversationOrderEventsService - ConversationEvent"
+  )
 
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] =
     Future.sequence(Seq(

@@ -57,7 +57,9 @@ class TypingService(userId:        UserId,
 
   val typingEventStage = EventScheduler.Stage[TypingEvent]((c, es, tag) => {
     verbose(l"SSSTAGES<TAG:$tag> TypingService stage 1")
-    traverseSequential(es)(handleTypingEvent)}
+    traverseSequential(es)(handleTypingEvent)
+  },
+    name = "TypingService - TypingEvent"
   )
 
   accounts.accountState(userId).on(Threading.Background) {

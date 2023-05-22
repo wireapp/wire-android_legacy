@@ -118,7 +118,7 @@ class GenericMessageService(selfUserId: UserId,
 
   private var processing = Future.successful(())
 
-  val eventProcessingStage: Stage = EventScheduler.Stage[GenericMessageEvent] { (_, events, tag) => {
+  val eventProcessingStage: Stage = EventScheduler.Stage[GenericMessageEvent] ({ (_, events, tag) => {
     verbose(l"SSSTAGES<TAG:$tag> GenericMessageService stage 1")
     synchronized {
       verbose(l"SSSTAGES<TAG:$tag> GenericMessageService stage 2")
@@ -127,5 +127,7 @@ class GenericMessageService(selfUserId: UserId,
       processing
       }
     }
-  }
+  },
+    name = "GenericMessageService - GenericMessageEvent"
+  )
 }

@@ -27,11 +27,13 @@ final class WsNotificationServiceImpl(selfId:              UserId,
                                      (implicit ec: ExecutionContext, eventContext: EventContext)
   extends WsNotificationService with DerivedLogTag {
 
-  override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[Event] {
+  override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[Event] ({
     (_, events, tag) =>
       verbose(l"SSSTAGES<TAG:$tag> WsNotificationServiceImpl stage 1")
       process(events)
-  }
+  },
+    name = "WsNotificationService - Event"
+  )
 
   private def process(events: Seq[Event]): Future[Unit] =
     for {

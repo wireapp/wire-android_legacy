@@ -69,7 +69,9 @@ final class ConnectionServiceImpl(selfUserId:      UserId,
   override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e, tag) => {
     verbose(l"SSSTAGES<TAG:$tag> ConnectionServiceImpl")
     handleUserConnectionEvents(e)
-  })
+  },
+    name = "ConnectionEventStage - UserConnectionEvent"
+  )
 
   private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 

@@ -86,14 +86,21 @@ object EventScheduler extends DerivedLogTag {
 
       val eventTag: LogTag = LogTag("Event")
 
+      val stageName: String
+
       def apply(conv: RConvId, es: Traversable[Event], tag: Option[UUID]): Future[Any]
     }
 
     def apply(strategy: SchedulingStrategy)(stages: Stage*): Composite = Composite(strategy, stages.toVector)
 
-    def apply[A <: Event](processor: (RConvId, Vector[A], Option[UUID]) => Future[Any], include: A => Boolean = (_: A) => true)(implicit EligibleEvent: ClassTag[A]): Atomic = new Atomic {
+    def apply[A <: Event](processor: (RConvId, Vector[A], Option[UUID]) => Future[Any],
+                          include: A => Boolean = (_: A) => true,
+                          name: String
+                         )(implicit EligibleEvent: ClassTag[A]): Atomic = new Atomic {
 
       override val eventTag = LogTag(EligibleEvent.runtimeClass.getSimpleName)
+
+      override val stageName: String = name
 
       def isEligible(e: Event): Boolean = e match {
         case EligibleEvent(a) if include(a) => true
@@ -115,7 +122,7 @@ object EventScheduler extends DerivedLogTag {
   sealed trait Schedule
   case class Branch(strategy: ExecutionStrategy, schedules: Stream[Schedule]) extends Schedule
   case class Leaf(stage: Stage.Atomic, events: Vector[Event]) extends Schedule
-  val NOP = Leaf(Stage[Event]((s, e, None) => successful(()), _ => false), Vector.empty)
+  val NOP = Leaf(Stage[Event]((s, e, None) => successful(()), _ => false, "NOP"), Vector.empty)
 
   def executeSchedule(conv: RConvId, schedule: Schedule, tag: Option[UUID]): Future[Unit] = {
     import Threading.Implicits.Background
@@ -133,7 +140,7 @@ object EventScheduler extends DerivedLogTag {
       case Leaf(stage, events) #:: remaining =>
         verbose(l"SSES<TAG:$tag> executeSchedule dfs 4")
         val p = Promise[Unit]()
-        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4 - stage: $stage")
+        verbose(l"SSES<TAG:$tag> executeSchedule dfs 4 - stageName: '${stage.stageName}'")
         stage(conv, events, tag).onComplete {
           case _ =>
             verbose(l"SSES<TAG:$tag> executeSchedule dfs 4:complete")

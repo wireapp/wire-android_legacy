@@ -60,10 +60,12 @@ class PushTokenService(userId:       UserId,
   }
   private val userToken = accStorage.signal(userId).map(_.pushToken)
 
-  val eventProcessingStage = EventScheduler.Stage[PushTokenRemoveEvent] { (_, events, tag) =>
+  val eventProcessingStage = EventScheduler.Stage[PushTokenRemoveEvent] ({ (_, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> PushTokenService stage 1")
     globalToken.resetGlobalToken(events.map(_.token))
-  }
+  },
+    name = "PushTokenService - PushTokenRemoveEvent"
+  )
 
   //on dispatcher prevents infinite register loop
   (for {

@@ -54,10 +54,12 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events, tag) =>
+  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] ({ (_, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> LegalHoldServiceImpl stage 1")
     Future.traverse(events)(processEvent)
-  }
+  },
+    name = "LegalHoldService - LegalHoldEvent"
+  )
 
   private def processEvent(event: LegalHoldEvent): Future[Unit] = event match {
     case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
@@ -234,7 +236,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   private def legalHold(convId: ConvId): Signal[Boolean] =
     clientsInConv(convId).map(_.exists(_.isLegalHoldDevice))
 
-  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events, tag) =>
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] ({ (_, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> LegalHoldServiceImpl:MessageEventStage stage 1")
     Future.traverse(events) {
       case GenericMessageEvent(convId, _, time, _, _, content) =>
@@ -242,7 +244,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
       case _ =>
         Future.successful(())
     }
-  }
+  },
+    name = "LegalHoldService - MessageEvent"
+  )
 
   private def updateStatusFromMessageHint(convId: RConvId,
                                           messageStatus: Messages.LegalHoldStatus,

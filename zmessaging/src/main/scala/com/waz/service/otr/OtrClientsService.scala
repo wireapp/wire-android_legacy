@@ -74,7 +74,7 @@ class OtrClientsServiceImpl(selfId:        UserId,
     case _ =>
   }
 
-  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (_, events, tag) =>
+  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] ({ (_, events, tag) =>
     verbose(l"SSSTAGES<TAG:$tag> OtrClientsServiceImpl stage 1")
     RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
@@ -87,7 +87,9 @@ class OtrClientsServiceImpl(selfId:        UserId,
         verbose(l"SSSTAGES<TAG:$tag> OtrClientsServiceImpl stage 3")
         removeClients(selfId, Set(cId))
     }
-  }
+  },
+    name = "OtrClientsService - OtrClientEvent"
+  )
 
   override def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days): Unit =
     getSelfClient.zip(lastSelfClientsSyncPref()) flatMap {
