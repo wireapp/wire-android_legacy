@@ -581,7 +581,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     val updated = updater(current)
     verbose(l"$logPrefix CachedStorageImpl.updateInternal: updated = $updated")
     if (updated == current) {
-      verbose(l"$logPrefix CachedStorageImpl.updateInternal: NO CHANGE")
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal: NO CHANGE - Final")
       Future.successful(Some((current, updated)))
     }
     else {
