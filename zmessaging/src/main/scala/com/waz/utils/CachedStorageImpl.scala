@@ -489,9 +489,9 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     verbose(l"$logPrefix CachedStorageImpl.update - inside")
     val prev = Option(cache.get(key)).getOrElse(loaded)
     prev.fold(Future successful Option.empty[(V, V)]) {
-      verbose(l"$logPrefix CachedStorageImpl.update - inside 2")
+      verbose(l"$logPrefix CachedStorageImpl.update - inside 2 -> Creating updateInternal Future")
       val result = updateInternal(key, updater, logPrefix)(_)
-      verbose(l"$logPrefix CachedStorageImpl.update - inside 3")
+      verbose(l"$logPrefix CachedStorageImpl.update - inside 3 -> updateInternal Future created")
       result
     }
   }
@@ -580,15 +580,18 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   protected def updateInternal(key: K, updater: V => V, logPrefix: Option[String] = None)(current: V): Future[Option[(V, V)]] = {
     val updated = updater(current)
     verbose(l"$logPrefix CachedStorageImpl.updateInternal: updated = $updated")
-    if (updated == current) Future.successful(Some((current, updated)))
+    if (updated == current) {
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal: NO CHANGE")
+      Future.successful(Some((current, updated)))
+    }
     else {
-      verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE")
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal CHANGE 1")
       cache.put(key, Some(updated))
-      verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 2")
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal CHANGE 2 - Pre DB")
       db(save(Seq(updated))(_)).future.map { _ =>
-        verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 3")
+        verbose(l"$logPrefix CachedStorageImpl.updateInternal CHANGE 3")
         tellUpdated(Seq((current, updated)))
-        verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 4")
+        verbose(l"$logPrefix CachedStorageImpl.updateInternal CHANGE 4 - Final")
         Some((current, updated))
       }
     }
