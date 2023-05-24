@@ -247,7 +247,7 @@ trait CachedStorage[K, V <: Identifiable[K]] {
 
   protected def delete(keys: Iterable[K])(implicit db: DB): Unit
 
-  protected def updateInternal(key: K, updater: V => V, tag: Option[UUID] = None)(current: V): Future[Option[(V, V)]]
+  protected def updateInternal(key: K, updater: V => V, logPrefix: Option[String] = None)(current: V): Future[Option[(V, V)]]
 
   def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A,
                  jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B]
@@ -366,47 +366,51 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   }
 
   def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A,
-                 jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B] = Future {
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 1")
-    val matches = cb.apply()
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 2")
-    val snapshot = cache.snapshot.asScala
+                 jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B] = {
+    val logPrefix = jobTag.map({ it => s"SSSTAGES<JOB:$jobTag>" })
+      .orElse(Option(s"FallbackTag<RANDOM:${UUID.randomUUID()}>"))
+    Future {
+      verbose(l"$logPrefix CachedStorageImpl.find 1")
+      val matches = cb.apply()
+      verbose(l"$logPrefix CachedStorageImpl.find 2")
+      val snapshot = cache.snapshot.asScala
 
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 3")
-    snapshot.foreach {
-      case (k, Some(v)) if predicate(v) => matches += mapping(v)
-      case _ =>
-    }
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 4")
-    (snapshot.keySet, matches)
-  } flatMap { case (wasCached, matches) =>
-
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find 5")
-    db.read({ database =>
-      verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.read")
-      val uncached = Map.newBuilder[K, V]
-      verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.6")
-      search(database).acquire { rows =>
-        verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.7")
-        rows.foreach { v =>
-          if (!wasCached(v.id)) {
-            matches += mapping(v)
-            uncached += v.id -> v
-          }
-        }
-
-        (matches.result, uncached.result)
+      verbose(l"$logPrefix CachedStorageImpl.find 3")
+      snapshot.foreach {
+        case (k, Some(v)) if predicate(v) => matches += mapping(v)
+        case _ =>
       }
-    }, jobTag)
-  } map { case (results, uncached) =>
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.8")
+      verbose(l"$logPrefix CachedStorageImpl.find 4")
+      (snapshot.keySet, matches)
+    } flatMap { case (wasCached, matches) =>
 
-    uncached.foreach { case (k, v) =>
-      if (cache.get(k) eq null) cache.put(k, Some(v))
+      verbose(l"$logPrefix CachedStorageImpl.find 5 - pre-read")
+      db.read({ database =>
+        verbose(l"$logPrefix CachedStorageImpl.find 5 - inside read")
+        val uncached = Map.newBuilder[K, V]
+        verbose(l"$logPrefix CachedStorageImpl.find 6")
+        search(database).acquire { rows =>
+          verbose(l"$logPrefix CachedStorageImpl.find 7")
+          rows.foreach { v =>
+            if (!wasCached(v.id)) {
+              matches += mapping(v)
+              uncached += v.id -> v
+            }
+          }
+
+          (matches.result, uncached.result)
+        }
+      }, jobTag)
+    } map { case (results, uncached) =>
+      verbose(l"$logPrefix CachedStorageImpl.find 8")
+
+      uncached.foreach { case (k, v) =>
+        if (cache.get(k) eq null) cache.put(k, Some(v))
+      }
+      verbose(l"$logPrefix CachedStorageImpl.find 9 - Final")
+
+      results
     }
-    verbose(l"SSSTAGES<JOB:$jobTag> CachedStorageImpl.find.9")
-
-    results
   }
 
   def filterCached(f: V => Boolean) = Future {
@@ -480,11 +484,15 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   }
 
   def update(key: K, updater: V => V, tag: Option[UUID] = None): Future[Option[(V, V)]] = get(key) flatMap { loaded =>
-    verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.update - inside")
+    val logPrefix = tag.map({ it => s"SSSTAGES<JOB:$tag>" })
+      .orElse(Option(s"FallbackTag<RANDOM:${UUID.randomUUID()}>"))
+    verbose(l"$logPrefix CachedStorageImpl.update - inside")
     val prev = Option(cache.get(key)).getOrElse(loaded)
     prev.fold(Future successful Option.empty[(V, V)]) {
-      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.update - inside 2")
-      updateInternal(key, updater, tag)(_)
+      verbose(l"$logPrefix CachedStorageImpl.update - inside 2")
+      val result = updateInternal(key, updater, logPrefix)(_)
+      verbose(l"$logPrefix CachedStorageImpl.update - inside 3")
+      result
     }
   }
 
@@ -515,9 +523,10 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   def updateOrCreate(key: K, updater: V => V, creator: => V): Future[V] = get(key) flatMap { loaded =>
     val prev = Option(cache.get(key)).getOrElse(loaded)
+    val logPrefix = Option(s"FallbackTag<RANDOM:${UUID.randomUUID()}>")
     prev.fold {
       addInternal(key, creator)
-    } { v => updateInternal(key, updater)(v).map(_.fold(v)(_._2)) }
+    } { v => updateInternal(key, updater, logPrefix)(v).map(_.fold(v)(_._2)) }
   }
 
   def updateOrCreateAll(updaters: K Map (Option[V] => V)): Future[Set[V]] =
@@ -568,18 +577,18 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     }
   }
 
-  protected def updateInternal(key: K, updater: V => V, tag: Option[UUID] = None)(current: V): Future[Option[(V, V)]] = {
+  protected def updateInternal(key: K, updater: V => V, logPrefix: Option[String] = None)(current: V): Future[Option[(V, V)]] = {
     val updated = updater(current)
-    verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal: updated = $updated")
+    verbose(l"$logPrefix CachedStorageImpl.updateInternal: updated = $updated")
     if (updated == current) Future.successful(Some((current, updated)))
     else {
-      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE")
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE")
       cache.put(key, Some(updated))
-      verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 2")
+      verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 2")
       db(save(Seq(updated))(_)).future.map { _ =>
-        verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 3")
+        verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 3")
         tellUpdated(Seq((current, updated)))
-        verbose(l"SSSTAGES<JOB:$tag> CachedStorageImpl.updateInternal ELSE 4")
+        verbose(l"$logPrefix CachedStorageImpl.updateInternal ELSE 4")
         Some((current, updated))
       }
     }
