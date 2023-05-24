@@ -367,7 +367,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   def find[A, B](predicate: V => Boolean, search: DB => Managed[TraversableOnce[V]], mapping: V => A,
                  jobTag: Option[UUID] = None)(implicit cb: CanBuild[A, B]): Future[B] = {
-    val logPrefix = jobTag.map({ it => s"SSSTAGES<JOB:$jobTag>" })
+    val logPrefix = jobTag.map { it => s"SSSTAGES<JOB:$jobTag>" }
       .orElse(Option(s"FallbackTag<RANDOM:${UUID.randomUUID()}>"))
     Future {
       verbose(l"$logPrefix CachedStorageImpl.find 1")
@@ -400,7 +400,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
           (matches.result, uncached.result)
         }
-      }, jobTag)
+      }, logPrefix)
     } map { case (results, uncached) =>
       verbose(l"$logPrefix CachedStorageImpl.find 8")
 

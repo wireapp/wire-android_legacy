@@ -21,39 +21,37 @@ import com.waz.db.{BaseDaoDB, inReadTransaction, inTransaction}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.threading.Threading
-import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, UnlimitedDispatchQueue}
 import com.waz.utils.wrappers.DB
+import com.wire.signals.CancellableFuture
 
-import java.util.UUID
-import scala.concurrent.Future
+import java.util.concurrent.ExecutorService
+import scala.concurrent.{ExecutionContext, Future}
 
 trait Database extends DerivedLogTag {
-  protected implicit val dispatcher: DispatchQueue
+  protected implicit val dispatcher: ExecutorService
+  implicit lazy val executorContext = ExecutionContext.fromExecutorService(dispatcher)
 
   val dbHelper: BaseDaoDB
 
-  protected lazy val readExecutionContext: DispatchQueue =
-    DispatchQueue(DispatchQueue.Unlimited, Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
-
-  def apply[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = dispatcher {
-    implicit val db:DB = dbHelper.getWritableDatabase
+  def apply[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = CancellableFuture {
+    implicit val db: DB = dbHelper.getWritableDatabase
     inTransaction(f(db))
   }
 
   def withTransaction[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = apply(f)
 
-  def read[A](f: DB => A, jobTag: Option[UUID] = None): Future[A] = Future {
-    verbose(l"SSSTAGES<JOB:$jobTag> Database.read - getWritableDatabase")
-    implicit val db:DB = dbHelper.getReadableDatabase
-    verbose(l"SSSTAGES<JOB:$jobTag> Database.read - preInReadTransaction")
-    inReadTransaction(f(db), jobTag)
-  } (readExecutionContext)
+  def read[A](f: DB => A, logPrefix: Option[String] = None): Future[A] = Future {
+    verbose(l"$logPrefix Database.read - getWritableDatabase")
+    implicit val db: DB = dbHelper.getReadableDatabase
+    verbose(l"$logPrefix Database.read - preInReadTransaction")
+    inReadTransaction(f(db), logPrefix)
+  }
 
-  def close(): CancellableFuture[Unit] = dispatcher {
+  def close(): CancellableFuture[Unit] = CancellableFuture {
     dbHelper.close()
   }
 
-  def flushWALToDatabase(): Future[Unit] =
-    dispatcher(dbHelper.flushWALFile())
+  def flushWALToDatabase(): Future[Unit] = CancellableFuture {
+    dbHelper.flushWALFile()
+  }
 }

@@ -18,11 +18,9 @@
 package com.waz.threading
 
 import java.util.concurrent.Executors
-
 import android.os.{Handler, HandlerThread, Looper}
 import com.waz.utils.returning
 import com.waz.zms.BuildConfig
-import com.wire.signals.Threading.Cpus
 import com.wire.signals.{DispatchQueue, EventContext, EventStream, Signal, Subscription}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -72,7 +70,7 @@ object Threading {
   /**
     * Image decoding/encoding dispatch queue. This operations are quite cpu intensive, we don't want them to use all cores (leaving one spare core for other tasks).
     */
-  val ImageDispatcher: DispatchQueue = DispatchQueue(1, Background.asInstanceOf[ExecutionContext], "ImageDispatcher")
+  val ImageDispatcher: DispatchQueue = DispatchQueue(4 - 1, Background.asInstanceOf[ExecutionContext], "ImageDispatcher")
 
   // var for tests
   private var _ui: Option[DispatchQueue] = None

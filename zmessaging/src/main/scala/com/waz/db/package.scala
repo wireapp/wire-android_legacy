@@ -92,21 +92,22 @@ package object db {
 
   private lazy val readTransactions = ReadTransactionSupport.chooseImplementation()
 
-  def inReadTransaction[A](body: => A, jobId: Option[UUID] = None)(implicit db: DB, logTag: LogTag = LogTag("")): A =
+  def inReadTransaction[A](body: => A, logPrefix: Option[String] = None)(implicit db: DB, logTag: LogTag = LogTag("")): A =
     if (db.inTransaction) {
-      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - inTransaction")
+      verbose(l"$logPrefix inReadTransaction - inTransaction")
       body
     } else {
-      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 1")
+      verbose(l"$logPrefix inReadTransaction - not in transaction 1")
       readTransactions.beginReadTransaction(db)
-      verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 2")
+      verbose(l"$logPrefix inReadTransaction - not in transaction 2")
       try returning(body) { _ =>
-        verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 3")
+        verbose(l"$logPrefix inReadTransaction - not in transaction 3 - Returning")
         db.setTransactionSuccessful()
       }
       finally {
-        verbose(l"SSSTAGES<JOB:$jobId> preInReadTransaction - not in transaction 4 - finally")
+        verbose(l"$logPrefix inReadTransaction - not in transaction 4 - Pre-endTransaction")
         db.endTransaction()
+        verbose(l"$logPrefix inReadTransaction - not in transaction 5 - Final")
       }
     }
 
