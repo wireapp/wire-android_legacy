@@ -21,15 +21,18 @@ import com.waz.db.{BaseDaoDB, inReadTransaction, inTransaction}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.DB
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, DispatchQueue}
 
 import java.util.concurrent.ExecutorService
 import scala.concurrent.{ExecutionContext, Future}
 
 trait Database extends DerivedLogTag {
-  protected implicit val dispatcher: ExecutorService
-  implicit lazy val executorContext = ExecutionContext.fromExecutorService(dispatcher)
+  protected implicit val dispatcher: DispatchQueue
+
+  protected lazy val readExecutionContext: DispatchQueue =
+    DispatchQueue(DispatchQueue.Unlimited, Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
 
   val dbHelper: BaseDaoDB
 
@@ -45,13 +48,11 @@ trait Database extends DerivedLogTag {
     implicit val db: DB = dbHelper.getReadableDatabase
     verbose(l"$logPrefix Database.read - preInReadTransaction")
     inReadTransaction(f(db), logPrefix)
-  }
+  } (readExecutionContext)
 
-  def close(): CancellableFuture[Unit] = CancellableFuture {
+  def close(): CancellableFuture[Unit] = dispatcher {
     dbHelper.close()
   }
 
-  def flushWALToDatabase(): Future[Unit] = CancellableFuture {
-    dbHelper.flushWALFile()
-  }
+  def flushWALToDatabase(): Future[Unit] = dispatcher(dbHelper.flushWALFile())
 }

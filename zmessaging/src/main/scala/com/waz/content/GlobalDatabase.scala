@@ -20,14 +20,14 @@ package com.waz.content
 import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZGlobalDB}
 import com.waz.service.tracking.TrackingService
+import com.waz.threading.Threading
 import com.waz.zclient.storage.db.{GlobalDatabase => RoomGlobalDatabase}
 import com.waz.zclient.storage.di.StorageModule
-
-import java.util.concurrent.Executors
+import com.wire.signals.DispatchQueue
 
 class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: TrackingService) extends Database {
 
-  override implicit val dispatcher = Executors.newFixedThreadPool(4)
+  override implicit val dispatcher = DispatchQueue(DispatchQueue.Serial, Threading.IOThreadPool, "GlobalDatabase")
 
   override          val dbHelper  : BaseDaoDB           =
     new RoomDaoDB(StorageModule.getGlobalDatabase(
