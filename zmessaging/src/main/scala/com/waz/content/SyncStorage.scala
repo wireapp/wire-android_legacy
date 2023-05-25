@@ -65,6 +65,7 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
       verbose(l"SSM5<TAG:$tag> saving to db... (deleting: $toDelete, adding: ${toAdd.keySet})")
       SyncJobDao.deleteEvery(toDelete)
       SyncJobDao.insertOrReplace(toAdd.values)
+      verbose(l"SSM5<TAG:$tag> DONE saving to db... (deleting: $toDelete, adding: ${toAdd.keySet})")
     }
   }, "SyncStorageSaveQueue")
 

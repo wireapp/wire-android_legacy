@@ -94,7 +94,7 @@ package object db {
 
   def inReadTransaction[A](body: => A, logPrefix: Option[String] = None)(implicit db: DB, logTag: LogTag = LogTag("")): A =
     if (db.inTransaction) {
-      verbose(l"$logPrefix inReadTransaction - inTransaction")
+      verbose(l"$logPrefix inReadTransaction - inTransaction - Final")
       body
     } else {
       verbose(l"$logPrefix inReadTransaction - not in transaction 1")

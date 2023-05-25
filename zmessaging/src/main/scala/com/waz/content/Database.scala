@@ -28,6 +28,19 @@ import com.wire.signals.{CancellableFuture, DispatchQueue}
 import java.util.concurrent.ExecutorService
 import scala.concurrent.{ExecutionContext, Future}
 
+object DuleExec extends ExecutionContext {
+       implicit val logTag = LogTag("DuleExec")
+    override def execute(runnable: Runnable): Unit = {
+    	     verbose(l"DuleExec - start")
+    	     runnable.run()
+    	     verbose(l"DuleExec - end")
+    }
+    override def reportFailure(cause: Throwable): Unit = {
+    	     verbose(l"DuleExec has failure")
+    	     cause.printStackTrace()
+    }
+  }
+
 trait Database extends DerivedLogTag {
   protected implicit val dispatcher: DispatchQueue
 
@@ -43,12 +56,17 @@ trait Database extends DerivedLogTag {
 
   def withTransaction[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = apply(f)
 
-  def read[A](f: DB => A, logPrefix: Option[String] = None): Future[A] = Future {
-    verbose(l"$logPrefix Database.read - getWritableDatabase")
-    implicit val db: DB = dbHelper.getReadableDatabase
-    verbose(l"$logPrefix Database.read - preInReadTransaction")
-    inReadTransaction(f(db), logPrefix)
-  } (readExecutionContext)
+  def read[A](f: DB => A, logPrefix: Option[String] = None): Future[A] = {
+    verbose(l"$logPrefix Database.read - creating Future")
+    Future {
+        verbose(l"$logPrefix Database.read - getWritableDatabase")
+    	implicit val db: DB = dbHelper.getReadableDatabase
+    	verbose(l"$logPrefix Database.read - preInReadTransaction")
+	var tr:A = inReadTransaction(f(db), logPrefix)
+    	verbose(l"$logPrefix Database.read - final")
+	tr
+    } (DuleExec)
+  }
 
   def close(): CancellableFuture[Unit] = dispatcher {
     dbHelper.close()

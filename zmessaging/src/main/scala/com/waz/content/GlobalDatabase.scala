@@ -27,7 +27,7 @@ import com.wire.signals.DispatchQueue
 
 class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: TrackingService) extends Database {
 
-  override implicit val dispatcher = DispatchQueue(DispatchQueue.Serial, Threading.IOThreadPool, "GlobalDatabase")
+  override implicit val dispatcher = Executors.newFixedThreadPool(8)
 
   override          val dbHelper  : BaseDaoDB           =
     new RoomDaoDB(StorageModule.getGlobalDatabase(

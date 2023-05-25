@@ -86,12 +86,12 @@ class ConversationOrderEventsService(selfUserId: UserId,
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 1")
     val orderChanges    = processConversationOrderEvents(convId, events.filter(shouldChangeOrder), tag)
     verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 2")
-    val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive), tag)
-    verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 3")
+    //val unarchiveConvs  = processConversationUnarchiveEvents(convId, events.filter(shouldUnarchive), tag)
+    //verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 3")
 
     for {
       _ <- orderChanges
-      _ <- unarchiveConvs
+      //_ <- unarchiveConvs
     } yield {
       verbose(l"SSSTAGES<TAG:$tag> ConversationOrderEventsService stage 4")
       Unit

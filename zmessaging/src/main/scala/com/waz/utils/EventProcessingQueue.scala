@@ -31,6 +31,21 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, Future}
+
+
+object DuleExecEP extends ExecutionContext {
+       implicit val logTag = LogTag("DuleExecEP")
+    override def execute(runnable: Runnable): Unit = {
+    	     verbose(l"DuleExecEP - start")
+    	     runnable.run()
+    	     verbose(l"DuleExecEP - end")
+    }
+    override def reportFailure(cause: Throwable): Unit = {
+    	     verbose(l"DuleExecEP has failure")
+    	     cause.printStackTrace()
+    }
+}
 
 trait EventProcessingQueue[A <: Event] {
 
@@ -63,6 +78,7 @@ object EventProcessingQueue {
   }
 }
 
+
 class SerialEventProcessingQueue[A <: Event](processor: (Option[UUID], Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
   extends SerialProcessingQueue[A](processor, name) with EventProcessingQueue[A]
 
@@ -84,7 +100,7 @@ class GroupedEventProcessingQueue[A <: Event, Key]
     Future.traverse(events.groupBy(groupBy).toVector) {
       case (key, es) =>
         verbose(l"SSEQ<TAG:$tag> EventProcessingQueue enqueue step 2")
-        Future(queue(key, tag)).flatMap({
+        Future(queue(key, tag))(DuleExecEP).flatMap({
             verbose(l"SSEQ<TAG:$tag> EventProcessingQueue enqueue step 3")
             _.enqueue(es, tag)
           }
