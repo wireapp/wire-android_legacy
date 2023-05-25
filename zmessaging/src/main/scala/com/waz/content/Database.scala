@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.DB
-import com.wire.signals.{CancellableFuture, DispatchQueue}
+import com.wire.signals.CancellableFuture
 
 import java.util.concurrent.ExecutorService
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,11 +42,9 @@ object DuleExec extends ExecutionContext {
   }
 
 trait Database extends DerivedLogTag {
-  protected implicit val dispatcher: DispatchQueue
-
-  protected lazy val readExecutionContext: DispatchQueue =
-    DispatchQueue(DispatchQueue.Unlimited, Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
-
+  protected implicit val dispatcher: ExecutorService
+  implicit lazy val executorContext = ExecutionContext.fromExecutorService(dispatcher)
+  
   val dbHelper: BaseDaoDB
 
   def apply[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = CancellableFuture {
@@ -68,9 +66,9 @@ trait Database extends DerivedLogTag {
     } (DuleExec)
   }
 
-  def close(): CancellableFuture[Unit] = dispatcher {
+  def close(): CancellableFuture[Unit] = CancellableFuture {
     dbHelper.close()
   }
 
-  def flushWALToDatabase(): Future[Unit] = dispatcher(dbHelper.flushWALFile())
+  def flushWALToDatabase(): Future[Unit] = CancellableFuture(dbHelper.flushWALFile())
 }

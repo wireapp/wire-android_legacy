@@ -20,17 +20,16 @@ package com.waz.content
 import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZMessagingDB}
 import com.waz.model.UserId
-import com.waz.threading.Threading
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.di.StorageModule
-import com.wire.signals.DispatchQueue
+
+import java.util.concurrent.Executors
 
 /**
   * Single user storage. Keeps data specific to used user account.
   */
 class ZmsDatabase(user: UserId, context: Context) extends Database {
-  override implicit val dispatcher: DispatchQueue =
-    DispatchQueue(DispatchQueue.Serial, Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
+  override implicit val dispatcher = Executors.newFixedThreadPool(8)
 
   override val dbHelper: BaseDaoDB =
     new RoomDaoDB(StorageModule.getUserDatabase(
