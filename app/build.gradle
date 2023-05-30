@@ -440,6 +440,8 @@ dependencies {
 
     implementation BuildDependencies.zooming
 
+    implementation "com.jakewharton:process-phoenix:2.1.2"
+
     implementation BuildDependencies.osmdroid
     implementation(BuildDependencies.osmbonuspack) {
         // don't bring in newer com.squareup.okhttp3:okhttp & androidx.core:core
