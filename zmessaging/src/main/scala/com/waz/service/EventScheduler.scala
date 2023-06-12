@@ -23,20 +23,69 @@ import com.waz.log.LogSE._
 import com.waz.model.{Event, RConvEvent, RConvId}
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.wire.signals.Signal
 
+import java.util.UUID
 import scala.collection.breakOut
 import scala.concurrent.Future.{successful, traverse}
 import scala.concurrent.{Future, Promise}
 import scala.reflect.ClassTag
 
 class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
+  import Threading.Implicits.Background
+
   import EventScheduler._
 
-  private val queue = new GroupedEventProcessingQueue[Event, RConvId](RConvEvent, (c, e) => executeSchedule(c, createSchedule(e)), "EventScheduler")
+  private val queue = new SerialEventProcessingQueue[Event]((e) => {
+      Future.sequence(
+        e.map { event =>
+        executeSchedule(RConvEvent(event), createSchedule(e))
+      }
+    ).map { _ => Unit }
+  }, "EventScheduler")
+
+  val currentEventTag = Signal[Option[UUID]]()
+
+  private def executeSchedule(conv: RConvId, schedule: Schedule): Future[Unit] = {
+
+    def dfs(s: Stream[Schedule]): Future[Unit] = s match {
+      case Stream.Empty =>
+        successful(())
+
+      case NOP #:: remaining =>
+        dfs(remaining)
+
+      case Leaf(stage, events) #:: remaining =>
+        val p = Promise[Unit]()
+        val tag = UUID.randomUUID()
+        verbose(l"EVENT_PROCESSING; Scheduling execution for new tag: $tag")
+        currentEventTag ! Option(tag)
+        stage(conv, events).onComplete { result =>
+          result match {
+            case _ => p.completeWith(dfs(remaining))
+          }
+          verbose(l"EVENT_PROCESSING; Completed current tag: $tag")
+          currentEventTag ! None
+        }
+        p.future
+
+      case Branch(Sequential, schedules) #:: remaining =>
+        dfs(schedules #::: remaining)
+
+      case Branch(Parallel, schedules) #:: remaining =>
+        val p = Promise[Unit]()
+        traverse(schedules)(s => dfs(Stream(s))).onComplete {
+          case _ => p.completeWith(dfs(remaining))
+        }
+        p.future
+    }
+
+    dfs(Stream(schedule))
+  }
 
   def enqueue(events: Traversable[Event]): Future[Unit] = queue.enqueue(events.to[Vector]).recoverWithLog()
 
-  def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
+//  def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
 
   def createSchedule(events: Traversable[Event]): Schedule = schedule(layout, events.toStream)
 
@@ -58,13 +107,13 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
 
       case Stage.Composite(Interleaved, stages) =>
         def interleave(es: Stream[Event]): Stream[(Stage, Event)] = es match {
-          case Stream.Empty   => Stream.Empty
+          case Stream.Empty => Stream.Empty
           case event #:: tail => stages.to[Stream].filter(_.isEligible(event)).map(stage => (stage, event)) #::: interleave(tail)
         }
 
         def compact(stagedEvents: Stream[(Stage, Event)]): Stream[Schedule] = stagedEvents match {
           case Stream.Empty => Stream.Empty
-          case (staged @ (stage, event)) #:: tail =>
+          case (staged@(stage, event)) #:: tail =>
             val (groupable, remaining) = tail.span(_._1 == stage)
             schedule(stage, (staged #:: groupable).map(_._2)(breakOut)) #:: compact(remaining)
         }
@@ -74,13 +123,17 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
   }
 }
 
-object EventScheduler {
+object EventScheduler extends DerivedLogTag {
   sealed trait Strategy
+
   sealed trait SchedulingStrategy extends Strategy
+
   sealed trait ExecutionStrategy extends Strategy
 
   case object Sequential extends SchedulingStrategy with ExecutionStrategy
+
   case object Parallel extends SchedulingStrategy with ExecutionStrategy
+
   case object Interleaved extends SchedulingStrategy
 
   sealed trait Stage {
@@ -119,38 +172,11 @@ object EventScheduler {
   }
 
   sealed trait Schedule
+
   case class Branch(strategy: ExecutionStrategy, schedules: Stream[Schedule]) extends Schedule
+
   case class Leaf(stage: Stage.Atomic, events: Vector[Event]) extends Schedule
+
   val NOP = Leaf(Stage[Event]((s, e) => successful(()), _ => false), Vector.empty)
 
-  def executeSchedule(conv: RConvId, schedule: Schedule): Future[Unit] = {
-    import Threading.Implicits.Background
-
-    def dfs(s: Stream[Schedule]): Future[Unit] = s match {
-      case Stream.Empty =>
-        successful(())
-
-      case NOP #:: remaining =>
-        dfs(remaining)
-
-      case Leaf(stage, events) #:: remaining =>
-        val p = Promise[Unit]()
-        stage(conv, events).onComplete {
-          case _ => p.completeWith(dfs(remaining))
-        }
-        p.future
-
-      case Branch(Sequential, schedules) #:: remaining =>
-        dfs(schedules #::: remaining)
-
-      case Branch(Parallel, schedules) #:: remaining =>
-        val p = Promise[Unit]()
-        traverse(schedules)(s => dfs(Stream(s))).onComplete {
-          case _ => p.completeWith(dfs(remaining))
-        }
-        p.future
-    }
-
-    dfs(Stream(schedule))
-  }
 }
