@@ -58,13 +58,11 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
       case Leaf(stage, events) #:: remaining =>
         val p = Promise[Unit]()
         val tag = UUID.randomUUID()
-        verbose(l"EVENT_PROCESSING; Scheduling execution for new tag: $tag")
         currentEventTag ! Option(tag)
         stage(conv, events).onComplete { result =>
           result match {
             case _ => p.completeWith(dfs(remaining))
           }
-          verbose(l"EVENT_PROCESSING; Completed current tag: $tag")
           currentEventTag ! None
         }
         p.future
