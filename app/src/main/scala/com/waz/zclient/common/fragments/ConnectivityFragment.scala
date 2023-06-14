@@ -55,18 +55,13 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
     case true => Signal.from(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
     case _ => Signal.const(false)
   }
-  private lazy val lastEventProcessingChange = inject[Signal[ZMessaging]].flatMap(_.eventScheduler.currentEventTag)
-    .map{ _ =>System.currentTimeMillis() }
   private lazy val tooLongProcess = for {
-    isProcessing <- inject[Signal[ZMessaging]].flatMap(_.push.processing)
-    lastEventProcessingChange <- lastEventProcessingChange
-    isTooLong <- if (isProcessing) {
-      Signal.from(CancellableFuture.delay(TooLongProcessingDelay)).map { _ =>
-        val currentTime = System.currentTimeMillis()
-        (currentTime - lastEventProcessingChange > TooLongProcessingDelay.toMillis)
-      }.orElse(Signal.const(false))
-    } else {
-      Signal.const(false)
+    push <- inject[Signal[ZMessaging]].map(_.push)
+    isTooLong <- inject[Signal[ZMessaging]].flatMap(_.eventScheduler.currentEventTag).flatMap { _ =>
+      Signal.from(CancellableFuture.delay(TooLongProcessingDelay)).map {_ =>
+        val isProcessing = push.processing.currentValue.getOrElse(false)
+        isProcessing
+      }
     }
   } yield { isTooLong }
 
