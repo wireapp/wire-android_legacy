@@ -7,7 +7,7 @@ As of the beginning of 2023, wire-android is fully deprecated and moved to its n
 For bugs or feature requests, you can find in the application a button to report a bug. Feel free to use it to request features as well.
 
 > [!IMPORTANT]
-> In the short term, this repo will be archived.
+> Shortly, this repo will be archived.
 
 
 # Wire™
