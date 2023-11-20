@@ -1,5 +1,19 @@
 # Wire™
 
+# Deprecated!
+
+As of the beginning of 2023, wire-android is fully deprecated and moved to its new home:
+
+- https://github.com/wireapp/wire-android-reloaded
+
+For bugs or feature requests, you can find in the application a button to report a bug. Feel free to use it to request features as well.
+
+> [!IMPORTANT]
+> In the short term, this repo will be archived.
+
+---
+
+
 [![Wire logo](https://github.com/wireapp/wire/blob/master/assets/header-small.png?raw=true)](https://wire.com/jobs/)
 
 This repository is part of the source code of Wire. You can find more information at [wire.com](https://wire.com) or by contacting opensource@wire.com.
